@@ -14,3 +14,4 @@ for /d /r . %%d in (tempgitforplugged) do @if exist "%%d" rd /s/q "%%d"
 ::RD /S %MoveToDir%
 ::RMDIR %MoveToDir%
 ::cmd /k
+lazygit
