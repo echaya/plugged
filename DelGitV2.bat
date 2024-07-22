@@ -1,7 +1,7 @@
 @ECHO ON
 
 SET MoveToDir=D:\tempgitforplugged
-SET MoveFromDir=D:\temp\\.git
+SET MoveFromDir=D:\PluggedRepo\\.git
 
 ROBOCOPY %MoveFromDir% %MoveToDir% /S
 
