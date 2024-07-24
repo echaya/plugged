@@ -319,6 +319,7 @@ You can view this list in vim with `:help conform-formatters`
 - [shellcheck](https://github.com/koalaman/shellcheck) - A static analysis tool for shell scripts.
 - [shellharden](https://github.com/anordal/shellharden) - The corrective bash syntax highlighter.
 - [shfmt](https://github.com/mvdan/sh) - A shell parser, formatter, and interpreter with `bash` support.
+- [sleek](https://github.com/nrempel/sleek) - Sleek is a CLI tool for formatting SQL.
 - [smlfmt](https://github.com/shwestrick/smlfmt) - A custom parser and code formatter for Standard ML.
 - [snakefmt](https://github.com/snakemake/snakefmt) - a formatting tool for Snakemake files following the design of Black.
 - [sql_formatter](https://github.com/sql-formatter-org/sql-formatter) - A whitespace formatter for different query languages.
@@ -340,8 +341,8 @@ You can view this list in vim with `:help conform-formatters`
 - [terragrunt_hclfmt](https://terragrunt.gruntwork.io/docs/reference/cli-options/#hclfmt) - Format hcl files into a canonical format.
 - [tlint](https://github.com/tighten/tlint) - Tighten linter for Laravel conventions with support for auto-formatting.
 - [tofu_fmt](https://opentofu.org/docs/cli/commands/fmt/) - The tofu-fmt command rewrites OpenTofu configuration files to a canonical format and style.
-- [trim_newlines](https://www.gnu.org/software/gawk/manual/gawk.html) - Trim new lines with awk.
-- [trim_whitespace](https://www.gnu.org/software/gawk/manual/gawk.html) - Trim whitespaces with awk.
+- [trim_newlines](https://github.com/stevearc/conform.nvim/blob/master/lua/conform/formatters/trim_whitespace.lua) - Trim empty lines at the end of the file.
+- [trim_whitespace](https://github.com/stevearc/conform.nvim/blob/master/lua/conform/formatters/trim_whitespace.lua) - Trim trailing whitespace.
 - [twig-cs-fixer](https://github.com/VincentLanglet/Twig-CS-Fixer) - Automatically fix Twig Coding Standards issues
 - [typos](https://github.com/crate-ci/typos) - Source code spell checker
 - [typstyle](https://github.com/Enter-tainer/typstyle) - Beautiful and reliable typst code formatter.

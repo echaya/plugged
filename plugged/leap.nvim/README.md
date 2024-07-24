@@ -15,31 +15,33 @@ a jump.
 
 Leap's default motions allow you to jump to any position in the visible editor
 area by entering a 2-character search pattern, and then potentially a label
-character to pick your target from multiple matches, in a manner similar to
-Sneak. The main novel idea in Leap is that **you get a preview of the target
-labels** - Leap shows you which key you will need to press before you actually
-need to do that.
+character to pick your target from multiple matches, similar to Sneak. The main
+novel idea in Leap is that **you get a preview of the target labels** - you can
+see which key you will need to press before you actually need to do that.
 
 - Initiate the search in the forward (`s`) or backward (`S`) direction, or in
   the other windows (`gs`). (Note: you can use a single key for the current
   window or even the whole tab page, if you are okay with the trade-offs.)
 - Start typing a 2-character pattern (`{char1}{char2}`).
 - After typing the first character, you see "labels" appearing next to some of
-  the `{char1}{?}` pairs. You cannot _use_ the labels yet.
+  the `{char1}{?}` pairs. You cannot use the labels yet - they only get active
+  after finishing the pattern.
 - Enter `{char2}`. If the pair was not labeled, then voilà, you're already
   there. You can safely ignore the remaining labels, and continue editing -
   those are guaranteed non-conflicting letters, disappearing on the next
   keypress.
-- Else: type the label character. If there are more matches than available
-  labels, you can switch between groups, using `<space>` and `<tab>`.
+- Else: type the label character, that is now active. If there are more matches
+  than available labels, you can switch between groups, using `<space>` and
+  `<backspace>`.
 
 Character pairs give you full coverage of the screen:
 
-- `s{char}<space>` jumps to a character before the end of the line.
-- `s<space><space>` jumps to any EOL position, including empty lines.
+- `s{char}<space>` jumps to the last character on a line.
+- `s<space><space>` jumps to actual end-of-line characters, including empty
+  lines.
 
 At any stage, `<enter>` consistently jumps to the next available target
-(`<tab>` steps back):
+(`<backspace>` steps back):
 
 - `s<enter>...` repeats the previous search.
 - `s{char}<enter>...` can be used as a multiline substitute for `fFtT` motions.
@@ -144,10 +146,6 @@ See `:h leap-custom-mappings` for more.
 -- the default whitespace group.
 require('leap').opts.equivalence_classes = { ' \t\r\n', '([{', ')]}', '\'"`' }
 
--- Override some old defaults - use backspace instead of tab (see issue #165).
-require('leap').opts.special_keys.prev_target = '<backspace>'
-require('leap').opts.special_keys.prev_group = '<backspace>'
-
 -- Use the traversal keys to repeat the previous motion without explicitly
 -- invoking Leap.
 require('leap.user').set_repeat_keys('<enter>', '<backspace>')
@@ -156,11 +154,99 @@ require('leap.user').set_repeat_keys('<enter>', '<backspace>')
 </details>
 
 <details>
-<summary>Remote operations a.k.a. spooky actions at a distance (experimental)</summary>
+<summary>Workaround for the duplicate cursor bug when autojumping</summary>
+
+For Neovim versions < 0.10 (https://github.com/neovim/neovim/issues/20793):
+
+```lua
+-- Hide the (real) cursor when leaping, and restore it afterwards.
+vim.api.nvim_create_autocmd('User', { pattern = 'LeapEnter',
+    callback = function()
+      vim.cmd.hi('Cursor', 'blend=100')
+      vim.opt.guicursor:append { 'a:Cursor/lCursor' }
+    end,
+  }
+)
+vim.api.nvim_create_autocmd('User', { pattern = 'LeapLeave',
+    callback = function()
+      vim.cmd.hi('Cursor', 'blend=0')
+      vim.opt.guicursor:remove { 'a:Cursor/lCursor' }
+    end,
+  }
+)
+```
+
+Caveat: If you experience any problems after using the above snippet, check
+[#70](https://github.com/ggandor/leap.nvim/issues/70#issuecomment-1521177534)
+and [#143](https://github.com/ggandor/leap.nvim/pull/143) to tweak it.
+
+</details>
+
+<details>
+<summary>Lazy loading</summary>
+
+...is all the rage now, but doing it via your plugin manager is unnecessary, as
+Leap lazy loads itself. Using the `keys` feature of lazy.nvim might even cause
+[problems](https://github.com/ggandor/leap.nvim/issues/191).
+
+</details>
+
+### Extras
+
+Experimental features, APIs might be subject to change.
+
+<details>
+<summary>Incremental treesitter node selection</summary>
+
+```lua
+vim.keymap.set({'n', 'x', 'o'}, 'ga',  function ()
+  require('leap.treesitter').select()
+end)
+
+-- Linewise.
+vim.keymap.set({'n', 'x', 'o'}, 'gA',
+  'V<cmd>lua require("leap.treesitter").select()<cr>'
+)
+```
+
+Besides choosing a label (`ga{label}`), in Normal/Visual mode you can also use
+the traversal keys for incremental selection (`;` and `,` are automatically
+added to the default keys). The labels are forced to be safe, so you can
+operate on the current selection right away (`ga;;y`).
+
+**Tips**
+
+* The traversal can "wrap around" backwards, so you can select the root node
+  right away (`ga,`), instead of going forward (`ga;;;...`).
+
+* Linewise mode skips the current line, and redundant nodes are also filtered
+  out (only the outermost are kept among the ones that span the same line
+  ranges).
+
+* You can set the trigger key (or the suffix of it) and its inverted case to
+  increase/decrease the selection (see
+  [clever-f.vim](https://github.com/rhysd/clever-f.vim)):
+
+  ```lua
+  -- "clever-a"
+  vim.keymap.set({'n', 'x', 'o'}, 'ga',  function ()
+    local sk = vim.deepcopy(require('leap').opts.special_keys)
+    -- The items in `special_keys` can be both strings or tables - the
+    -- shortest workaround might be the below one:
+    sk.next_target = vim.fn.flatten(vim.list_extend({'a'}, {sk.next_target}))
+    sk.prev_target = vim.fn.flatten(vim.list_extend({'A'}, {sk.prev_target}))
+
+    require('leap.treesitter').select { opts = { special_keys = sk } }
+  end)
+  ```
+
+</details>
+
+<details>
+<summary>Remote operations ("spooky actions at a distance")</summary>
 
 Inspired by [leap-spooky.nvim](https://github.com/ggandor/leap-spooky.nvim),
-and [flash.nvim](https://github.com/folke/flash.nvim)'s similar feature. The
-API is not final.
+and [flash.nvim](https://github.com/folke/flash.nvim)'s similar feature.
 
 This function allows you to perform an action in a remote location: it
 forgets the current mode or pending operator, lets you leap with the
@@ -247,44 +333,6 @@ end
 
 </details>
 
-<details>
-<summary>Workaround for the duplicate cursor bug when autojumping</summary>
-
-For Neovim versions < 0.10 (https://github.com/neovim/neovim/issues/20793):
-
-```lua
--- Hide the (real) cursor when leaping, and restore it afterwards.
-vim.api.nvim_create_autocmd('User', { pattern = 'LeapEnter',
-    callback = function()
-      vim.cmd.hi('Cursor', 'blend=100')
-      vim.opt.guicursor:append { 'a:Cursor/lCursor' }
-    end,
-  }
-)
-vim.api.nvim_create_autocmd('User', { pattern = 'LeapLeave',
-    callback = function()
-      vim.cmd.hi('Cursor', 'blend=0')
-      vim.opt.guicursor:remove { 'a:Cursor/lCursor' }
-    end,
-  }
-)
-```
-
-Caveat: If you experience any problems after using the above snippet, check
-[#70](https://github.com/ggandor/leap.nvim/issues/70#issuecomment-1521177534)
-and [#143](https://github.com/ggandor/leap.nvim/pull/143) to tweak it.
-
-</details>
-
-<details>
-<summary>Lazy loading</summary>
-
-...is all the rage now, but doing it via your plugin manager is unnecessary, as
-Leap lazy loads itself. Using the `keys` feature of lazy.nvim might even cause
-[problems](https://github.com/ggandor/leap.nvim/issues/191).
-
-</details>
-
 ### Next steps
 
 Help files are not exactly page-turners, but I suggest at least skimming
@@ -306,7 +354,7 @@ required by the latter.
 That is, **you do not want to think about**
 
 - **the command**: we need one fundamental targeting method that can bring you
-  anywhere: a "jetpack on the back", instead of "airline routes" (↔
+  anywhere: a jetpack on the back, instead of airline routes (↔
   [EasyMotion](https://github.com/easymotion/vim-easymotion) and its
   derivatives)
 - **the context**: it should be enough to look at the target, and nothing else
@@ -622,76 +670,6 @@ vim.keymap.set('x', '|', function ()
 end)
 vim.keymap.set('o', '|', "V<cmd>lua leap_line_start()<cr>")
 ```
-</details>
-
-<details>
-<summary>Select Tree-sitter nodes</summary>
-
-Not as sophisticated as flash.nvim's implementation, but totally usable, in 50
-lines:
-
-```lua
-local api = vim.api
-local ts = vim.treesitter
-
-local function get_ts_nodes()
-  if not pcall(ts.get_parser) then
-    return
-  end
-  local wininfo = vim.fn.getwininfo(api.nvim_get_current_win())[1]
-
-  -- Get current node, and then its parent nodes recursively.
-  local cur_node = ts.get_node()
-  if not cur_node then return end
-  local nodes = { cur_node }
-  local parent = cur_node:parent()
-  while parent do
-    table.insert(nodes, parent)
-    parent = parent:parent()
-  end
-
-  -- Create Leap targets from TS nodes.
-  local targets = {}
-  local startline, startcol
-  for _, node in ipairs(nodes) do
-    startline, startcol, endline, endcol = node:range()  -- (0,0)
-    local startpos = { startline + 1, startcol + 1 }
-    local endpos = { endline + 1, endcol + 1 }
-    -- Add both ends of the node.
-    if startline + 1 >= wininfo.topline then
-      table.insert(targets, { pos = startpos, altpos = endpos })
-    end
-    if endline + 1 <= wininfo.botline then
-      table.insert(targets, { pos = endpos, altpos = startpos })
-    end
-  end
-
-  if #targets >= 1 then
-    return targets
-  end
-end
-
-local function select_node_range(target)
-  local mode = api.nvim_get_mode().mode
-  -- Force going back to Normal from Visual mode.
-  if not mode:match('no?') then vim.cmd('normal! ' .. mode) end
-  vim.fn.cursor(unpack(target.pos))
-  local v = mode:match('V') and 'V' or mode:match('') and '' or 'v'
-  vim.cmd('normal! ' .. v)
-  vim.fn.cursor(unpack(target.altpos))
-end
-
-local function leap_ts()
-  require('leap').leap {
-    target_windows = { api.nvim_get_current_win() },
-    targets = get_ts_nodes,
-    action = select_node_range,
-  }
-end
-
-vim.keymap.set({'x', 'o'}, '\\', leap_ts)
-```
-
 </details>
 
 <details>

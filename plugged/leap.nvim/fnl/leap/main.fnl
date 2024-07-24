@@ -250,7 +250,8 @@ char separately.
           :target_windows target-windows
           :opts user-given-opts
           :targets user-given-targets
-          :action user-given-action}
+          :action user-given-action
+          :traversal action-can-traverse?}
          kwargs)
   (local {:backward backward?}
          (if invoked-dot-repeat? state.dot_repeat
@@ -377,9 +378,10 @@ char separately.
     (vim.cmd :redraw))
 
   (fn can-traverse? [targets]
-    (and directional?
-         (not (or count op-mode? user-given-action))
-         (>= (length targets) 2)))
+    (or action-can-traverse?
+        (and directional?
+             (not (or count op-mode? user-given-action))
+             (>= (length targets) 2))))
 
   ; When traversing without labels, keep highlighting the same one group
   ; of targets, and do not shift until reaching the end of the group - it
@@ -464,25 +466,31 @@ char separately.
       (or targets (set st.errmsg (.. "not found: " in1 (or ?in2 ""))))))
 
   (fn get-user-given-targets [targets]
-    (local targets* (if (= (type targets) :function) (targets) targets))
-    (if (and targets* (> (length targets*) 0))
+    (local default-errmsg "no targets")
+    (local (targets* errmsg) (if (= (type targets) :function) (targets) targets))
+    (if (not targets*)
+        (set st.errmsg (or errmsg default-errmsg))
+
+        (= (length targets*) 0)
+        (set st.errmsg default-errmsg)
+
         (do
           ; Fill wininfo-s when not provided.
-          (local wininfo (. (vim.fn.getwininfo curr-winid) 1))
           (when-not (. targets* 1 :wininfo)
+            (local wininfo (. (vim.fn.getwininfo curr-winid) 1))
             (each [_ t (ipairs targets*)]
               (set t.wininfo wininfo)))
-          targets*)
-        (set st.errmsg "no targets")))
+          targets*)))
 
   ; Sets `autojump` and `label_set` attributes for the target list, plus
   ; `label` and `group` attributes for each individual target.
   (fn prepare-labeled-targets* [targets]
-    (local force-noautojump? (or
-                               ; No jump, doing sg else.
-                               user-given-action
-                               ; Should be able to select our target.
-                               (and op-mode? (> (length targets) 1))))
+    (local force-noautojump? (and (not action-can-traverse?)
+                                  (or
+                                    ; No jump, doing sg else.
+                                    user-given-action
+                                    ; Should be able to select our target.
+                                    (and op-mode? (> (length targets) 1)))))
     (prepare-labeled-targets targets force-noautojump? multi-window-search?))
 
   ; Repeat
@@ -537,6 +545,8 @@ char separately.
                         : inclusive-op?})
         (set first-jump? false))))
 
+  (local do-action (or user-given-action jump-to!))
+
   ; Target-selection loops
 
   (fn post-pattern-input-loop [targets]
@@ -575,6 +585,15 @@ char separately.
     (loop true))
 
 
+  (fn traversal-get-new-idx [idx in targets]
+    (if (contains? spec-keys.next_target in)
+        (min (inc idx) (length targets))
+
+        (contains? spec-keys.prev_target in)
+        ; Wrap around backwards.
+        (if (<= idx 1) (length targets) (dec idx))))
+
+
   (fn traversal-loop [targets start-idx {: use-no-labels?}]
 
     (fn on-first-invoc []
@@ -597,34 +616,25 @@ char separately.
       (with-highlight-chores
         #(light-up-beacons targets start end)))
 
-    (fn get-new-idx [idx in]
-      (if (contains? spec-keys.next_target in) (min (inc idx) (length targets))
-          (contains? spec-keys.prev_target in) (max (dec idx) 1)))
-
     (fn loop [idx first-invoc?]
       (when first-invoc? (on-first-invoc))
       (set st.curr-idx idx)  ; `display` depends on it!
       (display)
       (case (get-input)
         in
-        (if (and (= idx 1) (contains? spec-keys.prev_target in))
-            ; Handy if repeat keys are set.
-            (vim.fn.feedkeys in :i)
-            (case (get-new-idx idx in)
-              new-idx (do
-                        (jump-to! (. targets new-idx))
-                        (loop new-idx false))
-                ; We still want the labels (if there are) to function.
-              _ (case (get-target-with-active-label targets in)
-                  target (jump-to! target)
-                  _ (vim.fn.feedkeys in :i))))))
+        (case (traversal-get-new-idx idx in targets)
+          new-idx (do
+                    (do-action (. targets new-idx))
+                    (loop new-idx false))
+          ; We still want the labels (if there are) to function.
+          _ (case (get-target-with-active-label targets in)
+              target (do-action target)
+              _ (vim.fn.feedkeys in :i)))))
 
     (loop start-idx true))
 
   ; //> Helper functions END
 
-
-  (local do-action (or user-given-action jump-to!))
 
   ; After all the stage-setting, here comes the main action you've all been
   ; waiting for:
@@ -742,33 +752,34 @@ char separately.
           (set st.curr-idx 1))))
 
   (local in-final (post-pattern-input-loop targets*))  ; REDRAW (LOOP)
-  (when-not in-final
-    (exit-early))
+  (if (not in-final)
+      (exit-early)
 
-  ; Jump to the first target on the [rest of the] target list?
-  (when (contains? spec-keys.next_target in-final)
-    (if (can-traverse? targets*)
-        (let [new-idx (inc st.curr-idx)]
-          (do-action (. targets* new-idx))
-          (traversal-loop targets*                     ; REDRAW (LOOP)
-                          new-idx
-                          {:use-no-labels? (or no-labels-to-use?
-                                               st.repeating-partial-pattern?
-                                               (not targets*.autojump?))})
-          (exit))
+      ; Traversal - `prev_target` can also start it, wrapping backwards.
+      (and (can-traverse? targets*)
+           (or (contains? spec-keys.next_target in-final)
+               (contains? spec-keys.prev_target in-final)))
+      (let [use-no-labels? (or no-labels-to-use?
+                               st.repeating-partial-pattern?
+                               (not targets*.autojump?))
+            ; Note: `traversal-loop` will set `st.curr-idx` to `new-idx`.
+            new-idx (traversal-get-new-idx st.curr-idx in-final targets*)]
+        (do-action (. targets* new-idx))
+        (traversal-loop targets* new-idx {: use-no-labels?})  ; REDRAW (LOOP)
+        (exit))
 
-        (= st.curr-idx 0)  ; the cursor hasn't moved yet
-        (exit-with-action-on 1)
+      ; `next_target` accepts the first match if the cursor hasn't moved
+      ; yet (no autojump).
+      (and (contains? spec-keys.next_target in-final)
+           (= st.curr-idx 0))
+      (exit-with-action-on 1)
 
-        (= st.curr-idx 1)  ; already on the first target (after autojump)
-        (do (vim.fn.feedkeys in-final :i)
-            (exit))))
-
-  (local (_ idx) (get-target-with-active-label targets* in-final))
-  (if idx
-      (exit-with-action-on idx)
-      (do (vim.fn.feedkeys in-final :i)
-          (exit)))
+      ; Otherwise try to get a labeled target, and feed the key to
+      ; Normal mode if no success.
+      (case (get-target-with-active-label targets* in-final)
+        (target idx) (exit-with-action-on idx)
+        _ (do (vim.fn.feedkeys in-final :i)
+              (exit))))
 
   ; Do return something here, otherwise Fennel automatically inserts
   ; return statements into the tail-positioned if branches above,
