@@ -2,7 +2,7 @@
 ---@field triggers {mappings: wk.Mapping[], modes: table<string,boolean>}
 local M = {}
 
-M.version = "3.12.0" -- x-release-please-version
+M.version = "3.13.0" -- x-release-please-version
 
 ---@class wk.Opts
 local defaults = {
@@ -247,6 +247,11 @@ function M.setup(opts)
 
     if M.options.debug then
       Util.debug("\n\nDebug Started for v" .. M.version)
+      if package.loaded.lazy then
+        local Git = require("lazy.manage.git")
+        local plugin = require("lazy.core.config").plugins["which-key.nvim"]
+        Util.debug(vim.inspect(Git.info(plugin.dir)))
+      end
     end
 
     local wk = require("which-key")

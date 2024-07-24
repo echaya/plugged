@@ -688,10 +688,10 @@ If you don't have a sketch yet create one.
 
 ```sh
 $ arduino-cli sketch new test
-$ cd  test
+$ cd test
 ```
 
-You will need a `sketch.yaml` file in order for the language server to understand your project. It will also save you passing options to `arduino-cli` each time you compile or upload a file. You can generate the file like using the following commands.
+You will need a `sketch.yaml` file in order for the language server to understand your project. It will also save you passing options to `arduino-cli` each time you compile or upload a file. You can generate the file by using the following commands.
 
 
 First gather some information about your board. Make sure your board is connected and run the following:
@@ -708,7 +708,7 @@ Then generate the file:
 arduino-cli board attach -p /dev/ttyACM0 -b arduino:avr:uno test.ino
 ```
 
-The resulting file should like like this:
+The resulting file should look like this:
 
 ```yaml
 default_fqbn: arduino:avr:uno
@@ -723,7 +723,7 @@ Your folder structure should look like this:
 └── sketch.yaml
 ```
 
-For further instruction about configuration options, run `arduino-language-server --help`.
+For further instructions about configuration options, run `arduino-language-server --help`.
 
 Note that an upstream bug makes keywords in some cases become undefined by the language server.
 Ref: https://github.com/arduino/arduino-ide/issues/159
@@ -10180,6 +10180,9 @@ require'lspconfig'.rust_analyzer.setup{
   }
 }
 ```
+
+Note: do not set `init_options` for this LS config, it will be automatically populated by the contents of settings["rust-analyzer"] per
+https://github.com/rust-lang/rust-analyzer/blob/eb5da56d839ae0a9e9f50774fa3eb78eb0964550/docs/dev/lsp-extensions.md?plain=1#L26.
     
 
 
@@ -10191,6 +10194,10 @@ require'lspconfig'.rust_analyzer.setup{}
 - CargoReload: Reload current cargo workspace
 
 **Default values:**
+  - `before_init` : 
+  ```lua
+  see source file
+  ```
   - `capabilities` : 
   ```lua
   {
