@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.13.2](https://github.com/folke/which-key.nvim/compare/v3.13.1...v3.13.2) (2024-07-24)
+
+
+### Bug Fixes
+
+* **view:** fix epanded keys. Fixes [#795](https://github.com/folke/which-key.nvim/issues/795) ([f5e0cd5](https://github.com/folke/which-key.nvim/commit/f5e0cd5c7712ac63d8e6184785fb7bdac3b7b50d))
+
+## [3.13.1](https://github.com/folke/which-key.nvim/compare/v3.13.0...v3.13.1) (2024-07-24)
+
+
+### Bug Fixes
+
+* **state:** better current buf/mode check ([711453b](https://github.com/folke/which-key.nvim/commit/711453bb945433362636e918a5238172ffd21e43))
+* **state:** deal with the fact that ModeChanged doesn't always seems to trigger. Fixes [#787](https://github.com/folke/which-key.nvim/issues/787) ([388bd3f](https://github.com/folke/which-key.nvim/commit/388bd3f83de06d1a1758ea6a342cf3ae614401f1))
+
 ## [3.13.0](https://github.com/folke/which-key.nvim/compare/v3.12.1...v3.13.0) (2024-07-24)
 
 
