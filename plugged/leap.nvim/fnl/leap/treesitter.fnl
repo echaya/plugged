@@ -19,30 +19,34 @@
   (local targets [])
   ; To skip duplicate ranges.
   (var prev-range [])
-  (var prev-line-range [])
   (each [_ node (ipairs nodes)]
-    (let [(startline startcol endline endcol) (node:range)  ; (0,0)
-          range [startline startcol endline endcol]
-          line-range [startline endline]
-          remove-prev? (if linewise?
-                           (vim.deep_equal line-range prev-line-range)
-                           (vim.deep_equal range prev-range))]
-      (when (not (and linewise? (= startline endline)))
-        (when remove-prev?
-          (table.remove targets))
-        (set prev-range range)
-        (set prev-line-range line-range)
-        (var endline* endline)
-        (var endcol* endcol)
-        (when (= endcol 0)  ; exclusive
-          ; Go to the end of the previous line.
-          (set endline* (- endline 1))
-          (set endcol* (length (vim.fn.getline endline))))  ; (getline 1-indexed)
-        (table.insert targets  ; (0,0) -> (1,1)
-                      {:pos [(+ startline 1) (+ startcol 1)]
-                       ; `endcol` is exclusive, but we want to put the
-                       ; inline labels after it, so still +1.
-                       :endpos [(+ endline* 1) (+ endcol* 1)]}))))
+    (local (startline startcol endline endcol) (node:range))  ; (0,0)
+    (when (not (and linewise? (= startline endline)))
+      ; Adjust the end position if necessary. (It is exclusive, so if we
+      ; are on the very first column, move to the end of the previous
+      ; line, to the newline character.)
+      (var endline* endline)
+      (var endcol* endcol)
+      (when (= endcol 0)
+        (set endline* (- endline 1))
+        ; Include EOL (+1) (also, `getline` is 1-indexed).
+        (set endcol* (+ (length (vim.fn.getline (+ endline* 1))) 1)))
+      ; Check duplicates based on the adjusted ranges (relevant for
+      ; linewise mode)!
+      (local range (if linewise?
+                       [startline endline*]
+                       [startline startcol endline* endcol*]))
+      ; Instead of skipping, keep this (the outer one), and remove the
+      ; previous (better for linewise mode).
+      (when (vim.deep_equal range prev-range)
+        (table.remove targets))
+      (set prev-range range)
+      ; Create target ((0,0) -> (1,1)).
+      ; `endcol` is exclusive, but we want to put the inline labels
+      ; after it, so still +1.
+      (local target {:pos [(+ startline 1) (+ startcol 1)]
+                     :endpos [(+ endline* 1) (+ endcol* 1)]})
+      (table.insert targets target)))
   (when (> (length targets) 0)
     targets))
 
@@ -71,7 +75,9 @@
   ; Move to the start. This might be more intuitive for incremental
   ; selection, when the whole range is not visible - nodes are usually
   ; harder to identify at their end.
-  (vim.cmd "normal! o"))
+  (vim.cmd "normal! o")
+  ; Force redrawing the selection if the text has been scrolled.
+  (pcall api.nvim__redraw {:flush true}))  ; EXPERIMENTAL
 
 
 (local ns (api.nvim_create_namespace ""))
@@ -123,30 +129,30 @@
         leap (require "leap")
         op-mode? (: (vim.fn.mode true) :match "o")
         inc-select? (not op-mode?)]
-  ; Add `;` and `,` as traversal keys.
-  (local sk (vim.deepcopy leap.opts.special_keys))
-  (set sk.next_target (vim.fn.flatten
-                        (vim.list_extend [";"] [sk.next_target])))
-  (set sk.prev_target (vim.fn.flatten
-                        (vim.list_extend [","] [sk.prev_target])))
+    ; Add `;` and `,` as traversal keys.
+    (local sk (vim.deepcopy leap.opts.special_keys))
+    (set sk.next_target (vim.fn.flatten
+                          (vim.list_extend [";"] [sk.next_target])))
+    (set sk.prev_target (vim.fn.flatten
+                          (vim.list_extend [","] [sk.prev_target])))
 
-  (local (ok? context) (pcall require "treesitter-context"))
-  (local context? (and ok? (context.enabled)))
-  (when context? (context.disable))
+    (local (ok? context) (pcall require "treesitter-context"))
+    (local context? (and ok? (context.enabled)))
+    (when context? (context.disable))
 
-  (leap.leap {:target_windows [(api.nvim_get_current_win)]
-              :targets get-targets
-              :action select-range
-              :traversal inc-select?  ; allow traversal for the custom action
-              :opts (vim.tbl_extend :keep
-                      (or kwargs.opts {})
-                      {:labels (when inc-select? "")  ; force autojump
-                       :on_beacons (when inc-select? fill-cursor-pos)
-                       :virt_text_pos "inline"
-                       :special_keys sk})})
+    (leap.leap {:target_windows [(api.nvim_get_current_win)]
+                :targets get-targets
+                :action select-range
+                :traversal inc-select?  ; allow traversal for the custom action
+                :opts (vim.tbl_extend :keep
+                        (or kwargs.opts {})
+                        {:labels (when inc-select? "")  ; force autojump
+                         :on_beacons (when inc-select? fill-cursor-pos)
+                         :virt_text_pos "inline"
+                         :special_keys sk})})
 
-  (when inc-select? (clear-fill))
-  (when context? (context.enable))))
+    (when inc-select? (clear-fill))
+    (when context? (context.enable))))
 
 
 {: select}
