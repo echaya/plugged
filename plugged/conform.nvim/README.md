@@ -11,6 +11,7 @@ Lightweight yet powerful formatter plugin for Neovim
 - [Formatters](#formatters)
 - [Customizing formatters](#customizing-formatters)
 - [Recipes](#recipes)
+- [Debugging](#debugging)
 - [Advanced topics](#advanced-topics)
 - [Options](#options)
 - [Formatter options](#formatter-options)
@@ -205,6 +206,7 @@ You can view this list in vim with `:help conform-formatters`
 - [caramel_fmt](https://caramel.run/manual/reference/cli/fmt.html) - Format Caramel code.
 - [cbfmt](https://github.com/lukas-reineke/cbfmt) - A tool to format codeblocks inside markdown and org documents.
 - [clang-format](https://www.kernel.org/doc/html/latest/process/clang-format.html) - Tool to format C/C++/… code according to a set of rules and heuristics.
+- [cljfmt](https://github.com/weavejester/cljfmt) - cljfmt is a tool for detecting and fixing formatting errors in Clojure code.
 - [cljstyle](https://github.com/greglook/cljstyle) - Formatter for Clojure code.
 - [cmake_format](https://github.com/cheshirekow/cmake_format) - Parse cmake listfiles and format them nicely.
 - [codespell](https://github.com/codespell-project/codespell) - Check code for common misspellings.
@@ -273,6 +275,7 @@ You can view this list in vim with `:help conform-formatters`
 - [llf](https://repo.or.cz/llf.git) - A LaTeX reformatter / beautifier.
 - [lua-format](https://github.com/Koihik/LuaFormatter) - Code formatter for Lua.
 - [markdown-toc](https://github.com/jonschlinkert/markdown-toc) - API and CLI for generating a markdown TOC (table of contents) for a README or any markdown files.
+- [markdownfmt](https://github.com/shurcooL/markdownfmt) - Like gofmt, but for Markdown.
 - [markdownlint](https://github.com/DavidAnson/markdownlint) - A Node.js style checker and lint tool for Markdown/CommonMark files.
 - [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) - A fast, flexible, configuration-based command-line interface for linting Markdown/CommonMark files with the markdownlint library.
 - [mdformat](https://github.com/executablebooks/mdformat) - An opinionated Markdown formatter.
@@ -281,7 +284,7 @@ You can view this list in vim with `:help conform-formatters`
 - [mix](https://hexdocs.pm/mix/main/Mix.Tasks.Format.html) - Format Elixir files using the mix format command.
 - [nickel](https://nickel-lang.org/) - Code formatter for the Nickel programming language.
 - [nimpretty](https://github.com/nim-lang/nim) - nimpretty is a Nim source code beautifier that follows the official style guide.
-- [nixfmt](https://github.com/serokell/nixfmt) - nixfmt is a formatter for Nix code, intended to apply a uniform style.
+- [nixfmt](https://github.com/NixOS/nixfmt) - The official (but not yet stable) formatter for Nix code.
 - [nixpkgs_fmt](https://github.com/nix-community/nixpkgs-fmt) - nixpkgs-fmt is a Nix code formatter for nixpkgs.
 - [npm-groovy-lint](https://github.com/nvuillam/npm-groovy-lint) - Lint, format and auto-fix your Groovy / Jenkinsfile / Gradle files using command line.
 - [ocamlformat](https://github.com/ocaml-ppx/ocamlformat) - Auto-formatter for OCaml code.
@@ -438,6 +441,16 @@ require("conform").formatters.shfmt = {
 - [Run the first available formatter followed by more formatters](doc/recipes.md#run-the-first-available-formatter-followed-by-more-formatters)
 
 <!-- /RECIPES -->
+
+## Debugging
+
+<!-- DEBUGGING -->
+
+- [Background](doc/debugging.md#background)
+- [Tools](doc/debugging.md#tools)
+- [Testing the formatter](doc/debugging.md#testing-the-formatter)
+
+<!-- /DEBUGGING -->
 
 ## Advanced topics
 

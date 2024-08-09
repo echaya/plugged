@@ -288,6 +288,8 @@ FORMATTERS                                                    *conform-formatter
 `cbfmt` - A tool to format codeblocks inside markdown and org documents.
 `clang-format` - Tool to format C/C++/… code according to a set of rules and
                heuristics.
+`cljfmt` - cljfmt is a tool for detecting and fixing formatting errors in
+         Clojure code.
 `cljstyle` - Formatter for Clojure code.
 `cmake_format` - Parse cmake listfiles and format them nicely.
 `codespell` - Check code for common misspellings.
@@ -378,6 +380,7 @@ FORMATTERS                                                    *conform-formatter
 `lua-format` - Code formatter for Lua.
 `markdown-toc` - API and CLI for generating a markdown TOC (table of contents)
                for a README or any markdown files.
+`markdownfmt` - Like gofmt, but for Markdown.
 `markdownlint` - A Node.js style checker and lint tool for Markdown/CommonMark
                files.
 `markdownlint-cli2` - A fast, flexible, configuration-based command-line
@@ -391,8 +394,7 @@ FORMATTERS                                                    *conform-formatter
 `nickel` - Code formatter for the Nickel programming language.
 `nimpretty` - nimpretty is a Nim source code beautifier that follows the
             official style guide.
-`nixfmt` - nixfmt is a formatter for Nix code, intended to apply a uniform
-         style.
+`nixfmt` - The official (but not yet stable) formatter for Nix code.
 `nixpkgs_fmt` - nixpkgs-fmt is a Nix code formatter for nixpkgs.
 `npm-groovy-lint` - Lint, format and auto-fix your Groovy / Jenkinsfile / Gradle
                   files using command line.
