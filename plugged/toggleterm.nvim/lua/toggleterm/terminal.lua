@@ -208,7 +208,7 @@ function Terminal:new(term)
   term.id = id or next_id()
   term.display_name = term.display_name
   term.float_opts = vim.tbl_deep_extend("keep", term.float_opts or {}, conf.float_opts)
-  term.clear_env = term.clear_env
+  term.clear_env = vim.F.if_nil(term.clear_env, conf.clear_env)
   term.auto_scroll = vim.F.if_nil(term.auto_scroll, conf.auto_scroll)
   term.env = vim.F.if_nil(term.env, conf.env)
   term.hidden = vim.F.if_nil(term.hidden, false)
@@ -261,11 +261,11 @@ function Terminal:__restore_mode() self:set_mode(self.__state.mode) end
 ---@param m Mode
 function Terminal:set_mode(m)
   if m == mode.INSERT then
-    vim.cmd("startinsert")
+    vim.schedule(function() vim.cmd("startinsert") end)
   elseif m == mode.NORMAL then
-    vim.cmd("stopinsert")
+    vim.schedule(function() vim.cmd("stopinsert") end)
   elseif m == mode.UNSUPPORTED and config.get("start_in_insert") then
-    vim.cmd("startinsert")
+    vim.schedule(function() vim.cmd("startinsert") end)
   end
 end
 
