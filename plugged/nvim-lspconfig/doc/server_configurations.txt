@@ -5645,7 +5645,7 @@ require'lspconfig'.htmx.setup{}
   ```
   - `filetypes` : 
   ```lua
-  { "html", "templ" }
+  { "aspnetcorerazor", "astro", "astro-markdown", "blade", "clojure", "django-html", "htmldjango", "edge", "eelixir", "elixir", "ejs", "erb", "eruby", "gohtml", "gohtmltmpl", "haml", "handlebars", "hbs", "html", "htmlangular", "html-eex", "heex", "jade", "leaf", "liquid", "markdown", "mdx", "mustache", "njk", "nunjucks", "php", "razor", "slim", "twig", "javascript", "javascriptreact", "reason", "rescript", "typescript", "typescriptreact", "vue", "svelte", "templ" }
   ```
   - `root_dir` : 
   ```lua
@@ -10038,7 +10038,7 @@ require'lspconfig'.ruby_lsp.setup{}
   ```
   - `filetypes` : 
   ```lua
-  { "ruby" }
+  { "ruby", "eruby" }
   ```
   - `init_options` : 
   ```lua
