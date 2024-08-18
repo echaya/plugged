@@ -149,7 +149,7 @@ do
   function make_entry.gen_from_file(opts)
     opts = opts or {}
 
-    local cwd = vim.fn.expand(opts.cwd or vim.loop.cwd())
+    local cwd = utils.path_expand(opts.cwd or vim.loop.cwd())
 
     local disable_devicons = opts.disable_devicons
 
@@ -158,14 +158,16 @@ do
     mt_file_entry.cwd = cwd
     mt_file_entry.display = function(entry)
       local hl_group, icon
-      local display = utils.transform_path(opts, entry.value)
+      local display, path_style = utils.transform_path(opts, entry.value)
 
       display, hl_group, icon = utils.transform_devicons(entry.value, display, disable_devicons)
 
       if hl_group then
-        return display, { { { 0, #icon }, hl_group } }
+        local style = { { { 0, #icon + 1 }, hl_group } }
+        style = utils.merge_styles(style, path_style, #icon + 1)
+        return display, style
       else
-        return display
+        return display, path_style
       end
     end
 
@@ -182,7 +184,7 @@ do
 
       if k == "path" then
         local retpath = Path:new({ t.cwd, t.value }):absolute()
-        if not vim.loop.fs_access(retpath, "R", nil) then
+        if not vim.loop.fs_access(retpath, "R") then
           retpath = t.value
         end
         return retpath
@@ -191,8 +193,15 @@ do
       return rawget(t, rawget(lookup_keys, k))
     end
 
-    return function(line)
-      return setmetatable({ line }, mt_file_entry)
+    if opts.file_entry_encoding then
+      return function(line)
+        line = vim.iconv(line, opts.file_entry_encoding, "utf8")
+        return setmetatable({ line }, mt_file_entry)
+      end
+    else
+      return function(line)
+        return setmetatable({ line }, mt_file_entry)
+      end
     end
   end
 end
@@ -303,10 +312,10 @@ do
     local display_string = "%s%s%s"
 
     mt_vimgrep_entry = {
-      cwd = vim.fn.expand(opts.cwd or vim.loop.cwd()),
+      cwd = utils.path_expand(opts.cwd or vim.loop.cwd()),
 
       display = function(entry)
-        local display_filename = utils.transform_path(opts, entry.filename)
+        local display_filename, path_style = utils.transform_path(opts, entry.filename)
 
         local coordinates = ":"
         if not disable_coordinates then
@@ -326,9 +335,11 @@ do
         )
 
         if hl_group then
-          return display, { { { 0, #icon }, hl_group } }
+          local style = { { { 0, #icon }, hl_group } }
+          style = utils.merge_styles(style, path_style, #icon + 1)
+          return display, style
         else
-          return display
+          return display, path_style
         end
       end,
 
@@ -445,37 +456,24 @@ function make_entry.gen_from_quickfix(opts)
   local show_line = vim.F.if_nil(opts.show_line, true)
 
   local hidden = utils.is_path_hidden(opts)
-  local items = {
-    { width = vim.F.if_nil(opts.fname_width, 30) },
-    { remaining = true },
-  }
-  if hidden then
-    items[1] = { width = 8 }
-  end
-  if not show_line then
-    table.remove(items, 1)
-  end
-
-  local displayer = entry_display.create { separator = "▏", items = items }
 
   local make_display = function(entry)
-    local input = {}
-    if not hidden then
-      table.insert(input, string.format("%s:%d:%d", utils.transform_path(opts, entry.filename), entry.lnum, entry.col))
-    else
-      table.insert(input, string.format("%4d:%2d", entry.lnum, entry.col))
+    local display_filename, path_style = utils.transform_path(opts, entry.filename)
+    local display_string = string.format("%s:%d:%d", display_filename, entry.lnum, entry.col)
+    if hidden then
+      display_string = string.format("%4d:%2d", entry.lnum, entry.col)
     end
 
     if show_line then
       local text = entry.text
       if opts.trim_text then
-        text = text:gsub("^%s*(.-)%s*$", "%1")
+        text = vim.trim(text)
       end
       text = text:gsub(".* | ", "")
-      table.insert(input, text)
+      display_string = display_string .. ":" .. text
     end
 
-    return displayer(input)
+    return display_string, path_style
   end
 
   local get_filename = get_filename_fn()
@@ -542,8 +540,14 @@ function make_entry.gen_from_lsp_symbols(opts)
         msg,
       }
     else
+      local display_path, path_style = utils.transform_path(opts, entry.filename)
       return displayer {
-        utils.transform_path(opts, entry.filename),
+        {
+          display_path,
+          function()
+            return path_style
+          end,
+        },
         entry.symbol_name,
         { entry.symbol_type:lower(), type_highlight[entry.symbol_type] },
         msg,
@@ -598,26 +602,30 @@ function make_entry.gen_from_buffer(opts)
     },
   }
 
-  local cwd = vim.fn.expand(opts.cwd or vim.loop.cwd())
+  local cwd = utils.path_expand(opts.cwd or vim.loop.cwd())
 
   local make_display = function(entry)
     -- bufnr_width + modes + icon + 3 spaces + : + lnum
     opts.__prefix = opts.bufnr_width + 4 + icon_width + 3 + 1 + #tostring(entry.lnum)
-    local display_bufname = utils.transform_path(opts, entry.filename)
+    local display_bufname, path_style = utils.transform_path(opts, entry.filename)
     local icon, hl_group = utils.get_devicons(entry.filename, disable_devicons)
 
     return displayer {
       { entry.bufnr, "TelescopeResultsNumber" },
       { entry.indicator, "TelescopeResultsComment" },
       { icon, hl_group },
-      display_bufname .. ":" .. entry.lnum,
+      {
+        display_bufname .. ":" .. entry.lnum,
+        function()
+          return path_style
+        end,
+      },
     }
   end
 
   return function(entry)
-    local bufname = entry.info.name ~= "" and entry.info.name or "[No Name]"
-    -- if bufname is inside the cwd, trim that part of the string
-    bufname = Path:new(bufname):normalize(cwd)
+    local filename = entry.info.name ~= "" and entry.info.name or nil
+    local bufname = filename and Path:new(filename):normalize(cwd) or "[No Name]"
 
     local hidden = entry.info.hidden == 1 and "h" or "a"
     local readonly = vim.api.nvim_buf_get_option(entry.bufnr, "readonly") and "=" or " "
@@ -640,8 +648,8 @@ function make_entry.gen_from_buffer(opts)
       value = bufname,
       ordinal = entry.bufnr .. " : " .. bufname,
       display = make_display,
-
       bufnr = entry.bufnr,
+      path = filename,
       filename = bufname,
       lnum = lnum,
       indicator = indicator,
@@ -655,7 +663,7 @@ function make_entry.gen_from_treesitter(opts)
   local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
 
   local display_items = {
-    { width = 25 },
+    { width = opts.symbol_width or 25 },
     { width = 10 },
     { remaining = true },
   }
@@ -835,11 +843,23 @@ function make_entry.gen_from_keymaps(opts)
     return utils.display_termcodes(entry.lhs)
   end
 
+  local function get_attr(entry)
+    local ret = ""
+    if entry.value.noremap ~= 0 then
+      ret = ret .. "*"
+    end
+    if entry.value.buffer ~= 0 then
+      ret = ret .. "@"
+    end
+    return ret
+  end
+
   local displayer = require("telescope.pickers.entry_display").create {
     separator = "▏",
     items = {
-      { width = 2 },
+      { width = 3 },
       { width = opts.width_lhs },
+      { width = 2 },
       { remaining = true },
     },
   }
@@ -847,6 +867,7 @@ function make_entry.gen_from_keymaps(opts)
     return displayer {
       entry.mode,
       get_lhs(entry),
+      get_attr(entry),
       get_desc(entry),
     }
   end
@@ -1004,7 +1025,7 @@ end
 function make_entry.gen_from_ctags(opts)
   opts = opts or {}
 
-  local cwd = vim.fn.expand(opts.cwd or vim.loop.cwd())
+  local cwd = utils.path_expand(opts.cwd or vim.loop.cwd())
   local current_file = Path:new(vim.api.nvim_buf_get_name(opts.bufnr)):normalize(cwd)
 
   local display_items = {
@@ -1028,7 +1049,7 @@ function make_entry.gen_from_ctags(opts)
   }
 
   local make_display = function(entry)
-    local filename = utils.transform_path(opts, entry.filename)
+    local display_path, path_style = utils.transform_path(opts, entry.filename)
 
     local scode
     if opts.show_line then
@@ -1042,7 +1063,12 @@ function make_entry.gen_from_ctags(opts)
       }
     else
       return displayer {
-        filename,
+        {
+          display_path,
+          function()
+            return path_style
+          end,
+        },
         entry.tag,
         scode,
       }
@@ -1058,7 +1084,7 @@ function make_entry.gen_from_ctags(opts)
 
     if k == "path" then
       local retpath = Path:new({ t.filename }):absolute()
-      if not vim.loop.fs_access(retpath, "R", nil) then
+      if not vim.loop.fs_access(retpath, "R") then
         retpath = t.filename
       end
       return retpath
@@ -1114,12 +1140,12 @@ end
 function make_entry.gen_from_diagnostics(opts)
   opts = opts or {}
 
+  local type_diagnostic = vim.diagnostic.severity
   local signs = (function()
     if opts.no_sign then
       return
     end
     local signs = {}
-    local type_diagnostic = vim.diagnostic.severity
     for _, severity in ipairs(type_diagnostic) do
       local status, sign = pcall(function()
         -- only the first char is upper all others are lowercalse
@@ -1133,14 +1159,25 @@ function make_entry.gen_from_diagnostics(opts)
     return signs
   end)()
 
+  local sign_width
+  if opts.disable_coordinates then
+    sign_width = signs ~= nil and 2 or 0
+  else
+    sign_width = signs ~= nil and 10 or 8
+  end
+
   local display_items = {
-    { width = signs ~= nil and 10 or 8 },
+    { width = sign_width },
     { remaining = true },
   }
   local line_width = vim.F.if_nil(opts.line_width, 0.5)
+  local line_width_opts = { width = line_width }
+  if type(line_width) == "string" and line_width == "full" then
+    line_width_opts = {}
+  end
   local hidden = utils.is_path_hidden(opts)
   if not hidden then
-    table.insert(display_items, 2, { width = line_width })
+    table.insert(display_items, 2, line_width_opts)
   end
   local displayer = entry_display.create {
     separator = "▏",
@@ -1148,21 +1185,34 @@ function make_entry.gen_from_diagnostics(opts)
   }
 
   local make_display = function(entry)
-    local filename = utils.transform_path(opts, entry.filename)
+    local display_path, path_style = utils.transform_path(opts, entry.filename)
 
     -- add styling of entries
     local pos = string.format("%4d:%2d", entry.lnum, entry.col)
+    local line_info_text = signs and signs[entry.type] .. " " or ""
     local line_info = {
-      (signs and signs[entry.type] .. " " or "") .. pos,
+      opts.disable_coordinates and line_info_text or line_info_text .. pos,
       "DiagnosticSign" .. entry.type,
     }
 
     return displayer {
       line_info,
       entry.text,
-      filename,
+      {
+        display_path,
+        function()
+          return path_style
+        end,
+      },
     }
   end
+
+  local errlist_type_map = {
+    [type_diagnostic.ERROR] = "E",
+    [type_diagnostic.WARN] = "W",
+    [type_diagnostic.INFO] = "I",
+    [type_diagnostic.HINT] = "N",
+  }
 
   return function(entry)
     return make_entry.set_default_entry_mt({
@@ -1174,6 +1224,7 @@ function make_entry.gen_from_diagnostics(opts)
       lnum = entry.lnum,
       col = entry.col,
       text = entry.text,
+      qf_type = errlist_type_map[type_diagnostic[entry.type]],
     }, opts)
   end
 end
@@ -1213,6 +1264,7 @@ function make_entry.gen_from_autocommands(opts)
         group_name = group_name,
         pattern = entry.pattern,
         command = command,
+        callback = entry.callback,
       },
       --
       ordinal = entry.event .. " " .. group_name .. " " .. entry.pattern .. " " .. entry.command,
@@ -1309,11 +1361,18 @@ function make_entry.gen_from_git_status(opts)
     local status_x = git_abbrev[x] or {}
     local status_y = git_abbrev[y] or {}
 
+    local display_path, path_style = utils.transform_path(opts, entry.path)
+
     local empty_space = " "
     return displayer {
       { status_x.icon or empty_space, status_x.hl },
       { status_y.icon or empty_space, status_y.hl },
-      utils.transform_path(opts, entry.path),
+      {
+        display_path,
+        function()
+          return path_style
+        end,
+      },
     }
   end
 

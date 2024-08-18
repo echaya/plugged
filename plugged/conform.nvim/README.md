@@ -28,7 +28,7 @@ Lightweight yet powerful formatter plugin for Neovim
 
 ## Requirements
 
-- Neovim 0.9+ (for older versions, use a [nvim-0.x branch](https://github.com/stevearc/conform.nvim/branches))
+- Neovim 0.10+ (for older versions, use a [nvim-0.x branch](https://github.com/stevearc/conform.nvim/branches))
 
 ## Features
 
@@ -435,7 +435,6 @@ require("conform").formatters.shfmt = {
 - [Format command](doc/recipes.md#format-command)
 - [Autoformat with extra features](doc/recipes.md#autoformat-with-extra-features)
 - [Command to toggle format-on-save](doc/recipes.md#command-to-toggle-format-on-save)
-- [Automatically run slow formatters async](doc/recipes.md#automatically-run-slow-formatters-async)
 - [Lazy loading with lazy.nvim](doc/recipes.md#lazy-loading-with-lazynvim)
 - [Leave visual mode after range format](doc/recipes.md#leave-visual-mode-after-range-format)
 - [Run the first available formatter followed by more formatters](doc/recipes.md#run-the-first-available-formatter-followed-by-more-formatters)

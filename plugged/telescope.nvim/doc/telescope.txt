@@ -146,6 +146,13 @@ telescope.setup({opts})                                    *telescope.setup()*
 
         Default: 'horizontal'
 
+                                         *telescope.defaults.create_layout*
+    create_layout: ~
+        Configure the layout of Telescope pickers.
+        See |telescope.pickers.layout| for details.
+
+        Default: 'nil'
+
                                          *telescope.defaults.layout_config*
     layout_config: ~
         Determines the default configuration values for layout strategies.
@@ -207,9 +214,10 @@ telescope.setup({opts})                                    *telescope.setup()*
                                               *telescope.defaults.winblend*
     winblend: ~
         Configure winblend for telescope floating windows. See |winblend| for
-        more information.
+        more information. Type can be a number or a function returning a
+        number
 
-        Default: 0
+        Default: function() return vim.o.winblend end
 
                                           *telescope.defaults.wrap_results*
     wrap_results: ~
@@ -262,18 +270,19 @@ telescope.setup({opts})                                    *telescope.setup()*
         Determines how file paths are displayed.
 
         path_display can be set to an array with a combination of:
-        - "hidden"    hide file names
-        - "tail"      only display the file name, and not the path
-        - "absolute"  display absolute paths
-        - "smart"     remove as much from the path as possible to only show
-                      the difference between the displayed paths.
-                      Warning: The nature of the algorithm might have a negative
-                      performance impact!
-        - "shorten"   only display the first character of each directory in
-                      the path
-        - "truncate"  truncates the start of the path when the whole path will
-                      not fit. To increase the gap between the path and the edge,
-                      set truncate to number `truncate = 3`
+        - "hidden"          hide file names
+        - "tail"            only display the file name, and not the path
+        - "absolute"        display absolute paths
+        - "smart"           remove as much from the path as possible to only show
+                            the difference between the displayed paths.
+                            Warning: The nature of the algorithm might have a negative
+                            performance impact!
+        - "shorten"         only display the first character of each directory in
+                            the path
+        - "truncate"        truncates the start of the path when the whole path will
+                            not fit. To increase the gap between the path and the edge,
+                            set truncate to number `truncate = 3`
+        - "filename_first"  shows filenames first and then the directories
 
         You can also specify the number of characters of each directory name
         to keep by setting `path_display.shorten = num`.
@@ -298,16 +307,56 @@ telescope.setup({opts})                                    *telescope.setup()*
           will give a path like:
             `al/beta/gamma/de`
 
+        path_display can also be set to 'filename_first' to put the filename
+        in front.
+
+          path_display = {
+            "filename_first"
+          },
+
+        The directory structure can be reversed as follows:
+
+          path_display = {
+            filename_first = {
+                reverse_directories = true
+            }
+          },
+
         path_display can also be set to 'hidden' string to hide file names
 
         path_display can also be set to a function for custom formatting of
-        the path display. Example:
+        the path display with the following signature
+
+        Signature: fun(opts: table, path: string): string, table?
+
+        The optional table is an list of positions and highlight groups to
+        set the highlighting of the return path string.
+
+        Example:
 
             -- Format path as "file.txt (path\to\file\)"
             path_display = function(opts, path)
               local tail = require("telescope.utils").path_tail(path)
               return string.format("%s (%s)", tail, path)
             end,
+
+            -- Format path and add custom highlighting
+            path_display = function(opts, path)
+              local tail = require("telescope.utils").path_tail(path)
+              path = string.format("%s (%s)", tail, path)
+
+              local highlights = {
+                {
+                  {
+                    0, -- highlight start position
+                    #path, -- highlight end position
+                  },
+                  "Comment", -- highlight group name
+                },
+              }
+
+              return path, highlights
+            end
 
         Default: {}
 
@@ -388,20 +437,25 @@ telescope.setup({opts})                                    *telescope.setup()*
           },
 
         Fields:
-          - path:    The path to the telescope history as string.
-                     Default: stdpath("data")/telescope_history
-          - limit:   The amount of entries that will be written in the
-                     history.
-                     Warning: If limit is set to nil it will grow unbound.
-                     Default: 100
-          - handler: A lua function that implements the history.
-                     This is meant as a developer setting for extensions to
-                     override the history handling, e.g.,
-                     https://github.com/nvim-telescope/telescope-smart-history.nvim,
-                     which allows context sensitive (cwd + picker) history.
+          - path:       The path to the telescope history as string.
+                        Default: stdpath("data")/telescope_history
+          - limit:      The amount of entries that will be written in the
+                        history.
+                        Warning: If limit is set to nil it will grow unbound.
+                        Default: 100
+          - handler:    A lua function that implements the history.
+                        This is meant as a developer setting for extensions to
+                        override the history handling, e.g.,
+                        https://github.com/nvim-telescope/telescope-smart-history.nvim,
+                        which allows context sensitive (cwd + picker) history.
 
-                     Default:
-                     require('telescope.actions.history').get_simple_history
+                        Default:
+                        require('telescope.actions.history').get_simple_history
+          - cycle_wrap: Indicates whether the cycle_history_next and
+                        cycle_history_prev functions should wrap around to the
+                        beginning or end of the history entries on reaching
+                        their respective ends
+                        Default: false
 
                                           *telescope.defaults.cache_picker*
     cache_picker: ~
@@ -415,15 +469,19 @@ telescope.setup({opts})                                    *telescope.setup()*
         ('cache_picker.limit_entries`) are cached.
 
         Fields:
-          - num_pickers:      The number of pickers to be cached.
-                              Set to -1 to preserve all pickers of your session.
-                              If passed to a picker, the cached pickers with
-                              indices larger than `cache_picker.num_pickers` will
-                              be cleared.
-                              Default: 1
-          - limit_entries:    The amount of entries that will be saved for each
-                              picker.
-                              Default: 1000
+          - num_pickers:          The number of pickers to be cached.
+                                  Set to -1 to preserve all pickers of your
+                                  session. If passed to a picker, the cached
+                                  pickers with indices larger than
+                                  `cache_picker.num_pickers` will be cleared.
+                                  Default: 1
+          - limit_entries:        The amount of entries that will be saved for
+                                  each picker.
+                                  Default: 1000
+          - ignore_empty_prompt:  If true, the picker will not be cached if
+                                  the prompt is empty (i.e., no text has been
+                                  typed at the time of closing the prompt).
+                                  Default: false
 
 
                                                *telescope.defaults.preview*
@@ -437,8 +495,8 @@ telescope.setup({opts})                                    *telescope.setup()*
 
         Fields:
           - check_mime_type:  Use `file` if available to try to infer whether the
-                              file to preview is a binary if plenary's
-                              filetype detection fails.
+                              file to preview is a binary if filetype
+                              detection fails.
                               Windows users get `file` from:
                               https://github.com/julian-r/file-windows
                               Set to false to attempt to preview any mime type.
@@ -446,6 +504,9 @@ telescope.setup({opts})                                    *telescope.setup()*
           - filesize_limit:   The maximum file size in MB attempted to be previewed.
                               Set to false to attempt to preview any file size.
                               Default: 25
+          - highlight_limit:  The maximum file size in MB attempted to be highlighted.
+                              Set to false to attempt to highlight any file size.
+                              Default: 1
           - timeout:          Timeout the previewer if the preview did not
                               complete within `timeout` milliseconds.
                               Set to false to not timeout preview.
@@ -491,32 +552,32 @@ telescope.setup({opts})                                    *telescope.setup()*
                                   end,
                                 }
                               The configuration recipes for relevant examples.
-                              Note: if plenary does not recognize your filetype yet --
-                              1) Please consider contributing to:
-                                 $PLENARY_REPO/data/plenary/filetypes/builtin.lua
-                              2) Register your filetype locally as per link
-                                 https://github.com/nvim-lua/plenary.nvim#plenaryfiletype
+                              Note: we use vim.filetype filetype detection,
+                                    so if you have troubles with files not
+                                    highlighting correctly, please read
+                                    |vim.filetype|
                               Default: nil
           - treesitter:       Determines whether the previewer performs treesitter
                               highlighting, which falls back to regex-based highlighting.
                               `true`: treesitter highlighting for all available filetypes
                               `false`: regex-based highlighting for all filetypes
-                              `table`: following nvim-treesitters highlighting options:
-                                It contains two keys:
-                                  - enable boolean|table: if boolean, enable all ts
-                                                          highlighing with that flag,
-                                                          disable still considered.
-                                                          Containing a list of filetypes,
-                                                          that are enabled, disabled
-                                                          ignored because it doesnt make
-                                                          any sense in this case.
-                                  - disable table: containing a list of filetypes
-                                                   that are disabled
+                              `table`: may contain the following keys:
+                                  - enable boolean|table: if boolean, enable ts
+                                                          highlighting for all supported
+                                                          filetypes.
+                                                          if table, ts highlighting is only
+                                                            enabled for given filetypes.
+                                  - disable table: list of filetypes for which ts highlighting
+                                                   is not used if `enable = true`.
                               Default: true
           - msg_bg_fillchar:  Character to fill background of unpreviewable buffers with
                               Default: "╱"
           - hide_on_startup:  Hide previewer when picker starts. Previewer can be toggled
                               with actions.layout.toggle_preview.
+                              Default: false
+          - ls_short:         Determines whether to use the `--short` flag for the `ls`
+                              command when previewing directories. Otherwise will result
+                              to using `--long`.
                               Default: false
 
 
@@ -631,6 +692,22 @@ telescope.setup({opts})                                    *telescope.setup()*
           be opened in and the cursor placed in upon leaving the picker.
 
           Default: `function() return 0 end`
+
+
+                                         *telescope.defaults.git_worktrees*
+    git_worktrees: ~
+        A table of arrays of detached working trees with keys `gitdir` and `toplevel`.
+        Used to pass `--git-dir` and `--work-tree` flags to git commands when telescope fails
+        to infer the top-level directory of a given working tree based on cwd.
+        Example:
+        git_worktrees = {
+          {
+            toplevel = vim.env.HOME,
+            gitdir = vim.env.HOME .. '/.cfg'
+          }
+        }
+
+        Default: nil
 
 
                                         *telescope.defaults.file_previewer*
@@ -801,7 +878,8 @@ builtin.live_grep({opts})                      *telescope.builtin.live_grep()*
 
 
 builtin.grep_string({opts})                  *telescope.builtin.grep_string()*
-    Searches for the string under your cursor in your current working directory
+    Searches for the string under your cursor or the visual selection in your
+    current working directory
 
 
     Parameters: ~
@@ -844,26 +922,34 @@ builtin.find_files({opts})                    *telescope.builtin.find_files()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {cwd}              (string)          root dir to search from (default:
-                                             cwd, use utils.buffer_dir() to
-                                             search relative to open buffer)
-        {find_command}     (function|table)  cmd to use for the search. Can be
-                                             a fn(opts) -> tbl (default:
-                                             autodetect)
-        {follow}           (boolean)         if true, follows symlinks (i.e.
-                                             uses `-L` flag for the `find`
-                                             command)
-        {hidden}           (boolean)         determines whether to show hidden
-                                             files or not (default: false)
-        {no_ignore}        (boolean)         show files ignored by .gitignore,
-                                             .ignore, etc. (default: false)
-        {no_ignore_parent} (boolean)         show files ignored by .gitignore,
-                                             .ignore, etc. in parent dirs.
-                                             (default: false)
-        {search_dirs}      (table)           directory/directories/files to
-                                             search
-        {search_file}      (string)          specify a filename to search for
-        {file_encoding}    (string)          file encoding for the previewer
+        {cwd}                 (string)          root dir to search from
+                                                (default: cwd, use
+                                                utils.buffer_dir() to search
+                                                relative to open buffer)
+        {find_command}        (function|table)  cmd to use for the search. Can
+                                                be a fn(opts) -> tbl (default:
+                                                autodetect)
+        {file_entry_encoding} (string)          encoding of output of
+                                                `find_command`
+        {follow}              (boolean)         if true, follows symlinks
+                                                (i.e. uses `-L` flag for the
+                                                `find` command) (default:
+                                                false)
+        {hidden}              (boolean)         determines whether to show
+                                                hidden files or not (default:
+                                                false)
+        {no_ignore}           (boolean)         show files ignored by
+                                                .gitignore, .ignore, etc.
+                                                (default: false)
+        {no_ignore_parent}    (boolean)         show files ignored by
+                                                .gitignore, .ignore, etc. in
+                                                parent dirs. (default: false)
+        {search_dirs}         (table)           directory/directories/files to
+                                                search
+        {search_file}         (string)          specify a filename to search
+                                                for
+        {file_encoding}       (string)          file encoding for the
+                                                previewer
 
 
 builtin.fd()                                          *telescope.builtin.fd()*
@@ -879,14 +965,19 @@ builtin.treesitter()                          *telescope.builtin.treesitter()*
 
 
     Options: ~
-        {show_line}         (boolean)  if true, shows the row:column that the
-                                       result is found at (default: true)
-        {bufnr}             (number)   specify the buffer number where
-                                       treesitter should run. (default:
-                                       current buffer)
-        {symbol_highlights} (table)    string -> string. Matches symbol with
-                                       hl_group
-        {file_encoding}     (string)   file encoding for the previewer
+        {show_line}         (boolean)       if true, shows the row:column that
+                                            the result is found at (default:
+                                            true)
+        {bufnr}             (number)        specify the buffer number where
+                                            treesitter should run. (default:
+                                            current buffer)
+        {symbol_width}      (number)        defines the width of the symbol
+                                            section (default: 25)
+        {symbols}           (string|table)  filter results by symbol kind(s)
+        {ignore_symbols}    (string|table)  list of symbols to ignore
+        {symbol_highlights} (table)         string -> string. Matches symbol
+                                            with hl_group
+        {file_encoding}     (string)        file encoding for the previewer
 
 
 builtin.current_buffer_fuzzy_find({opts}) *telescope.builtin.current_buffer_fuzzy_find()*
@@ -897,9 +988,11 @@ builtin.current_buffer_fuzzy_find({opts}) *telescope.builtin.current_buffer_fuzz
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {skip_empty_lines} (boolean)  if true we don't display empty lines
-                                      (default: false)
-        {file_encoding}    (string)   file encoding for the previewer
+        {skip_empty_lines}     (boolean)  if true we don't display empty lines
+                                          (default: false)
+        {results_ts_highlight} (boolean)  highlight result entries with
+                                          treesitter (default: true)
+        {file_encoding}        (string)   file encoding for the previewer
 
 
 builtin.tags({opts})                                *telescope.builtin.tags()*
@@ -958,6 +1051,8 @@ builtin.git_files({opts})                      *telescope.builtin.git_files()*
 
     Options: ~
         {cwd}                (string)   specify the path of the repo
+        {use_file_path}      (boolean)  if we should use the current buffer
+                                        git root (default: false)
         {use_git_root}       (boolean)  if we should use git root as cwd or
                                         the cwd (important for submodule)
                                         (default: true)
@@ -985,15 +1080,43 @@ builtin.git_commits({opts})                  *telescope.builtin.git_commits()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {cwd}          (string)   specify the path of the repo
-        {use_git_root} (boolean)  if we should use git root as cwd or the cwd
-                                  (important for submodule) (default: true)
-        {git_command}  (table)    command that will be executed.
-                                  {"git","log","--pretty=oneline","--abbrev-commit","--","."}
+        {cwd}           (string)   specify the path of the repo
+        {use_file_path} (boolean)  if we should use the current buffer git
+                                   root (default: false)
+        {use_git_root}  (boolean)  if we should use git root as cwd or the cwd
+                                   (important for submodule) (default: true)
+        {git_command}   (table)    command that will be executed.
+                                   {"git","log","--pretty=oneline","--abbrev-commit","--","."}
 
 
 builtin.git_bcommits({opts})                *telescope.builtin.git_bcommits()*
     Lists commits for current buffer with diff preview
+    - Default keymaps or your overridden `select_` keys:
+      - `<cr>`: checks out the currently selected commit
+      - `<c-v>`: opens a diff in a vertical split
+      - `<c-x>`: opens a diff in a horizontal split
+      - `<c-t>`: opens a diff in a new tab
+
+
+    Parameters: ~
+        {opts} (table)  options to pass to the picker
+
+    Options: ~
+        {cwd}           (string)   specify the path of the repo
+        {use_file_path} (boolean)  if we should use the current buffer git
+                                   root (default: false)
+        {use_git_root}  (boolean)  if we should use git root as cwd or the cwd
+                                   (important for submodule) (default: true)
+        {current_file}  (string)   specify the current file that should be
+                                   used for bcommits (default: current buffer)
+        {git_command}   (table)    command that will be executed.
+                                   {"git","log","--pretty=oneline","--abbrev-commit"}
+
+
+builtin.git_bcommits_range({opts})    *telescope.builtin.git_bcommits_range()*
+    Lists commits for a range of lines in the current buffer with diff preview
+    In visual mode, lists commits for the selected lines With operator mode
+    enabled, lists commits inside the text object/motion
     - Default keymaps or your overridden `select_` keys:
       - `<cr>`: checks out the currently selected commit
       - `<c-v>`: opens a diff in a vertical split
@@ -1010,8 +1133,15 @@ builtin.git_bcommits({opts})                *telescope.builtin.git_bcommits()*
                                   (important for submodule) (default: true)
         {current_file} (string)   specify the current file that should be used
                                   for bcommits (default: current buffer)
-        {git_command}  (table)    command that will be executed.
-                                  {"git","log","--pretty=oneline","--abbrev-commit"}
+        {git_command}  (table)    command that will be executed. the last
+                                  element must be "-L".
+                                  {"git","log","--pretty=oneline","--abbrev-commit","--no-patch","-L"}
+        {from}         (number)   the first line number in the range (default:
+                                  current line)
+        {to}           (number)   the last line number in the range (default:
+                                  the value of `from`)
+        {operator}     (boolean)  select lines in operator-pending mode
+                                  (default: false)
 
 
 builtin.git_branches({opts})                *telescope.builtin.git_branches()*
@@ -1032,10 +1162,20 @@ builtin.git_branches({opts})                *telescope.builtin.git_branches()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {cwd}          (string)   specify the path of the repo
-        {use_git_root} (boolean)  if we should use git root as cwd or the cwd
-                                  (important for submodule) (default: true)
-        {pattern}      (string)   specify the pattern to match all refs
+        {cwd}                           (string)   specify the path of the
+                                                   repo
+        {use_file_path}                 (boolean)  if we should use the
+                                                   current buffer git root
+                                                   (default: false)
+        {use_git_root}                  (boolean)  if we should use git root
+                                                   as cwd or the cwd
+                                                   (important for submodule)
+                                                   (default: true)
+        {show_remote_tracking_branches} (boolean)  show remote tracking
+                                                   branches like origin/main
+                                                   (default: true)
+        {pattern}                       (string)   specify the pattern to
+                                                   match all refs
 
 
 builtin.git_status({opts})                    *telescope.builtin.git_status()*
@@ -1049,14 +1189,16 @@ builtin.git_status({opts})                    *telescope.builtin.git_status()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {cwd}          (string)   specify the path of the repo
-        {use_git_root} (boolean)  if we should use git root as cwd or the cwd
-                                  (important for submodule) (default: true)
-        {git_icons}    (table)    string -> string. Matches name with icon
-                                  (see source code, make_entry.lua
-                                  git_icon_defaults)
-        {expand_dir}   (boolean)  pass flag `-uall` to show files in untracked
-                                  directories (default: true)
+        {cwd}           (string)   specify the path of the repo
+        {use_file_path} (boolean)  if we should use the current buffer git
+                                   root (default: false)
+        {use_git_root}  (boolean)  if we should use git root as cwd or the cwd
+                                   (important for submodule) (default: true)
+        {git_icons}     (table)    string -> string. Matches name with icon
+                                   (see source code, make_entry.lua
+                                   git_icon_defaults)
+        {expand_dir}    (boolean)  pass flag `-uall` to show files in
+                                   untracked directories (default: true)
 
 
 builtin.git_stash({opts})                      *telescope.builtin.git_stash()*
@@ -1069,11 +1211,13 @@ builtin.git_stash({opts})                      *telescope.builtin.git_stash()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {cwd}          (string)   specify the path of the repo
-        {use_git_root} (boolean)  if we should use git root as cwd or the cwd
-                                  (important for submodule) (default: true)
-        {show_branch}  (boolean)  if we should display the branch name for git
-                                  stash entries (default: true)
+        {cwd}           (string)   specify the path of the repo
+        {use_file_path} (boolean)  if we should use the current buffer git
+                                   root (default: false)
+        {use_git_root}  (boolean)  if we should use git root as cwd or the cwd
+                                   (important for submodule) (default: true)
+        {show_branch}   (boolean)  if we should display the branch name for
+                                   git stash entries (default: true)
 
 
 builtin.builtin({opts})                          *telescope.builtin.builtin()*
@@ -1171,11 +1315,9 @@ builtin.quickfix({opts})                        *telescope.builtin.quickfix()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {show_line}   (boolean)  show results text (default: true)
-        {trim_text}   (boolean)  trim results text (default: false)
-        {fname_width} (number)   defines the width of the filename section
-                                 (default: 30)
-        {nr}          (number)   specify the quickfix list number
+        {show_line} (boolean)  show results text (default: true)
+        {trim_text} (boolean)  trim results text (default: false)
+        {nr}        (number)   specify the quickfix list number
 
 
 builtin.quickfixhistory({opts})          *telescope.builtin.quickfixhistory()*
@@ -1197,10 +1339,8 @@ builtin.loclist({opts})                          *telescope.builtin.loclist()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {show_line}   (boolean)  show results text (default: true)
-        {trim_text}   (boolean)  trim results text (default: false)
-        {fname_width} (number)   defines the width of the filename section
-                                 (default: 30)
+        {show_line} (boolean)  show results text (default: true)
+        {trim_text} (boolean)  trim results text (default: false)
 
 
 builtin.oldfiles({opts})                        *telescope.builtin.oldfiles()*
@@ -1211,6 +1351,8 @@ builtin.oldfiles({opts})                        *telescope.builtin.oldfiles()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
+        {cwd}           (string)   specify a working directory to filter
+                                   oldfiles by
         {only_cwd}      (boolean)  show only files in the cwd (default: false)
         {cwd_only}      (boolean)  alias for only_cwd
         {file_encoding} (string)   file encoding for the previewer
@@ -1225,6 +1367,10 @@ builtin.command_history({opts})          *telescope.builtin.command_history()*
 
     Parameters: ~
         {opts} (table)  options to pass to the picker
+
+    Options: ~
+        {filter_fn} (function)  filter fn(cmd:string). true if the history
+                                command should be presented.
 
 
 builtin.search_history({opts})            *telescope.builtin.search_history()*
@@ -1289,31 +1435,42 @@ builtin.reloader({opts})                        *telescope.builtin.reloader()*
 builtin.buffers({opts})                          *telescope.builtin.buffers()*
     Lists open buffers in current neovim instance, opens selected buffer on
     `<cr>`
+    - Default keymaps:
+      - `<M-d>`: delete the currently selected buffer
 
 
     Parameters: ~
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {show_all_buffers}      (boolean)  if true, show all buffers,
-                                           including unloaded buffers
-                                           (default: true)
-        {ignore_current_buffer} (boolean)  if true, don't show the current
-                                           buffer in the list (default: false)
-        {only_cwd}              (boolean)  if true, only show buffers in the
-                                           current working directory (default:
-                                           false)
-        {cwd_only}              (boolean)  alias for only_cwd
-        {sort_lastused}         (boolean)  Sorts current and last buffer to
-                                           the top and selects the lastused
-                                           (default: false)
-        {sort_mru}              (boolean)  Sorts all buffers after most recent
-                                           used. Not just the current and last
-                                           one (default: false)
-        {bufnr_width}           (number)   Defines the width of the buffer
-                                           numbers in front of the filenames 
-                                           (default: dynamic)
-        {file_encoding}         (string)   file encoding for the previewer
+        {cwd}                   (string)    specify a working directory to
+                                            filter buffers list by
+        {show_all_buffers}      (boolean)   if true, show all buffers,
+                                            including unloaded buffers
+                                            (default: true)
+        {ignore_current_buffer} (boolean)   if true, don't show the current
+                                            buffer in the list (default:
+                                            false)
+        {only_cwd}              (boolean)   if true, only show buffers in the
+                                            current working directory
+                                            (default: false)
+        {cwd_only}              (boolean)   alias for only_cwd
+        {sort_lastused}         (boolean)   Sorts current and last buffer to
+                                            the top and selects the lastused
+                                            (default: false)
+        {sort_mru}              (boolean)   Sorts all buffers after most
+                                            recent used. Not just the current
+                                            and last one (default: false)
+        {bufnr_width}           (number)    Defines the width of the buffer
+                                            numbers in front of the filenames 
+                                            (default: dynamic)
+        {file_encoding}         (string)    file encoding for the previewer
+        {sort_buffers}          (function)  sort fn(bufnr_a, bufnr_b). true if
+                                            bufnr_a should go first. Runs
+                                            after sorting by most recent (if
+                                            specified)
+        {select_current}        (boolean)   select current buffer (default:
+                                            false)
 
 
 builtin.colorscheme({opts})                  *telescope.builtin.colorscheme()*
@@ -1324,7 +1481,12 @@ builtin.colorscheme({opts})                  *telescope.builtin.colorscheme()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {enable_preview} (boolean)  if true, will preview the selected color
+        {colors}          (table)    a list of additional colorschemes to
+                                     explicitly make available to telescope
+                                     (default: {})
+        {enable_preview}  (boolean)  if true, will preview the selected color
+        {ignore_builtins} (boolean)  if true, builtin colorschemes are not
+                                     listed
 
 
 builtin.marks({opts})                              *telescope.builtin.marks()*
@@ -1336,6 +1498,8 @@ builtin.marks({opts})                              *telescope.builtin.marks()*
 
     Options: ~
         {file_encoding} (string)  file encoding for the previewer
+        {mark_type}     (string)  filter marks by type (default: "all",
+                                  options: "all"|"global"|"local")
 
 
 builtin.registers({opts})                      *telescope.builtin.registers()*
@@ -1356,10 +1520,18 @@ builtin.keymaps({opts})                          *telescope.builtin.keymaps()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {modes}     (table)    a list of short-named keymap modes to search
-                               (default: { "n", "i", "c", "x" })
-        {show_plug} (boolean)  if true, the keymaps for which the lhs contains
-                               "<Plug>" are also shown (default: true)
+        {modes}      (table)     a list of short-named keymap modes to search
+                                 (default: { "n", "i", "c", "x" })
+        {show_plug}  (boolean)   if true, the keymaps for which the lhs
+                                 contains "<Plug>" are also shown (default:
+                                 true)
+        {only_buf}   (boolean)   if true, only show the buffer-local keymaps
+                                 (default: false)
+        {lhs_filter} (function)  filter(lhs:string) -> boolean. true for
+                                 keymap.lhs if the keymap should be shown
+                                 (optional)
+        {filter}     (function)  filter(km:keymap) -> boolean. true for the
+                                 keymap if it should be shown (optional)
 
 
 builtin.filetypes({opts})                      *telescope.builtin.filetypes()*
@@ -1404,10 +1576,8 @@ builtin.tagstack({opts})                        *telescope.builtin.tagstack()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {show_line}   (boolean)  show results text (default: true)
-        {trim_text}   (boolean)  trim results text (default: false)
-        {fname_width} (number)   defines the width of the filename section
-                                 (default: 30)
+        {show_line} (boolean)  show results text (default: true)
+        {trim_text} (boolean)  trim results text (default: false)
 
 
 builtin.jumplist({opts})                        *telescope.builtin.jumplist()*
@@ -1418,10 +1588,8 @@ builtin.jumplist({opts})                        *telescope.builtin.jumplist()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {show_line}   (boolean)  show results text (default: true)
-        {trim_text}   (boolean)  trim results text (default: false)
-        {fname_width} (number)   defines the width of the filename section
-                                 (default: 30)
+        {show_line} (boolean)  show results text (default: true)
+        {trim_text} (boolean)  trim results text (default: false)
 
 
 builtin.lsp_references({opts})            *telescope.builtin.lsp_references()*
@@ -1437,10 +1605,15 @@ builtin.lsp_references({opts})            *telescope.builtin.lsp_references()*
                                           lsp references (default: true)
         {include_current_line} (boolean)  include current line (default:
                                           false)
-        {fname_width}          (number)   defines the width of the filename
-                                          section (default: 30)
+        {jump_type}            (string)   how to goto reference if there is
+                                          only one and the definition file is
+                                          different from the current file,
+                                          values: "tab", "tab drop", "split",
+                                          "vsplit", "never"
         {show_line}            (boolean)  show results text (default: true)
         {trim_text}            (boolean)  trim results text (default: false)
+        {reuse_win}            (boolean)  jump to existing window if buffer is
+                                          already opened (default: false)
         {file_encoding}        (string)   file encoding for the previewer
 
 
@@ -1453,8 +1626,6 @@ builtin.lsp_incoming_calls({opts})    *telescope.builtin.lsp_incoming_calls()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {fname_width}   (number)   defines the width of the filename section
-                                   (default: 30)
         {show_line}     (boolean)  show results text (default: true)
         {trim_text}     (boolean)  trim results text (default: false)
         {file_encoding} (string)   file encoding for the previewer
@@ -1469,8 +1640,6 @@ builtin.lsp_outgoing_calls({opts})    *telescope.builtin.lsp_outgoing_calls()*
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {fname_width}   (number)   defines the width of the filename section
-                                   (default: 30)
         {show_line}     (boolean)  show results text (default: true)
         {trim_text}     (boolean)  trim results text (default: false)
         {file_encoding} (string)   file encoding for the previewer
@@ -1487,12 +1656,12 @@ builtin.lsp_definitions({opts})          *telescope.builtin.lsp_definitions()*
     Options: ~
         {jump_type}     (string)   how to goto definition if there is only one
                                    and the definition file is different from
-                                   the current file, values: "tab", "split",
-                                   "vsplit", "never"
-        {fname_width}   (number)   defines the width of the filename section
-                                   (default: 30)
+                                   the current file, values: "tab", "tab
+                                   drop", "split", "vsplit", "never"
         {show_line}     (boolean)  show results text (default: true)
         {trim_text}     (boolean)  trim results text (default: false)
+        {reuse_win}     (boolean)  jump to existing window if buffer is
+                                   already opened (default: false)
         {file_encoding} (string)   file encoding for the previewer
 
 
@@ -1507,12 +1676,12 @@ builtin.lsp_type_definitions({opts}) *telescope.builtin.lsp_type_definitions()*
     Options: ~
         {jump_type}     (string)   how to goto definition if there is only one
                                    and the definition file is different from
-                                   the current file, values: "tab", "split",
-                                   "vsplit", "never"
-        {fname_width}   (number)   defines the width of the filename section
-                                   (default: 30)
+                                   the current file, values: "tab", "tab
+                                   drop", "split", "vsplit", "never"
         {show_line}     (boolean)  show results text (default: true)
         {trim_text}     (boolean)  trim results text (default: false)
+        {reuse_win}     (boolean)  jump to existing window if buffer is
+                                   already opened (default: false)
         {file_encoding} (string)   file encoding for the previewer
 
 
@@ -1527,12 +1696,12 @@ builtin.lsp_implementations({opts})  *telescope.builtin.lsp_implementations()*
     Options: ~
         {jump_type}     (string)   how to goto implementation if there is only
                                    one and the definition file is different
-                                   from the current file, values: "tab",
-                                   "split", "vsplit", "never"
-        {fname_width}   (number)   defines the width of the filename section
-                                   (default: 30)
+                                   from the current file, values: "tab", "tab
+                                   drop", "split", "vsplit", "never"
         {show_line}     (boolean)  show results text (default: true)
         {trim_text}     (boolean)  trim results text (default: false)
+        {reuse_win}     (boolean)  jump to existing window if buffer is
+                                   already opened (default: false)
         {file_encoding} (string)   file encoding for the previewer
 
 
@@ -1624,34 +1793,44 @@ builtin.diagnostics({opts})                  *telescope.builtin.diagnostics()*
     - Default keymaps:
       - `<C-l>`: show autocompletion menu to prefilter your query with the
         diagnostic you want to see (i.e. `:warning:`)
+    - sort_by option:
+      - "buffer": order by bufnr (prioritizing current bufnr), severity, lnum
+      - "severity": order by severity, bufnr (prioritizing current bufnr), lnum
 
 
     Parameters: ~
         {opts} (table)  options to pass to the picker
 
     Options: ~
-        {bufnr}          (number|nil)      Buffer number to get diagnostics
-                                           from. Use 0 for current buffer or
-                                           nil for all buffers
-        {severity}       (string|number)   filter diagnostics by severity name
-                                           (string) or id (number)
-        {severity_limit} (string|number)   keep diagnostics equal or more
-                                           severe wrt severity name (string)
-                                           or id (number)
-        {severity_bound} (string|number)   keep diagnostics equal or less
-                                           severe wrt severity name (string)
-                                           or id (number)
-        {root_dir}       (string|boolean)  if set to string, get diagnostics
-                                           only for buffers under this dir
-                                           otherwise cwd
-        {no_unlisted}    (boolean)         if true, get diagnostics only for
-                                           listed buffers
-        {no_sign}        (boolean)         hide DiagnosticSigns from Results
-                                           (default: false)
-        {line_width}     (number)          set length of diagnostic entry text
-                                           in Results
-        {namespace}      (number)          limit your diagnostics to a
-                                           specific namespace
+        {bufnr}               (number|nil)      Buffer number to get
+                                                diagnostics from. Use 0 for
+                                                current buffer or nil for all
+                                                buffers
+        {severity}            (string|number)   filter diagnostics by severity
+                                                name (string) or id (number)
+        {severity_limit}      (string|number)   keep diagnostics equal or more
+                                                severe wrt severity name
+                                                (string) or id (number)
+        {severity_bound}      (string|number)   keep diagnostics equal or less
+                                                severe wrt severity name
+                                                (string) or id (number)
+        {root_dir}            (string|boolean)  if set to string, get
+                                                diagnostics only for buffers
+                                                under this dir otherwise cwd
+        {no_unlisted}         (boolean)         if true, get diagnostics only
+                                                for listed buffers
+        {no_sign}             (boolean)         hide DiagnosticSigns from
+                                                Results (default: false)
+        {line_width}          (string|number)   set length of diagnostic entry
+                                                text in Results. Use 'full'
+                                                for full untruncated text
+        {namespace}           (number)          limit your diagnostics to a
+                                                specific namespace
+        {disable_coordinates} (boolean)         don't show the line & row
+                                                numbers (default: false)
+        {sort_by}             (string)          sort order of the diagnostics
+                                                results; see above notes
+                                                (default: "buffer")
 
 
 
@@ -1819,7 +1998,7 @@ ordered from the lowest priority to the highest priority.
 
       map({"i", "n"}, "<C-r>", function(_prompt_bufnr)
         print "You typed <C-r>"
-      end)
+      end, { desc = "desc for which key"})
 
       -- needs to return true if you want to map default_mappings and
       -- false if not
@@ -1827,6 +2006,155 @@ ordered from the lowest priority to the highest priority.
     end,
   }
 <
+
+
+================================================================================
+LAYOUT                                                *telescope.pickers.layout*
+
+The telescope pickers layout can be configured using the
+|telescope.defaults.create_layout| option.
+
+Parameters: ~
+  - picker : A Picker object.
+
+Return: ~
+  - layout : instance of `TelescopeLayout` class.
+
+Example: ~
+>
+local Layout = require "telescope.pickers.layout"
+
+require("telescope").setup {
+  create_layout = function(picker)
+    local function create_window(enter, width, height, row, col, title)
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local winid = vim.api.nvim_open_win(bufnr, enter, {
+        style = "minimal",
+        relative = "editor",
+        width = width,
+        height = height,
+        row = row,
+        col = col,
+        border = "single",
+        title = title,
+      })
+
+      vim.wo[winid].winhighlight = "Normal:Normal"
+
+      return Layout.Window {
+        bufnr = bufnr,
+        winid = winid,
+      }
+    end
+
+    local function destory_window(window)
+      if window then
+        if vim.api.nvim_win_is_valid(window.winid) then
+          vim.api.nvim_win_close(window.winid, true)
+        end
+        if vim.api.nvim_buf_is_valid(window.bufnr) then
+          vim.api.nvim_buf_delete(window.bufnr, { force = true })
+        end
+      end
+    end
+
+    local layout = Layout {
+      picker = picker,
+      mount = function(self)
+        self.results = create_window(false, 40, 20, 0, 0, "Results")
+        self.preview = create_window(false, 40, 23, 0, 42, "Preview")
+        self.prompt = create_window(true, 40, 1, 22, 0, "Prompt")
+      end,
+      unmount = function(self)
+        destory_window(self.results)
+        destory_window(self.preview)
+        destory_window(self.prompt)
+      end,
+      update = function(self) end,
+    }
+
+    return layout
+  end,
+}
+<
+
+TelescopeWindowBorder.config                    *TelescopeWindowBorder.config*
+
+
+    Fields: ~
+        {bufnr}        (integer)
+        {winid}        (integer|nil)
+        {change_title} (nil|function)  (self: TelescopeWindowBorder, title:
+                                       string, pos?:
+                                       "NW"|"N"|"NE"|"SW"|"S"|"SE"):nil
+
+
+TelescopeWindowBorder                                  *TelescopeWindowBorder*
+
+
+    Fields: ~
+        {bufnr} (integer|nil)
+        {winid} (integer|nil)
+
+
+TelescopeWindow.config                                *TelescopeWindow.config*
+
+
+    Fields: ~
+        {bufnr}  (integer)
+        {winid}  (integer|nil)
+        {border} (TelescopeWindowBorder.config|nil)
+
+
+TelescopeWindow                                              *TelescopeWindow*
+
+
+    Fields: ~
+        {border} (TelescopeWindowBorder)
+        {bufnr}  (integer)
+        {winid}  (integer)
+
+
+TelescopeLayout.config                                *TelescopeLayout.config*
+
+
+    Fields: ~
+        {mount}   (function)             (self: TelescopeLayout):nil
+        {unmount} (function)             (self: TelescopeLayout):nil
+        {update}  (function)             (self: TelescopeLayout):nil
+        {prompt}  (TelescopeWindow|nil)
+        {results} (TelescopeWindow|nil)
+        {preview} (TelescopeWindow|nil)
+
+
+TelescopeLayout                                              *TelescopeLayout*
+
+
+    Fields: ~
+        {prompt}  (TelescopeWindow)
+        {results} (TelescopeWindow)
+        {preview} (TelescopeWindow|nil)
+
+
+Layout:mount()                              *telescope.pickers.layout:mount()*
+    Create the layout. This needs to ensure the required properties are
+    populated.
+
+
+
+Layout:unmount()                          *telescope.pickers.layout:unmount()*
+    Destroy the layout. This is responsible for performing clean-up, for
+    example:
+     - deleting buffers
+     - closing windows
+     - clearing autocmds
+
+
+
+Layout:update()                            *telescope.pickers.layout:update()*
+    Refresh the layout. This is called when, for example, vim is resized.
+
+
 
 
 ================================================================================
@@ -1903,6 +2231,9 @@ layout_strategies.horizontal()                 *telescope.layout.horizontal()*
       - anchor:
         - Which edge/corner to pin the picker to
         - See |resolver.resolve_anchor_pos()|
+      - anchor_padding:
+        - Specifies an amount of additional padding around the anchor
+        - Values should be a positive integer
       - height:
         - How tall to make Telescope's entire layout
         - See |resolver.resolve_height()|
@@ -1956,6 +2287,9 @@ layout_strategies.center()                         *telescope.layout.center()*
       - anchor:
         - Which edge/corner to pin the picker to
         - See |resolver.resolve_anchor_pos()|
+      - anchor_padding:
+        - Specifies an amount of additional padding around the anchor
+        - Values should be a positive integer
       - height:
         - How tall to make Telescope's entire layout
         - See |resolver.resolve_height()|
@@ -2034,6 +2368,9 @@ layout_strategies.vertical()                     *telescope.layout.vertical()*
       - anchor:
         - Which edge/corner to pin the picker to
         - See |resolver.resolve_anchor_pos()|
+      - anchor_padding:
+        - Specifies an amount of additional padding around the anchor
+        - Values should be a positive integer
       - height:
         - How tall to make Telescope's entire layout
         - See |resolver.resolve_height()|
@@ -2064,6 +2401,9 @@ layout_strategies.flex()                             *telescope.layout.flex()*
       - anchor:
         - Which edge/corner to pin the picker to
         - See |resolver.resolve_anchor_pos()|
+      - anchor_padding:
+        - Specifies an amount of additional padding around the anchor
+        - Values should be a positive integer
       - height:
         - How tall to make Telescope's entire layout
         - See |resolver.resolve_height()|
@@ -2258,6 +2598,31 @@ UTILS                                                          *telescope.utils*
 
 Utilities for writing telescope pickers
 
+utils.path_expand({path})                      *telescope.utils.path_expand()*
+    Hybrid of `vim.fn.expand()` and custom `vim.fs.normalize()`
+
+    Paths starting with '%', '#' or '<' are expanded with `vim.fn.expand()`.
+    Otherwise avoids using `vim.fn.expand()` due to its overly aggressive
+    expansion behavior which can sometimes lead to errors or the creation of
+    non-existent paths when dealing with valid absolute paths.
+
+    Other paths will have '~' and environment variables expanded. Unlike
+    `vim.fs.normalize()`, backslashes are preserved. This has better
+    compatibility with `plenary.path` and also avoids mangling valid Unix paths
+    with literal backslashes.
+
+    Trailing slashes are trimmed. With the exception of root paths. eg. `/` on
+    Unix or `C:\` on Windows
+
+
+
+    Parameters: ~
+        {path} (string)
+
+    Return: ~
+        string
+
+
 utils.transform_path({opts}, {path})        *telescope.utils.transform_path()*
     Transform path is a util function that formats a path based on path_display
     found in `opts` or the default value from config. It is meant to be used in
@@ -2268,12 +2633,21 @@ utils.transform_path({opts}, {path})        *telescope.utils.transform_path()*
 
 
     Parameters: ~
-        {opts} (table)   The opts the users passed into the picker. Might
-                         contains a path_display key
-        {path} (string)  The path that should be formatted
+        {opts} (table)       The opts the users passed into the picker. Might
+                             contains a path_display key
+        {path} (string|nil)  The path that should be formatted
 
     Return: ~
-        string: The transformed path ready to be displayed
+        string: path to be displayed
+        table: The transformed path ready to be displayed with the styling
+
+
+utils.has_ts_parser({lang})                  *telescope.utils.has_ts_parser()*
+    Checks if treesitter parser for language is installed
+
+
+    Parameters: ~
+        {lang} (string)
 
 
 utils.notify({funname}, {opts})                     *telescope.utils.notify()*
@@ -2461,6 +2835,22 @@ actions.preview_scrolling_down({prompt_bufnr}) *telescope.actions.preview_scroll
         {prompt_bufnr} (number)  The prompt bufnr
 
 
+actions.preview_scrolling_left({prompt_bufnr}) *telescope.actions.preview_scrolling_left()*
+    Scroll the preview window to the left
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.preview_scrolling_right({prompt_bufnr}) *telescope.actions.preview_scrolling_right()*
+    Scroll the preview window to the right
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
 actions.results_scrolling_up({prompt_bufnr}) *telescope.actions.results_scrolling_up()*
     Scroll the results window up
 
@@ -2471,6 +2861,22 @@ actions.results_scrolling_up({prompt_bufnr}) *telescope.actions.results_scrollin
 
 actions.results_scrolling_down({prompt_bufnr}) *telescope.actions.results_scrolling_down()*
     Scroll the results window down
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.results_scrolling_left({prompt_bufnr}) *telescope.actions.results_scrolling_left()*
+    Scroll the results window to the left
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.results_scrolling_right({prompt_bufnr}) *telescope.actions.results_scrolling_right()*
+    Scroll the results window to the right
 
 
     Parameters: ~
@@ -2522,6 +2928,28 @@ actions.select_vertical({prompt_bufnr})  *telescope.actions.select_vertical()*
 actions.select_tab({prompt_bufnr})            *telescope.actions.select_tab()*
     Perform 'tab' action on selection, usually something like
     `:tabedit <selection>`
+
+    i.e. open the selection in a new tab
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.select_drop({prompt_bufnr})          *telescope.actions.select_drop()*
+    Perform 'drop' action on selection, usually something like
+    `:drop <selection>`
+
+    i.e. open the selection in a window
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.select_tab_drop({prompt_bufnr})  *telescope.actions.select_tab_drop()*
+    Perform 'tab drop' action on selection, usually something like
+    `:tab drop <selection>`
 
     i.e. open the selection in a new tab
 
@@ -2684,6 +3112,11 @@ actions.git_switch_branch({prompt_bufnr}) *telescope.actions.git_switch_branch()
         {prompt_bufnr} (number)  The prompt bufnr
 
 
+actions.git_rename_branch()            *telescope.actions.git_rename_branch()*
+    Action to rename selected git branch
+
+
+
 actions.git_track_branch({prompt_bufnr}) *telescope.actions.git_track_branch()*
     Tell git to track the currently selected remote branch in Telescope
 
@@ -2693,7 +3126,7 @@ actions.git_track_branch({prompt_bufnr}) *telescope.actions.git_track_branch()*
 
 
 actions.git_delete_branch({prompt_bufnr}) *telescope.actions.git_delete_branch()*
-    Delete the currently selected branch
+    Delete all currently selected branches
 
 
     Parameters: ~
@@ -2963,6 +3396,46 @@ actions.to_fuzzy_refine({prompt_bufnr})  *telescope.actions.to_fuzzy_refine()*
         {prompt_bufnr} (number)  The prompt bufnr
 
 
+actions.delete_mark({prompt_bufnr})          *telescope.actions.delete_mark()*
+    Delete the selected mark or all the marks selected using multi selection.
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.insert_original_cword({prompt_bufnr}) *telescope.actions.insert_original_cword()*
+    Insert the word under the cursor of the original (pre-Telescope) window
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.insert_original_cWORD({prompt_bufnr}) *telescope.actions.insert_original_cWORD()*
+    Insert the WORD under the cursor of the original (pre-Telescope) window
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.insert_original_cfile({prompt_bufnr}) *telescope.actions.insert_original_cfile()*
+    Insert the file under the cursor of the original (pre-Telescope) window
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.insert_original_cline({prompt_bufnr}) *telescope.actions.insert_original_cline()*
+    Insert the line under the cursor of the original (pre-Telescope) window
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
 
 ================================================================================
 ACTIONS_STATE                                          *telescope.actions.state*
@@ -3043,10 +3516,32 @@ action_set.scroll_previewer({prompt_bufnr}, {direction}) *telescope.actions.set.
         {direction}    (number)  The direction of the scrolling
 
 
+action_set.scroll_horizontal_previewer({prompt_bufnr}, {direction}) *telescope.actions.set.scroll_horizontal_previewer()*
+    Scrolls the previewer to the left or right. Defaults to a half page scroll,
+    but can be overridden using the `scroll_speed` option in `layout_config`.
+    See |telescope.layout| for more details.
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+        {direction}    (number)  The direction of the scrolling
+
+
 action_set.scroll_results({prompt_bufnr}, {direction}) *telescope.actions.set.scroll_results()*
     Scrolls the results up or down. Defaults to a half page scroll, but can be
     overridden using the `scroll_speed` option in `layout_config`. See
     |telescope.layout| for more details.
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+        {direction}    (number)  The direction of the scrolling
+
+
+action_set.scroll_horizontal_results({prompt_bufnr}, {direction}) *telescope.actions.set.scroll_horizontal_results()*
+    Scrolls the results to the left or right. Defaults to a half page scroll,
+    but can be overridden using the `scroll_speed` option in `layout_config`.
+    See |telescope.layout| for more details.
 
 
     Parameters: ~
@@ -3270,6 +3765,8 @@ action_generate.which_key({opts})     *telescope.actions.generate.which_key()*
                                             "TelescopePromptBorder")
         {winblend}               (number)   pseudo-transparency of keymap
                                             hints floating window
+        {zindex}                 (number)   z-index of keymap hints floating
+                                            window (default: 100)
 
 
 
@@ -3314,6 +3811,7 @@ previewers.Previewer()                      *telescope.previewers.Previewer()*
     - `:teardown()`
     - `:send_input(input)`
     - `:scroll_fn(direction)`
+    - `:scroll_horizontal_fn(direction)`
 
     `Previewer:new()` expects a table as input with following keys:
       - `setup` function(self): Will be called the first time preview will be 
@@ -3329,6 +3827,8 @@ previewers.Previewer()                      *telescope.previewers.Previewer()*
         `termopen_previewer` and it can be used to send input to the terminal 
         application, like less.
       - `scroll_fn` function(self, direction): Used to make scrolling work.
+      - `scroll_horizontal_fn` function(self, direction): Used to make 
+        horizontal scrolling work.
 
 
 
@@ -3355,13 +3855,16 @@ previewers.new_termopen_previewer() *telescope.previewers.new_termopen_previewer
     - `title` a static title for example "File Preview"
     - `dyn_title(self, entry)` a dynamic title function which gets called when
       config value `dynamic_preview_title = true`
+    - `env` table: define environment variables to forward to the terminal 
+      process. Example:
+      - `{ ['PAGER'] = '', ['MANWIDTH'] = 50 }`
 
     It's an easy way to get your first previewer going and it integrates well
     with `bat` and `less`. Providing out of the box scrolling if the command
     uses less.
 
-    Furthermore, it will forward all `config.set_env` environment variables to
-    that terminal process.
+    Furthermore, if `env` is not set, it will forward all `config.set_env`
+    environment variables to that terminal process.
 
 
 
@@ -3526,7 +4029,9 @@ previewers.vim_buffer_vimgrep()    *telescope.previewers.vim_buffer_vimgrep()*
     It uses the `buffer_previewer` interface. To integrate this one into your
     own picker make sure that the field `path` or `filename` and `lnum` is set
     in each entry. If the latter is not present, it will default to the first
-    line. The preferred way of using this previewer is like this
+    line. Additionally, `lnend`, `col` and `colend` can be set to highlight a
+    text range instead of a single line. All line/column values are 1-indexed.
+    The preferred way of using this previewer is like this
     `require('telescope.config').values.grep_previewer` This will respect user
     configuration and will use `termopen_previewer` in case it's configured
     that way.
@@ -3624,14 +4129,17 @@ histories.History()                      *telescope.actions.history.History()*
 
 
     Fields: ~
-        {enabled} (boolean)  Will indicate if History is enabled or disabled
-        {path}    (string)   Will point to the location of the history file
-        {limit}   (string)   Will have the limit of the history. Can be nil,
-                             if limit is disabled.
-        {content} (table)    History table. Needs to be filled by your own
-                             History implementation
-        {index}   (number)   Used to keep track of the next or previous index.
-                             Default is #content + 1
+        {enabled}    (boolean)  Will indicate if History is enabled or
+                                disabled
+        {path}       (string)   Will point to the location of the history file
+        {limit}      (string)   Will have the limit of the history. Can be
+                                nil, if limit is disabled.
+        {content}    (table)    History table. Needs to be filled by your own
+                                History implementation
+        {index}      (number)   Used to keep track of the next or previous
+                                index. Default is #content + 1
+        {cycle_wrap} (boolean)  Controls if history will wrap on reaching
+                                beginning or end
 
 
 histories.History:new({opts})        *telescope.actions.history.History:new()*

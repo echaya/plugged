@@ -47,6 +47,7 @@ local previewers = {}
 --- - `:teardown()`
 --- - `:send_input(input)`
 --- - `:scroll_fn(direction)`
+--- - `:scroll_horizontal_fn(direction)`
 ---
 --- `Previewer:new()` expects a table as input with following keys:
 ---   - `setup` function(self): Will be called the first time preview will be
@@ -64,6 +65,8 @@ local previewers = {}
 ---                                         used to send input to the terminal
 ---                                         application, like less.
 ---   - `scroll_fn` function(self, direction): Used to make scrolling work.
+---   - `scroll_horizontal_fn` function(self, direction): Used to make
+---                                                       horizontal scrolling work.
 previewers.Previewer = Previewer
 
 --- A shorthand for creating a new Previewer.
@@ -88,12 +91,15 @@ end
 --- - `title` a static title for example "File Preview"
 --- - `dyn_title(self, entry)` a dynamic title function which gets called
 --- when config value `dynamic_preview_title = true`
+--- - `env` table: define environment variables to forward to the terminal
+---    process. Example:
+---   - `{ ['PAGER'] = '', ['MANWIDTH'] = 50 }`
 ---
 --- It's an easy way to get your first previewer going and it integrates well
 --- with `bat` and `less`. Providing out of the box scrolling if the command
 --- uses less.
 ---
---- Furthermore, it will forward all `config.set_env` environment variables to
+--- Furthermore, if `env` is not set, it will forward all `config.set_env` environment variables to
 --- that terminal process.
 previewers.new_termopen_previewer = term_previewer.new_termopen_previewer
 
@@ -251,7 +257,8 @@ previewers.vim_buffer_cat = buffer_previewer.cat
 --- It uses the `buffer_previewer` interface. To integrate this one into your
 --- own picker make sure that the field `path` or `filename` and `lnum` is set
 --- in each entry. If the latter is not present, it will default to the first
---- line.
+--- line. Additionally, `lnend`, `col` and `colend` can be set to highlight a
+--- text range instead of a single line. All line/column values are 1-indexed.
 --- The preferred way of using this previewer is like this
 --- `require('telescope.config').values.grep_previewer`
 --- This will respect user configuration and will use `termopen_previewer` in

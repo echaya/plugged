@@ -52,8 +52,8 @@ end
 
 ---@param opts? conform.setupOpts
 M.setup = function(opts)
-  if vim.fn.has("nvim-0.9") == 0 then
-    notify("conform.nvim requires Neovim 0.9+", vim.log.levels.ERROR)
+  if vim.fn.has("nvim-0.10") == 0 then
+    notify("conform.nvim requires Neovim 0.10+", vim.log.levels.ERROR)
     return
   end
   opts = opts or {}
@@ -311,7 +311,7 @@ end
 
 ---@param bufnr integer
 ---@param mode "v"|"V"
----@return table {start={row,col}, end={row,col}} using (1, 0) indexing
+---@return conform.Range {start={row,col}, end={row,col}} using (1, 0) indexing
 local function range_from_selection(bufnr, mode)
   -- [bufnum, lnum, col, off]; both row and column 1-indexed
   local start = vim.fn.getpos("v")

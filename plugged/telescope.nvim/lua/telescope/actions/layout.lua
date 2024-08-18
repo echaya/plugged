@@ -26,10 +26,11 @@ action_layout.toggle_preview = function(prompt_bufnr)
   local picker = action_state.get_current_picker(prompt_bufnr)
   local status = state.get_status(picker.prompt_bufnr)
 
-  if picker.previewer and status.preview_win then
+  local preview_winid = status.layout.preview and status.layout.preview.winid
+  if picker.previewer and preview_winid then
     picker.hidden_previewer = picker.previewer
     picker.previewer = nil
-  elseif picker.hidden_previewer and not status.preview_win then
+  elseif picker.hidden_previewer and not preview_winid then
     picker.previewer = picker.hidden_previewer
     picker.hidden_previewer = nil
   else
@@ -63,7 +64,10 @@ action_layout.toggle_prompt_position = function(prompt_bufnr)
   if picker.layout_strategy == "flex" then
     picker.layout_config.flex.horizontal = picker.layout_config.flex.horizontal or {}
     picker.layout_config.flex.vertical = picker.layout_config.flex.vertical or {}
-    local old_pos = picker.layout_config.flex[picker.__flex_strategy].prompt_position
+    local old_pos = vim.F.if_nil(
+      picker.layout_config.flex[picker.__flex_strategy].prompt_position,
+      picker.layout_config[picker.__flex_strategy].prompt_position
+    )
     local new_pos = old_pos == "top" and "bottom" or "top"
     picker.layout_config[picker.__flex_strategy].prompt_position = new_pos
     picker.layout_config.flex[picker.__flex_strategy].prompt_position = new_pos

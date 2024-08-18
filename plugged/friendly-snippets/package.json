@@ -23,6 +23,7 @@
                 "path": "./snippets/lua/luadoc.json"
             },
             {
+                "language": "markdown",
                 "path": "./snippets/markdown.json"
             },
             {

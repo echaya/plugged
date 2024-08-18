@@ -188,6 +188,16 @@ append(
   Default: 'horizontal']]
 )
 
+append(
+  "create_layout",
+  nil,
+  [[
+  Configure the layout of Telescope pickers.
+  See |telescope.pickers.layout| for details.
+
+  Default: 'nil']]
+)
+
 append("layout_config", layout_config_defaults, layout_config_description)
 
 append(
@@ -209,12 +219,15 @@ append(
 
 append(
   "winblend",
-  0,
+  function()
+    return vim.o.winblend
+  end,
   [[
   Configure winblend for telescope floating windows. See |winblend| for
-  more information.
+  more information. Type can be a number or a function returning a
+  number
 
-  Default: 0]]
+  Default: function() return vim.o.winblend end]]
 )
 
 append(
@@ -291,18 +304,19 @@ append(
   Determines how file paths are displayed.
 
   path_display can be set to an array with a combination of:
-  - "hidden"    hide file names
-  - "tail"      only display the file name, and not the path
-  - "absolute"  display absolute paths
-  - "smart"     remove as much from the path as possible to only show
-                the difference between the displayed paths.
-                Warning: The nature of the algorithm might have a negative
-                performance impact!
-  - "shorten"   only display the first character of each directory in
-                the path
-  - "truncate"  truncates the start of the path when the whole path will
-                not fit. To increase the gap between the path and the edge,
-                set truncate to number `truncate = 3`
+  - "hidden"          hide file names
+  - "tail"            only display the file name, and not the path
+  - "absolute"        display absolute paths
+  - "smart"           remove as much from the path as possible to only show
+                      the difference between the displayed paths.
+                      Warning: The nature of the algorithm might have a negative
+                      performance impact!
+  - "shorten"         only display the first character of each directory in
+                      the path
+  - "truncate"        truncates the start of the path when the whole path will
+                      not fit. To increase the gap between the path and the edge,
+                      set truncate to number `truncate = 3`
+  - "filename_first"  shows filenames first and then the directories
 
   You can also specify the number of characters of each directory name
   to keep by setting `path_display.shorten = num`.
@@ -327,16 +341,56 @@ append(
     will give a path like:
       `al/beta/gamma/de`
 
+  path_display can also be set to 'filename_first' to put the filename
+  in front.
+
+    path_display = {
+      "filename_first"
+    },
+
+  The directory structure can be reversed as follows:
+
+    path_display = {
+      filename_first = {
+          reverse_directories = true
+      }
+    },
+
   path_display can also be set to 'hidden' string to hide file names
 
   path_display can also be set to a function for custom formatting of
-  the path display. Example:
+  the path display with the following signature
+
+  Signature: fun(opts: table, path: string): string, table?
+
+  The optional table is an list of positions and highlight groups to
+  set the highlighting of the return path string.
+
+  Example:
 
       -- Format path as "file.txt (path\to\file\)"
       path_display = function(opts, path)
         local tail = require("telescope.utils").path_tail(path)
         return string.format("%s (%s)", tail, path)
       end,
+
+      -- Format path and add custom highlighting
+      path_display = function(opts, path)
+        local tail = require("telescope.utils").path_tail(path)
+        path = string.format("%s (%s)", tail, path)
+
+        local highlights = {
+          {
+            {
+              0, -- highlight start position
+              #path, -- highlight end position
+            },
+            "Comment", -- highlight group name
+          },
+        }
+
+        return path, highlights
+      end
 
   Default: {}]]
 )
@@ -353,24 +407,41 @@ append(
 
 append(
   "get_status_text",
-  function(self)
-    local ww = #(self:get_multi_selection())
-    local xx = (self.stats.processed or 0) - (self.stats.filtered or 0)
-    local yy = self.stats.processed or 0
-    if xx == 0 and yy == 0 then
-      return ""
+  function(self, opts)
+    local multi_select_cnt = #(self:get_multi_selection())
+    local showing_cnt = (self.stats.processed or 0) - (self.stats.filtered or 0)
+    local total_cnt = self.stats.processed or 0
+
+    local status_icon = ""
+    local status_text
+    if opts and not opts.completed then
+      status_icon = "*"
     end
 
-    -- local status_icon
-    -- if opts.completed then
-    --   status_icon = "✔️"
-    -- else
-    --   status_icon = "*"
-    -- end
-    if ww == 0 then
-      return string.format("%s / %s", xx, yy)
+    if showing_cnt == 0 and total_cnt == 0 then
+      status_text = status_icon
+    elseif multi_select_cnt == 0 then
+      status_text = string.format("%s %s / %s", status_icon, showing_cnt, total_cnt)
     else
-      return string.format("%s / %s / %s", ww, xx, yy)
+      status_text = string.format("%s %s / %s / %s", status_icon, multi_select_cnt, showing_cnt, total_cnt)
+    end
+
+    -- quick workaround for extmark right_align side-scrolling limitation
+    -- https://github.com/nvim-telescope/telescope.nvim/issues/2929
+    local prompt_width = vim.api.nvim_win_get_width(self.prompt_win)
+    local cursor_col = vim.api.nvim_win_get_cursor(self.prompt_win)[2]
+    local prefix_display_width = strings.strdisplaywidth(self.prompt_prefix) --[[@as integer]]
+    local prefix_width = #self.prompt_prefix
+    local prefix_shift = 0
+    if prefix_display_width ~= prefix_width then
+      prefix_shift = prefix_display_width
+    end
+
+    local cursor_occluded = (prompt_width - cursor_col - #status_text + prefix_shift) < 0
+    if cursor_occluded then
+      return ""
+    else
+      return status_text
     end
   end,
   [[
@@ -454,6 +525,7 @@ append(
     handler = function(...)
       return require("telescope.actions.history").get_simple_history(...)
     end,
+    cycle_wrap = false,
   },
   [[
   This field handles the configuration for prompt history.
@@ -469,20 +541,25 @@ append(
     },
 
   Fields:
-    - path:    The path to the telescope history as string.
-               Default: stdpath("data")/telescope_history
-    - limit:   The amount of entries that will be written in the
-               history.
-               Warning: If limit is set to nil it will grow unbound.
-               Default: 100
-    - handler: A lua function that implements the history.
-               This is meant as a developer setting for extensions to
-               override the history handling, e.g.,
-               https://github.com/nvim-telescope/telescope-smart-history.nvim,
-               which allows context sensitive (cwd + picker) history.
+    - path:       The path to the telescope history as string.
+                  Default: stdpath("data")/telescope_history
+    - limit:      The amount of entries that will be written in the
+                  history.
+                  Warning: If limit is set to nil it will grow unbound.
+                  Default: 100
+    - handler:    A lua function that implements the history.
+                  This is meant as a developer setting for extensions to
+                  override the history handling, e.g.,
+                  https://github.com/nvim-telescope/telescope-smart-history.nvim,
+                  which allows context sensitive (cwd + picker) history.
 
-               Default:
-               require('telescope.actions.history').get_simple_history]]
+                  Default:
+                  require('telescope.actions.history').get_simple_history
+    - cycle_wrap: Indicates whether the cycle_history_next and
+                  cycle_history_prev functions should wrap around to the
+                  beginning or end of the history entries on reaching
+                  their respective ends
+                  Default: false]]
 )
 
 append(
@@ -490,6 +567,7 @@ append(
   {
     num_pickers = 1,
     limit_entries = 1000,
+    ignore_empty_prompt = false,
   },
   [[
     This field handles the configuration for picker caching.
@@ -502,15 +580,19 @@ append(
     ('cache_picker.limit_entries`) are cached.
 
     Fields:
-      - num_pickers:      The number of pickers to be cached.
-                          Set to -1 to preserve all pickers of your session.
-                          If passed to a picker, the cached pickers with
-                          indices larger than `cache_picker.num_pickers` will
-                          be cleared.
-                          Default: 1
-      - limit_entries:    The amount of entries that will be saved for each
-                          picker.
-                          Default: 1000
+      - num_pickers:          The number of pickers to be cached.
+                              Set to -1 to preserve all pickers of your
+                              session. If passed to a picker, the cached
+                              pickers with indices larger than
+                              `cache_picker.num_pickers` will be cleared.
+                              Default: 1
+      - limit_entries:        The amount of entries that will be saved for
+                              each picker.
+                              Default: 1000
+      - ignore_empty_prompt:  If true, the picker will not be cached if
+                              the prompt is empty (i.e., no text has been
+                              typed at the time of closing the prompt).
+                              Default: false
     ]]
 )
 
@@ -519,6 +601,7 @@ append(
   {
     check_mime_type = not has_win,
     filesize_limit = 25,
+    highlight_limit = 1,
     timeout = 250,
     treesitter = true,
     msg_bg_fillchar = "╱",
@@ -534,8 +617,8 @@ append(
 
     Fields:
       - check_mime_type:  Use `file` if available to try to infer whether the
-                          file to preview is a binary if plenary's
-                          filetype detection fails.
+                          file to preview is a binary if filetype
+                          detection fails.
                           Windows users get `file` from:
                           https://github.com/julian-r/file-windows
                           Set to false to attempt to preview any mime type.
@@ -543,6 +626,9 @@ append(
       - filesize_limit:   The maximum file size in MB attempted to be previewed.
                           Set to false to attempt to preview any file size.
                           Default: 25
+      - highlight_limit:  The maximum file size in MB attempted to be highlighted.
+                          Set to false to attempt to highlight any file size.
+                          Default: 1
       - timeout:          Timeout the previewer if the preview did not
                           complete within `timeout` milliseconds.
                           Set to false to not timeout preview.
@@ -588,32 +674,32 @@ append(
                               end,
                             }
                           The configuration recipes for relevant examples.
-                          Note: if plenary does not recognize your filetype yet --
-                          1) Please consider contributing to:
-                             $PLENARY_REPO/data/plenary/filetypes/builtin.lua
-                          2) Register your filetype locally as per link
-                             https://github.com/nvim-lua/plenary.nvim#plenaryfiletype
+                          Note: we use vim.filetype filetype detection,
+                                so if you have troubles with files not
+                                highlighting correctly, please read
+                                |vim.filetype|
                           Default: nil
       - treesitter:       Determines whether the previewer performs treesitter
                           highlighting, which falls back to regex-based highlighting.
                           `true`: treesitter highlighting for all available filetypes
                           `false`: regex-based highlighting for all filetypes
-                          `table`: following nvim-treesitters highlighting options:
-                            It contains two keys:
-                              - enable boolean|table: if boolean, enable all ts
-                                                      highlighing with that flag,
-                                                      disable still considered.
-                                                      Containing a list of filetypes,
-                                                      that are enabled, disabled
-                                                      ignored because it doesnt make
-                                                      any sense in this case.
-                              - disable table: containing a list of filetypes
-                                               that are disabled
+                          `table`: may contain the following keys:
+                              - enable boolean|table: if boolean, enable ts
+                                                      highlighting for all supported
+                                                      filetypes.
+                                                      if table, ts highlighting is only
+                                                        enabled for given filetypes.
+                              - disable table: list of filetypes for which ts highlighting
+                                               is not used if `enable = true`.
                           Default: true
       - msg_bg_fillchar:  Character to fill background of unpreviewable buffers with
                           Default: "╱"
       - hide_on_startup:  Hide previewer when picker starts. Previewer can be toggled
                           with actions.layout.toggle_preview.
+                          Default: false
+      - ls_short:         Determines whether to use the `--short` flag for the `ls`
+                          command when previewing directories. Otherwise will result
+                          to using `--long`.
                           Default: false
     ]]
 )
@@ -763,6 +849,25 @@ append(
     be opened in and the cursor placed in upon leaving the picker.
 
     Default: `function() return 0 end`
+  ]]
+)
+
+append(
+  "git_worktrees",
+  nil,
+  [[
+  A table of arrays of detached working trees with keys `gitdir` and `toplevel`.
+  Used to pass `--git-dir` and `--work-tree` flags to git commands when telescope fails
+  to infer the top-level directory of a given working tree based on cwd.
+  Example:
+  git_worktrees = {
+    {
+      toplevel = vim.env.HOME,
+      gitdir = vim.env.HOME .. '/.cfg'
+    }
+  }
+
+  Default: nil
   ]]
 )
 
