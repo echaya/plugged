@@ -783,7 +783,9 @@ MiniFiles.synchronize = function()
 
   -- Parse and apply file system operations
   local fs_actions = H.explorer_compute_fs_actions(explorer)
-  if fs_actions ~= nil and H.fs_actions_confirm(fs_actions) then H.fs_actions_apply(fs_actions, explorer.opts) end
+  if fs_actions ~= nil and H.fs_actions_confirm(fs_actions, explorer.opts) then
+    H.fs_actions_apply(fs_actions, explorer.opts)
+  end
 
   H.explorer_refresh(explorer, { force_update = true })
 end
@@ -2431,13 +2433,13 @@ H.fs_get_type = function(path)
 end
 
 -- File system actions --------------------------------------------------------
-H.fs_actions_confirm = function(fs_actions)
-  local msg = table.concat(H.fs_actions_to_lines(fs_actions), '\n')
+H.fs_actions_confirm = function(fs_actions, opts)
+  local msg = table.concat(H.fs_actions_to_lines(fs_actions, opts), '\n')
   local confirm_res = vim.fn.confirm(msg, '&Yes\n&No', 1, 'Question')
   return confirm_res == 1
 end
 
-H.fs_actions_to_lines = function(fs_actions)
+H.fs_actions_to_lines = function(fs_actions, opts)
   -- Gather actions per source directory
   local actions_per_dir = {}
 
@@ -2463,9 +2465,10 @@ H.fs_actions_to_lines = function(fs_actions)
     table.insert(dir_actions, l)
   end
 
+  local delete_action = opts.options.permanent_delete and 'DELETE' or 'MOVE TO TRASH'
   for _, path in ipairs(fs_actions.delete) do
     local dir_actions = get_dir_actions(path)
-    local l = string.format('  DELETE: %s', get_quoted_basename(path))
+    local l = string.format('  %s: %s', delete_action, get_quoted_basename(path))
     table.insert(dir_actions, l)
   end
 
@@ -2580,7 +2583,7 @@ H.fs_delete = function(path, permanent_delete)
   -- Ensure that same basenames are replaced
   pcall(vim.fn.delete, trash_path, 'rf')
 
-  return vim.loop.fs_rename(path, trash_path)
+  return H.fs_move(path, trash_path)
 end
 
 H.fs_move = function(from, to)
@@ -2589,7 +2592,14 @@ H.fs_move = function(from, to)
 
   -- Move while allowing to create directory
   vim.fn.mkdir(H.fs_get_parent(to), 'p')
-  local success = vim.loop.fs_rename(from, to)
+  local success, _, err_code = vim.loop.fs_rename(from, to)
+
+  if err_code == 'EXDEV' then
+    -- Handle cross-device move separately as `loop.fs_rename` does not work
+    success = H.fs_copy(from, to)
+    if success then success = pcall(vim.fn.delete, from, 'rf') end
+    if not success then pcall(vim.fn.delete, to, 'rf') end
+  end
 
   if not success then return success end
 
