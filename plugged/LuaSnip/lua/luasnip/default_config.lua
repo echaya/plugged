@@ -110,7 +110,10 @@ return {
 	-- see :h User, event should never be triggered(except if it is `doautocmd`'d)
 	region_check_events = nil,
 	delete_check_events = nil,
-	store_selection_keys = nil, -- Supossed to be the same as the expand shortcut
+
+	-- preserve default of store_selection_keys.
+	cut_selection_keys = nil,
+
 	ext_opts = {
 		[types.textNode] = {
 			active = { hl_group = "LuasnipTextNodeActive" },

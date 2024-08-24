@@ -226,8 +226,8 @@ General workflow:
   so you can navigate in and out of directory with modified buffer.
 
 - Execute |MiniFiles.synchronize()| (default key is `=`). This will prompt
-  confirmation dialog listing all file system actions it is about to perform.
-  READ IT CAREFULLY.
+  confirmation dialog listing all file system actions (per directory) it is
+  about to perform. READ IT CAREFULLY.
 
 - Confirm by pressing `y`/`<CR>` (applies edits and updates buffers) or
   don't confirm by pressing `n`/`<Esc>` (updates buffers without applying edits).
@@ -354,8 +354,8 @@ Callback for each file action event will receive `data` field
 (see |nvim_create_autocmd()|) with the following information:
 
 - <action> - string with action name.
-- <from> - absolute path of entry before action (`nil` for "create" action).
-- <to> - absolute path of entry after action (`nil` for "delete" action).
+- <from> - full path of entry before action (`nil` for "create" action).
+- <to> - full path of entry after action (`nil` for permanent "delete" action).
 
 ------------------------------------------------------------------------------
                                                             *MiniFiles-examples*

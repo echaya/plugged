@@ -429,6 +429,13 @@ require'lspconfig'.als.setup{}
   ```lua
   { "ada_language_server" }
   ```
+  - `deprecate` : 
+  ```lua
+  {
+    to = "github.com/TamaMcGlinn/nvim-lspconfig-ada",
+    version = "0.2.0"
+  }
+  ```
   - `filetypes` : 
   ```lua
   { "ada" }
@@ -1950,6 +1957,7 @@ https://clangd.llvm.org/installation.html
 require'lspconfig'.clangd.setup{}
 ```
 **Commands:**
+- ClangdShowSymbolInfo: Show symbol info
 - ClangdSwitchSourceHeader: Switch between source/header
 
 **Default values:**
@@ -5716,7 +5724,7 @@ require'lspconfig'.hyprls.setup{}
   ```
   - `filetypes` : 
   ```lua
-  { "hyprlang", "*.hl", "hypr*.conf", ".config/hypr/*.conf" }
+  { "hyprlang" }
   ```
   - `root_dir` : 
   ```lua
@@ -9405,7 +9413,7 @@ require'lspconfig'.r_language_server.setup{}
 **Default values:**
   - `cmd` : 
   ```lua
-  { "R", "--slave", "-e", "languageserver::run()" }
+  { "R", "--no-echo", "-e", "languageserver::run()" }
   ```
   - `filetypes` : 
   ```lua
@@ -9747,7 +9755,21 @@ ReScript Language Server can be installed via npm:
 npm install -g @rescript/language-server
 ```
 
-See the init_options supported (see https://github.com/rescript-lang/rescript-vscode/tree/master/server/config.md):
+See [package.json](https://github.com/rescript-lang/rescript-vscode/blob/master/package.json#L139)
+for init_options supported.
+
+For example, in order to disable the `inlayHints` option:
+```lua
+require'lspconfig'.pylsp.setup{
+  settings = {
+    rescript = {
+      settings = {
+        inlayHints = { enable = false },
+      },
+    },
+  }
+}
+```
 
 
 
@@ -9770,7 +9792,21 @@ require'lspconfig'.rescriptls.setup{}
   ```lua
   {
     extensionConfiguration = {
-      askToStartBuild = false
+      allowBuiltInFormatter = true,
+      askToStartBuild = false,
+      cache = {
+        projectConfig = {
+          enabled = true
+        }
+      },
+      codeLens = true,
+      incrementalTypechecking = {
+        acrossFiles = true,
+        enabled = true
+      },
+      inlayHints = {
+        enable = true
+      }
     }
   }
   ```
@@ -10323,7 +10359,7 @@ require'lspconfig'.scheme_langserver.setup{}
 **Default values:**
   - `cmd` : 
   ```lua
-  { "scheme-langserver" }
+  { "scheme-langserver", "~/.scheme-langserver.log", "enable", "disable" }
   ```
   - `filetypes` : 
   ```lua
@@ -12788,10 +12824,6 @@ require'lspconfig'.typos_lsp.setup{}
   - `cmd` : 
   ```lua
   { "typos-lsp" }
-  ```
-  - `filetypes` : 
-  ```lua
-  { "*" }
   ```
   - `root_dir` : 
   ```lua
