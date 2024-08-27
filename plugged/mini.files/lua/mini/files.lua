@@ -226,8 +226,11 @@
 ---   confirmation dialog listing all file system actions (per directory) it is
 ---   about to perform. READ IT CAREFULLY.
 ---
---- - Confirm by pressing `y`/`<CR>` (applies edits and updates buffers) or
----   don't confirm by pressing `n`/`<Esc>` (updates buffers without applying edits).
+--- - Confirm by pressing `y` / `<CR>` (apply edits and update buffers) or
+---   don't confirm by pressing `n` / `<Esc>` (update buffers without applying edits).
+---
+--- Note: prefer small and not related steps with more frequent synchronization
+--- over single complex manipulation. There are (known) cases which won't work.
 ---
 --- # How does it work ~
 ---
@@ -241,6 +244,7 @@
 ---
 --- During synchronization, actual text for entry name is compared to path index
 --- at that line (if present) to deduce which file system action to perform.
+--- Note that order of text manipulation steps does not affect performed actions.
 ---
 --- # Supported file system actions ~
 ---
@@ -1555,13 +1559,28 @@ H.explorer_compute_fs_actions = function(explorer)
     table.insert(delete, { action = 'delete', from = p, to = to })
   end
 
-  -- Construct final array
+  -- Construct final array with proper order of actions:
+  -- - If action depends on the path which will be deleted, perform it first.
+  -- - "Delete"/"move"/"rename" before "copy"/"create" to free space for them.
+  -- - Move/rename (if successful) will later adjust next steps at execution.
+  local before_delete, after_delete = {}, {}
+  for _, arr in ipairs({ move, rename, copy, create }) do
+    for _, diff in ipairs(arr) do
+      local will_be_deleted = false
+      for _, del in ipairs(delete) do
+        local from_is_affected = del.from == diff.from or vim.startswith(diff.from or '', del.from .. '/')
+        -- Don't directly account for deleted path to allow "act on freed path"
+        local to_is_affected = vim.startswith(diff.to, del.from .. '/')
+        will_be_deleted = will_be_deleted or from_is_affected or to_is_affected
+      end
+      table.insert(will_be_deleted and before_delete or after_delete, diff)
+    end
+  end
+
   local res = {}
-  vim.list_extend(res, copy)
-  vim.list_extend(res, create)
-  vim.list_extend(res, move)
-  vim.list_extend(res, rename)
+  vim.list_extend(res, before_delete)
   vim.list_extend(res, delete)
+  vim.list_extend(res, after_delete)
   return res
 end
 
@@ -2294,7 +2313,7 @@ end
 H.window_set_view = function(win_id, view)
   -- Set buffer
   local buf_id = view.buf_id
-  vim.api.nvim_win_set_buf(win_id, buf_id)
+  H.win_set_buf(win_id, buf_id)
   -- - Update buffer register. No need to update previous buffer data, as it
   --   should already be invalidated.
   H.opened_buffers[buf_id].win_id = win_id
@@ -2501,13 +2520,19 @@ H.fs_actions_to_lines = function(fs_actions)
 end
 
 H.fs_actions_apply = function(fs_actions)
-  for _, diff in ipairs(fs_actions) do
-    local ok, success = pcall(H.fs_do[diff.action], diff.from, diff.to)
+  for i = 1, #fs_actions do
+    local diff, action = fs_actions[i], fs_actions[i].action
+    local ok, success = pcall(H.fs_do[action], diff.from, diff.to)
     if ok and success then
-      local to = diff.action == 'create' and diff.to:gsub('/$', '') or diff.to
-      local data = { action = diff.action, from = diff.from, to = to }
-      local action_titlecase = diff.action:sub(1, 1):upper() .. diff.action:sub(2)
+      -- Trigger event
+      local to = action == 'create' and diff.to:gsub('/$', '') or diff.to
+      local data = { action = action, from = diff.from, to = to }
+      local action_titlecase = action:sub(1, 1):upper() .. action:sub(2)
       H.trigger_event('MiniFilesAction' .. action_titlecase, data)
+
+      -- Modify later actions to account for file movement
+      local has_moved = to ~= nil and not (action == 'copy' or action == 'create')
+      if has_moved then H.adjust_after_move(diff.from, to, fs_actions, i + 1) end
     end
   end
 end
@@ -2611,6 +2636,17 @@ H.warn_existing_path = function(path, action)
   return false
 end
 
+H.adjust_after_move = function(from, to, fs_actions, start_ind)
+  local from_dir_pattern, to_dir = '^' .. vim.pesc(from .. '/'), to .. '/'
+  for i = start_ind, #fs_actions do
+    local diff = fs_actions[i]
+    -- Adjust completely to use entry at new location
+    if diff.from ~= nil then diff.from = diff.from == from and to or diff.from:gsub(from_dir_pattern, to_dir) end
+    -- Adjust only parent directory to correctly compute target
+    if diff.to ~= nil then diff.to = diff.to:gsub(from_dir_pattern, to_dir) end
+  end
+end
+
 -- Validators -----------------------------------------------------------------
 H.validate_opened_buffer = function(x)
   if x == nil or x == 0 then x = vim.api.nvim_get_current_buf() end
@@ -2652,6 +2688,13 @@ H.set_buflines = function(buf_id, lines)
 end
 
 H.set_extmark = function(...) pcall(vim.api.nvim_buf_set_extmark, ...) end
+
+H.win_set_buf = function(win_id, buf_id)
+  vim.wo[win_id].winfixbuf = false
+  vim.api.nvim_win_set_buf(win_id, buf_id)
+  vim.wo[win_id].winfixbuf = true
+end
+if vim.fn.has('nvim-0.10') == 0 then H.win_set_buf = vim.api.nvim_win_set_buf end
 
 H.get_first_valid_normal_window = function()
   for _, win_id in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
