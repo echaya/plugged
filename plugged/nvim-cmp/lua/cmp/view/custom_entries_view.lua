@@ -59,11 +59,12 @@ custom_entries_view.new = function()
         return
       end
 
+      local formatting = config.get().formatting
       local fields = config.get().formatting.fields
       for i = top, bot do
         local e = self.entries[i + 1]
         if e then
-          local v = e:get_view(self.offset, buf)
+          local v = e:get_view(self.offset, buf, formatting)
           local o = config.get().window.completion.side_padding
           local a = 0
           for _, field in ipairs(fields) do
@@ -80,7 +81,7 @@ custom_entries_view.new = function()
             o = o + v[field].bytes + (self.column_width[field] - v[field].width) + 1
           end
 
-          for _, m in ipairs(e.matches or {}) do
+          for _, m in ipairs(e:get_view_matches(v.abbr.text) or {}) do
             vim.api.nvim_buf_set_extmark(buf, custom_entries_view.ns, i, a + m.word_match_start - 1, {
               end_line = i,
               end_col = a + m.word_match_end,
@@ -127,9 +128,10 @@ custom_entries_view.open = function(self, offset, entries)
   local entries_buf = self.entries_win:get_buffer()
   local lines = {}
   local dedup = {}
+  local formatting = config.get().formatting
   local preselect_index = 0
   for _, e in ipairs(entries) do
-    local view = e:get_view(offset, entries_buf)
+    local view = e:get_view(offset, entries_buf, formatting)
     if view.dup == 1 or not dedup[e.completion_item.label] then
       dedup[e.completion_item.label] = true
       self.column_width.abbr = math.max(self.column_width.abbr, view.abbr.width)
@@ -266,19 +268,20 @@ custom_entries_view.draw = function(self)
   local topline = info.topline - 1
   local botline = info.topline + info.height - 1
   local texts = {}
-  local fields = config.get().formatting.fields
+  local cfg =  config.get()
+  local fields = cfg.formatting.fields
   local entries_buf = self.entries_win:get_buffer()
   for i = topline, botline - 1 do
     local e = self.entries[i + 1]
     if e then
-      local view = e:get_view(self.offset, entries_buf)
+      local view = e:get_view(self.offset, entries_buf, cfg.formatting)
       local text = {}
-      table.insert(text, string.rep(' ', config.get().window.completion.side_padding))
+      table.insert(text, string.rep(' ', cfg.window.completion.side_padding))
       for _, field in ipairs(fields) do
         table.insert(text, view[field].text)
         table.insert(text, string.rep(' ', 1 + self.column_width[field] - view[field].width))
       end
-      table.insert(text, string.rep(' ', config.get().window.completion.side_padding))
+      table.insert(text, string.rep(' ', cfg.window.completion.side_padding))
       table.insert(texts, table.concat(text, ''))
     end
   end
@@ -432,7 +435,7 @@ custom_entries_view._select = function(self, cursor, option)
   })
 
   if is_insert then
-    self:_insert(self.entries[cursor] and self.entries[cursor]:get_vim_item(self.offset).word or self.prefix)
+    self:_insert(self.entries[cursor] and self.entries[cursor]:get_vim_item(self.offset, config.get().formatting).word or self.prefix)
   end
 
   self.entries_win:update()

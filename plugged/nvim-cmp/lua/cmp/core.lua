@@ -124,7 +124,7 @@ core.on_keymap = function(self, keys, fallback)
       commit_character = chars,
     }, function()
       local ctx = self:get_context()
-      local word = e:get_word()
+      local word = e.word
       if string.sub(ctx.cursor_before_line, -#word, ctx.cursor.col - 1) == word and is_printable then
         fallback()
       else
@@ -252,8 +252,9 @@ core.complete_common_string = function(self)
   local cursor = api.get_cursor()
   local offset = self.view:get_offset() or cursor[2]
   local common_string
+  local formatting = config.get().formatting
   for _, e in ipairs(self.view:get_entries()) do
-    local vim_item = e:get_vim_item(offset)
+    local vim_item = e:get_vim_item(offset, formatting)
     if not common_string then
       common_string = vim_item.word
     else
@@ -288,11 +289,9 @@ core.complete = function(self, ctx)
         if s_.incomplete and new:changed(s_.context) then
           s_:complete(new, callback)
         else
-          if not self.view:get_active_entry() then
-            self.filter.stop()
-            self.filter.timeout = config.get().performance.debounce
-            self:filter()
-          end
+          self.filter.stop()
+          self.filter.timeout = config.get().performance.debounce
+          self:filter()
         end
       end
     end)(s)
@@ -317,18 +316,7 @@ local async_filter = async.wrap(function(self)
   end
 
   -- Check fetching sources.
-  local sources = {}
-  for _, s in ipairs(self:get_sources({ source.SourceStatus.FETCHING, source.SourceStatus.COMPLETED })) do
-    -- Reserve filter call for timeout.
-    if not s.incomplete and config.get().performance.fetching_timeout > s:get_fetching_time() then
-      self.filter.timeout = config.get().performance.fetching_timeout - s:get_fetching_time()
-      self:filter()
-      if #sources == 0 then
-        return
-      end
-    end
-    table.insert(sources, s)
-  end
+  local sources = self:get_sources({ source.SourceStatus.FETCHING, source.SourceStatus.COMPLETED })
 
   local ctx = self:get_context()
 
@@ -374,8 +362,8 @@ core.confirm = function(self, e, option, callback)
     -- Emulate `<C-y>` behavior to save `.` register.
     local ctx = context.new()
     local keys = {}
-    table.insert(keys, keymap.backspace(ctx.cursor_before_line:sub(e:get_offset())))
-    table.insert(keys, e:get_word())
+    table.insert(keys, keymap.backspace(ctx.cursor_before_line:sub(e.offset)))
+    table.insert(keys, e.word)
     table.insert(keys, keymap.undobreak())
     feedkeys.call(table.concat(keys, ''), 'in')
   end)
@@ -384,15 +372,15 @@ core.confirm = function(self, e, option, callback)
     local ctx = context.new()
     if api.is_cmdline_mode() then
       local keys = {}
-      table.insert(keys, keymap.backspace(ctx.cursor_before_line:sub(e:get_offset())))
-      table.insert(keys, string.sub(e.context.cursor_before_line, e:get_offset()))
+      table.insert(keys, keymap.backspace(ctx.cursor_before_line:sub(e.offset)))
+      table.insert(keys, string.sub(e.context.cursor_before_line, e.offset))
       feedkeys.call(table.concat(keys, ''), 'in')
     else
       vim.cmd([[silent! undojoin]])
       -- This logic must be used nvim_buf_set_text.
       -- If not used, the snippet engine's placeholder wil be broken.
-      vim.api.nvim_buf_set_text(0, e.context.cursor.row - 1, e:get_offset() - 1, ctx.cursor.row - 1, ctx.cursor.col - 1, {
-        e.context.cursor_before_line:sub(e:get_offset()),
+      vim.api.nvim_buf_set_text(0, e.context.cursor.row - 1, e.offset - 1, ctx.cursor.row - 1, ctx.cursor.col - 1, {
+        e.context.cursor_before_line:sub(e.offset),
       })
       vim.api.nvim_win_set_cursor(0, { e.context.cursor.row, e.context.cursor.col - 1 })
     end
@@ -444,9 +432,9 @@ core.confirm = function(self, e, option, callback)
     end
     local behavior = option.behavior or config.get().confirmation.default_behavior
     if behavior == types.cmp.ConfirmBehavior.Replace then
-      completion_item.textEdit.range = e:get_replace_range()
+      completion_item.textEdit.range = e.replace_range
     else
-      completion_item.textEdit.range = e:get_insert_range()
+      completion_item.textEdit.range = e.insert_range
     end
 
     local diff_before = math.max(0, e.context.cursor.col - (completion_item.textEdit.range.start.character + 1))

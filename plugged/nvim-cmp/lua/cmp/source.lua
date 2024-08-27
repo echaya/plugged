@@ -24,6 +24,10 @@ local char = require('cmp.utils.char')
 ---@field public completion_context lsp.CompletionContext|nil
 ---@field public status cmp.SourceStatus
 ---@field public complete_dedup function
+---@field public default_replace_range lsp.Range
+---@field public default_insert_range lsp.Range
+---@field public position_encoding lsp.PositionEncodingKind
+---@field private prev_filtered_entries any
 local source = {}
 
 ---@alias cmp.SourceStatus 1 | 2 | 3
@@ -41,6 +45,7 @@ source.new = function(name, s)
   self.cache = cache.new()
   self.complete_dedup = async.dedup()
   self.revision = 0
+  self.position_encoding = self:get_position_encoding_kind()
   self:reset()
   return self
 end
@@ -57,6 +62,7 @@ source.reset = function(self)
   self.request_offset = -1
   self.completion_context = nil
   self.status = source.SourceStatus.WAITING
+  self.prev_filtered_entries = nil
   self.complete_dedup(function() end)
 end
 
@@ -90,14 +96,16 @@ source.get_entries = function(self, ctx)
 
   local target_entries = self.entries
 
-  if not self.incomplete then
-    local prev = self.cache:get({ 'get_entries', tostring(self.revision) })
-    if prev and ctx.cursor.row == prev.ctx.cursor.row and self.offset == prev.offset then
-      -- only use prev entries when cursor is moved forward.
-      -- and the pattern offset is the same.
-      if prev.ctx.cursor.col <= ctx.cursor.col then
-        target_entries = prev.entries
+  local prev = self.prev_filtered_entries
+  if prev and prev.revision == self.revision and ctx.cursor.row == prev.ctx.cursor.row and self.offset == prev.offset then
+    -- only use prev entries when cursor is moved forward.
+    -- and the pattern offset is the same.
+    if prev.ctx.cursor.col <= ctx.cursor.col then
+      -- directly returns prev filtered entries since input no change
+      if prev.ctx.cursor_before_line == ctx.cursor_before_line then
+        return prev.entries
       end
+      target_entries = prev.entries
     end
   end
 
@@ -108,7 +116,7 @@ source.get_entries = function(self, ctx)
   local entries = {}
   local matching_config = self:get_matching_config()
   for _, e in ipairs(target_entries) do
-    local o = e:get_offset()
+    local o = e.offset
     if not inputs[o] then
       inputs[o] = string.sub(ctx.cursor_before_line, o)
     end
@@ -118,7 +126,7 @@ source.get_entries = function(self, ctx)
     e.exact = false
     if e.score >= 1 then
       e.matches = match.matches
-      e.exact = e:get_filter_text() == inputs[o] or e:get_word() == inputs[o]
+      e.exact = e.filter_text == inputs[o] or e.word == inputs[o]
 
       if entry_filter(e, ctx) then
         entries[#entries + 1] = e
@@ -130,54 +138,42 @@ source.get_entries = function(self, ctx)
     end
   end
 
-  if not self.incomplete then
-    self.cache:set({ 'get_entries', tostring(self.revision) }, { entries = entries, ctx = ctx, offset = self.offset })
-  end
+  self.prev_filtered_entries = { entries = entries, ctx = ctx, offset = self.offset, revision = self.revision }
 
   return entries
 end
 
 ---Get default insert range (UTF8 byte index).
+---@private
 ---@return lsp.Range
-source.get_default_insert_range = function(self)
-  if not self.context then
-    error('context is not initialized yet.')
-  end
-
-  return self.cache:ensure({ 'get_default_insert_range', tostring(self.revision) }, function()
-    return {
-      start = {
-        line = self.context.cursor.row - 1,
-        character = self.offset - 1,
-      },
-      ['end'] = {
-        line = self.context.cursor.row - 1,
-        character = self.context.cursor.col - 1,
-      },
-    }
-  end)
+source._get_default_insert_range = function(self)
+  return {
+    start = {
+      line = self.context.cursor.row - 1,
+      character = self.offset - 1,
+    },
+    ['end'] = {
+      line = self.context.cursor.row - 1,
+      character = self.context.cursor.col - 1,
+    },
+  }
 end
 
 ---Get default replace range (UTF8 byte index).
+---@private
 ---@return lsp.Range
-source.get_default_replace_range = function(self)
-  if not self.context then
-    error('context is not initialized yet.')
-  end
-
-  return self.cache:ensure({ 'get_default_replace_range', tostring(self.revision) }, function()
-    local _, e = pattern.offset('^' .. '\\%(' .. self:get_keyword_pattern() .. '\\)', string.sub(self.context.cursor_line, self.offset))
-    return {
-      start = {
-        line = self.context.cursor.row - 1,
-        character = self.offset,
-      },
-      ['end'] = {
-        line = self.context.cursor.row - 1,
-        character = (e and self.offset + e - 2 or self.context.cursor.col - 1),
-      },
-    }
-  end)
+source._get_default_replace_range = function(self)
+  local _, e = pattern.offset('^' .. '\\%(' .. self:get_keyword_pattern() .. '\\)', string.sub(self.context.cursor_line, self.offset))
+  return {
+    start = {
+      line = self.context.cursor.row - 1,
+      character = self.offset,
+    },
+    ['end'] = {
+      line = self.context.cursor.row - 1,
+      character = (e and self.offset + e - 2 or self.context.cursor.col - 1),
+    },
+  }
 end
 
 ---Return source name.
@@ -317,11 +313,13 @@ source.complete = function(self, ctx, callback)
   end
 
   debug.log(self:get_debug_name(), 'request', offset, vim.inspect(completion_context))
-  local prev_status = self.status
   self.status = source.SourceStatus.FETCHING
   self.offset = offset
   self.request_offset = offset
   self.context = ctx
+  self.default_replace_range = self:_get_default_replace_range()
+  self.default_insert_range = self:_get_default_insert_range()
+  self.position_encoding = self:get_position_encoding_kind()
   self.completion_context = completion_context
   self.source:complete(
     vim.tbl_extend('keep', misc.copy(self:get_source_config()), {
@@ -337,7 +335,7 @@ source.complete = function(self, ctx, callback)
       response = response or {}
 
       self.incomplete = response.isIncomplete or false
-
+      self.status = source.SourceStatus.COMPLETED
       if #(response.items or response) > 0 then
         debug.log(self:get_debug_name(), 'retrieve', #(response.items or response))
         local old_offset = self.offset
@@ -346,11 +344,11 @@ source.complete = function(self, ctx, callback)
         self.status = source.SourceStatus.COMPLETED
         self.entries = {}
         for _, item in ipairs(response.items or response) do
-          if (item or {}).label then
+          if item.label then
             local e = entry.new(ctx, self, item, response.itemDefaults)
             if not e:is_invalid() then
               table.insert(self.entries, e)
-              self.offset = math.min(self.offset, e:get_offset())
+              self.offset = math.min(self.offset, e.offset)
             end
           end
         end
@@ -366,7 +364,6 @@ source.complete = function(self, ctx, callback)
         if offset == ctx.cursor.col then
           self:reset()
         end
-        self.status = prev_status
       end
       callback()
     end))

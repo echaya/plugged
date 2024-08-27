@@ -72,20 +72,22 @@ view.open = function(self, ctx, sources)
     -- check the source triggered by character
     local has_triggered_by_symbol_source = false
     for _, s in ipairs(source_group) do
-      if #s:get_entries(ctx) > 0 then
-        if s.is_triggered_by_symbol then
-          has_triggered_by_symbol_source = true
-          break
-        end
+      if s.is_triggered_by_symbol and #s:get_entries(ctx) > 0 then
+        has_triggered_by_symbol_source = true
+        break
       end
     end
 
+    local has_fetching = false
+    local fetching_timeout = config.get().performance.fetching_timeout
     -- create filtered entries.
     local offset = ctx.cursor.col
     local group_entries = {}
     local max_item_counts = {}
     for i, s in ipairs(source_group) do
-      if s.offset <= ctx.cursor.col then
+      local is_fetching = fetching_timeout > s:get_fetching_time()
+      has_fetching = has_fetching or is_fetching
+      if (not is_fetching or s.incomplete) and s.offset <= ctx.cursor.col then
         if not has_triggered_by_symbol_source or s.is_triggered_by_symbol then
           -- prepare max_item_counts map for filtering after sort.
           local max_item_count = s:get_source_config().max_item_count
@@ -99,7 +101,7 @@ view.open = function(self, ctx, sources)
           for _, e in ipairs(s:get_entries(ctx)) do
             e.score = e.score + priority
             table.insert(group_entries, e)
-            offset = math.min(offset, e:get_offset())
+            offset = math.min(offset, e.offset)
           end
         end
       end
@@ -138,6 +140,10 @@ view.open = function(self, ctx, sources)
         window = self:_get_entries_view(),
       })
       break
+    elseif has_fetching then
+      -- if group has sources in fetching and no entries is available,
+      -- do not close or update menu
+      return false
     end
   end
 
