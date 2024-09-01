@@ -457,18 +457,18 @@
 --- <
 --- # Create mappings to modify target window via split ~
 ---
---- Combine |MiniFiles.get_target_window()| and |MiniFiles.set_target_window()|: >lua
+--- Combine |MiniFiles.get_explorer_state()| and |MiniFiles.set_target_window()|: >lua
 ---
 ---   local map_split = function(buf_id, lhs, direction)
 ---     local rhs = function()
 ---       -- Make new window and set it as target
----       local new_target_window
----       vim.api.nvim_win_call(MiniFiles.get_target_window(), function()
+---       local cur_target = MiniFiles.get_explorer_state().target_window
+---       local new_target = vim.api.nvim_win_call(cur_target, function()
 ---         vim.cmd(direction .. ' split')
----         new_target_window = vim.api.nvim_get_current_win()
+---         return vim.api.nvim_get_current_win()
 ---       end)
 ---
----       MiniFiles.set_target_window(new_target_window)
+---       MiniFiles.set_target_window(new_target)
 ---     end
 ---
 ---     -- Adding `desc` will result into `show_help` entries
@@ -481,8 +481,8 @@
 ---     callback = function(args)
 ---       local buf_id = args.data.buf_id
 ---       -- Tweak keys to your liking
----       map_split(buf_id, 'gs', 'belowright horizontal')
----       map_split(buf_id, 'gv', 'belowright vertical')
+---       map_split(buf_id, '<C-s>', 'belowright horizontal')
+---       map_split(buf_id, '<C-v>', 'belowright vertical')
 ---     end,
 ---   })
 --- <
@@ -994,16 +994,43 @@ MiniFiles.get_fs_entry = function(buf_id, line)
   return H.get_fs_entry_from_path_index(path_id)
 end
 
---- Get target window
+--- Get state of active explorer
 ---
----@return number|nil Window identifier inside which file will be opened or
----   `nil` if no explorer is opened.
-MiniFiles.get_target_window = function()
+---@return table|nil Table with explorer state data or `nil` if no active explorer.
+---   State data is a table with the following fields:
+---   - <anchor> `(string)` - anchor directory path (see |MiniFiles.open()|).
+---   - <target_window> `(number)` - identifier of target window.
+---   - <windows> `(table)` - array with data about currently opened windows.
+---     Each element is a table with <win_id> (window identifier) and <path> (path
+---     shown in the window) fields.
+---
+---@seealso |MiniFiles.set_target_window()|
+MiniFiles.get_explorer_state = function()
   local explorer = H.explorer_get()
   if explorer == nil then return end
 
-  explorer = H.explorer_ensure_target_window(explorer)
-  return explorer.target_window
+  H.explorer_ensure_target_window(explorer)
+  local windows = {}
+  for _, win_id in ipairs(explorer.windows) do
+    local buf_id = vim.api.nvim_win_get_buf(win_id)
+    local path = (H.opened_buffers[buf_id] or {}).path
+    table.insert(windows, { win_id = win_id, path = path })
+  end
+
+  return { anchor = explorer.anchor, target_window = explorer.target_window, windows = windows }
+end
+
+--- Get target window
+---
+--- Deprecated. Use |MiniFiles.get_explorer_state()|.
+MiniFiles.get_target_window = function()
+  -- TODO: remove after 'mini.nvim' 0.14 release
+  H.notify(
+    "`get_target_window()` is soft deprecated (currently works but will be removed after next 'mini.nvim' release)."
+      .. ' Use `get_explorer_state().target_window` instead. Sorry for the inconvenience.',
+    'WARN'
+  )
+  return (MiniFiles.get_explorer_state() or {}).target_window
 end
 
 --- Set target window
@@ -1942,7 +1969,12 @@ H.view_track_text_change = function(data)
   local last_visible_line = vim.fn.line('w0', win_id) + new_height - 1
   local out_of_buf_lines = last_visible_line - n_lines
   -- - Possibly scroll window upward (`\25` is an escaped `<C-y>`)
-  if out_of_buf_lines > 0 then vim.cmd('normal! ' .. out_of_buf_lines .. '\25') end
+  if out_of_buf_lines > 0 then
+    -- Preserve cursor as scrolling might affect it (like in Insert mode)
+    local cursor = vim.api.nvim_win_get_cursor(win_id)
+    vim.cmd('normal! ' .. out_of_buf_lines .. '\25')
+    vim.api.nvim_win_set_cursor(win_id, cursor)
+  end
 end
 
 -- Buffers --------------------------------------------------------------------
@@ -2230,6 +2262,7 @@ H.window_open = function(buf_id, config)
   -- Set permanent window options
   vim.wo[win_id].concealcursor = 'nvic'
   vim.wo[win_id].foldenable = false
+  vim.wo[win_id].foldmethod = 'manual'
   vim.wo[win_id].wrap = false
 
   -- Conceal path id and prefix separators

@@ -249,7 +249,9 @@ We are looking for maintainers to add more parsers and to write query files for 
 - [x] [gitcommit](https://github.com/gbprod/tree-sitter-gitcommit) (maintained by @gbprod)
 - [x] [gitignore](https://github.com/shunsambongi/tree-sitter-gitignore) (maintained by @theHamsta)
 - [x] [gleam](https://github.com/gleam-lang/tree-sitter-gleam) (maintained by @amaanq)
-- [x] [Glimmer and Ember](https://github.com/alexlafroscia/tree-sitter-glimmer) (maintained by @NullVoxPopuli)
+- [x] [Glimmer and Ember](https://github.com/ember-tooling/tree-sitter-glimmer) (maintained by @NullVoxPopuli)
+- [x] [glimmer_javascript](https://github.com/NullVoxPopuli/tree-sitter-glimmer-javascript) (maintained by @NullVoxPopuli)
+- [x] [glimmer_typescript](https://github.com/NullVoxPopuli/tree-sitter-glimmer-typescript) (maintained by @NullVoxPopuli)
 - [x] [glsl](https://github.com/theHamsta/tree-sitter-glsl) (maintained by @theHamsta)
 - [x] [GN (Generate Ninja)](https://github.com/amaanq/tree-sitter-gn) (maintained by @amaanq)
 - [x] [gnuplot](https://github.com/dpezto/tree-sitter-gnuplot) (maintained by @dpezto)
@@ -464,7 +466,7 @@ We are looking for maintainers to add more parsers and to write query files for 
 - [x] [yang](https://github.com/Hubro/tree-sitter-yang) (maintained by @Hubro)
 - [x] [yuck](https://github.com/Philipp-M/tree-sitter-yuck) (maintained by @Philipp-M, @amaanq)
 - [x] [zathurarc](https://github.com/Freed-Wu/tree-sitter-zathurarc) (maintained by @Freed-Wu)
-- [x] [zig](https://github.com/maxxnino/tree-sitter-zig) (maintained by @maxxnino)
+- [x] [zig](https://github.com/tree-sitter-grammars/tree-sitter-zig) (maintained by @amaanq)
 <!--parserinfo-->
 
 For related information on the supported languages, including related plugins, see [this wiki page](https://github.com/nvim-treesitter/nvim-treesitter/wiki/Supported-Languages-Information).

@@ -704,12 +704,32 @@ list.gleam = {
 
 list.glimmer = {
   install_info = {
-    url = "https://github.com/alexlafroscia/tree-sitter-glimmer",
+    url = "https://github.com/ember-tooling/tree-sitter-glimmer",
     files = { "src/parser.c", "src/scanner.c" },
   },
   filetype = "handlebars",
   maintainers = { "@NullVoxPopuli" },
   readme_name = "Glimmer and Ember",
+}
+
+list.glimmer_javascript = {
+  install_info = {
+    url = "https://github.com/NullVoxPopuli/tree-sitter-glimmer-javascript",
+    files = { "src/parser.c", "src/scanner.c" },
+    generate_requires_npm = true,
+  },
+  filetype = "javascript.glimmer",
+  maintainers = { "@NullVoxPopuli" },
+}
+
+list.glimmer_typescript = {
+  install_info = {
+    url = "https://github.com/NullVoxPopuli/tree-sitter-glimmer-typescript",
+    files = { "src/parser.c", "src/scanner.c" },
+    generate_requires_npm = true,
+  },
+  filetype = "typescript.glimmer",
+  maintainers = { "@NullVoxPopuli" },
 }
 
 list.glsl = {
@@ -2508,10 +2528,10 @@ list.zathurarc = {
 
 list.zig = {
   install_info = {
-    url = "https://github.com/maxxnino/tree-sitter-zig",
+    url = "https://github.com/tree-sitter-grammars/tree-sitter-zig",
     files = { "src/parser.c" },
   },
-  maintainers = { "@maxxnino" },
+  maintainers = { "@amaanq" },
 }
 
 list.templ = {
