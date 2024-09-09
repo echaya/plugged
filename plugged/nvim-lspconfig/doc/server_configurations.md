@@ -10731,7 +10731,7 @@ require'lspconfig'.snakeskin_ls.setup{}
 **Default values:**
   - `cmd` : 
   ```lua
-  { "npx", "@snakeskin/cli", "lsp", "--stdio" }
+  { "snakeskin-cli", "lsp", "--stdio" }
   ```
   - `filetypes` : 
   ```lua
@@ -13033,11 +13033,11 @@ require'lspconfig'.uvls.setup{}
 
 ## v_analyzer
 
-https://github.com/v-analyzer/v-analyzer
+https://github.com/vlang/v-analyzer
 
 V language server.
 
-`v-analyzer` can be installed by following the instructions [here](https://github.com/v-analyzer/v-analyzer#installation).
+`v-analyzer` can be installed by following the instructions [here](https://github.com/vlang/v-analyzer#installation).
 
 
 
