@@ -269,6 +269,7 @@ You can view this list in vim with `:help conform-formatters`
 - [kcl](https://www.kcl-lang.io/docs/tools/cli/kcl/fmt) - The KCL Format tool modifies the files according to the KCL code style.
 - [ktfmt](https://github.com/facebook/ktfmt) - Reformats Kotlin source code to comply with the common community standard conventions.
 - [ktlint](https://ktlint.github.io/) - An anti-bikeshedding Kotlin linter with built-in formatter.
+- [kulala-fmt](https://github.com/mistweaverco/kulala-fmt) - An opinionated .http and .rest files linter and formatter.
 - [latexindent](https://github.com/cmhughes/latexindent.pl) - A perl script for formatting LaTeX files that is generally included in major TeX distributions.
 - [leptosfmt](https://github.com/bram209/leptosfmt) - A formatter for the Leptos view! macro.
 - [liquidsoap-prettier](https://github.com/savonet/liquidsoap-prettier) - A binary to format Liquidsoap scripts
@@ -335,6 +336,7 @@ You can view this list in vim with `:help conform-formatters`
 - [styler](https://github.com/devOpifex/r.nvim) - R formatter and linter.
 - [stylish-haskell](https://github.com/haskell/stylish-haskell) - Haskell code prettifier.
 - [stylua](https://github.com/JohnnyMorganz/StyLua) - An opinionated code formatter for Lua.
+- [superhtml](https://github.com/kristoff-it/superhtml) - HTML Language Server and Templating Language Library.
 - [swift_format](https://github.com/apple/swift-format) - Swift formatter from apple. Requires building from source with `swift build`.
 - [swiftformat](https://github.com/nicklockwood/SwiftFormat) - SwiftFormat is a code library and command-line tool for reformatting `swift` code on macOS or Linux.
 - [swiftlint](https://github.com/realm/SwiftLint) - A tool to enforce Swift style and conventions.
@@ -361,6 +363,8 @@ You can view this list in vim with `:help conform-formatters`
 - [yew-fmt](https://github.com/schvv31n/yew-fmt) - Code formatter for the Yew framework.
 - [yq](https://github.com/mikefarah/yq) - YAML/JSON processor
 - [zigfmt](https://github.com/ziglang/zig) - Reformat Zig source into canonical form.
+- [ziggy](https://github.com/kristoff-it/ziggy) - A data serialization language for expressing clear API messages, config files, etc.
+- [ziggy_schema](https://github.com/kristoff-it/ziggy) - A data serialization language for expressing clear API messages, config files, etc.
 - [zprint](https://github.com/kkinnear/zprint) - Formatter for Clojure and EDN.
 <!-- /FORMATTERS -->
 
@@ -448,6 +452,7 @@ require("conform").formatters.shfmt = {
 - [Background](doc/debugging.md#background)
 - [Tools](doc/debugging.md#tools)
 - [Testing the formatter](doc/debugging.md#testing-the-formatter)
+- [Testing vim.system](doc/debugging.md#testing-vimsystem)
 
 <!-- /DEBUGGING -->
 
