@@ -3,6 +3,31 @@ local M = {}
 
 M.has_10 = vim.fn.has('nvim-0.10') == 1
 
+---@param name string
+---@return string[]
+function M.lazy_file_types(name)
+    -- https://github.com/folke/lazydev.nvim/blob/main/lua/lazydev/pkg.lua -> get_plugin_path
+    if type(package.loaded.lazy) ~= 'table' then
+        return {}
+    end
+    local ok, lazy_config = pcall(require, 'lazy.core.config')
+    if not ok then
+        return {}
+    end
+    local plugin = lazy_config.spec.plugins[name]
+    if plugin == nil then
+        return {}
+    end
+    local file_types = plugin.ft
+    if type(file_types) == 'table' then
+        return file_types
+    elseif type(file_types) == 'string' then
+        return { file_types }
+    else
+        return {}
+    end
+end
+
 ---@param buf integer
 ---@param win integer
 ---@return boolean
@@ -27,21 +52,23 @@ end
 
 ---@param win integer
 ---@param name string
----@return number|string|boolean
+---@return render.md.option.Value
 function M.get_win(win, name)
     return vim.api.nvim_get_option_value(name, { scope = 'local', win = win })
 end
 
 ---@param win integer
 ---@param name string
----@param value number|string|boolean
+---@param value render.md.option.Value
 function M.set_win(win, name, value)
-    vim.api.nvim_set_option_value(name, value, { scope = 'local', win = win })
+    if value ~= M.get_win(win, name) then
+        vim.api.nvim_set_option_value(name, value, { scope = 'local', win = win })
+    end
 end
 
 ---@param buf integer
 ---@param name string
----@return number|string|boolean
+---@return render.md.option.Value
 function M.get_buf(buf, name)
     return vim.api.nvim_get_option_value(name, { buf = buf })
 end
@@ -65,12 +92,23 @@ end
 ---@return number
 function M.file_size_mb(file)
     local ok, stats = pcall(function()
-        return vim.uv.fs_stat(file)
+        return (vim.uv or vim.loop).fs_stat(file)
     end)
     if not (ok and stats) then
         return 0
     end
     return stats.size / (1024 * 1024)
+end
+
+---@param callback fun()
+---@return fun()
+function M.wrap_runtime(callback)
+    return function()
+        local start_time = (vim.uv or vim.loop).hrtime()
+        callback()
+        local end_time = (vim.uv or vim.loop).hrtime()
+        vim.print(string.format('Runtime (ms): %.1f', (end_time - start_time) / 1e+6))
+    end
 end
 
 return M

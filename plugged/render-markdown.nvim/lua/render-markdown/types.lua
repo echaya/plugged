@@ -12,8 +12,8 @@
 ---@field public query string
 
 ---@class (exact) render.md.WindowOption
----@field public default number|string|boolean
----@field public rendered number|string|boolean
+---@field public default render.md.option.Value
+---@field public rendered render.md.option.Value
 
 ---@class (exact) render.md.Indent
 ---@field public enabled boolean
@@ -90,11 +90,12 @@
 ---@field public sign boolean
 ---@field public style render.md.code.Style
 ---@field public position render.md.code.Position
----@field public language_pad integer
+---@field public language_pad number
 ---@field public disable_background string[]
 ---@field public width render.md.code.Width
----@field public left_pad integer
----@field public right_pad integer
+---@field public left_margin number
+---@field public left_pad number
+---@field public right_pad number
 ---@field public min_width integer
 ---@field public border render.md.code.Border
 ---@field public above string
@@ -109,10 +110,12 @@
 ---@field public icons string[]
 ---@field public signs string[]
 ---@field public width render.md.heading.Width|(render.md.heading.Width)[]
----@field public left_pad integer
----@field public right_pad integer
----@field public min_width integer
+---@field public left_margin number|number[]
+---@field public left_pad number|number[]
+---@field public right_pad number|number[]
+---@field public min_width integer|integer[]
 ---@field public border boolean
+---@field public border_virtual boolean
 ---@field public border_prefix boolean
 ---@field public above string
 ---@field public below string
@@ -157,6 +160,7 @@
 ---@field public markdown_quote_query string
 ---@field public inline_query string
 ---@field public log_level render.md.config.LogLevel
+---@field public log_runtime boolean
 ---@field public file_types string[]
 ---@field public injections table<string, render.md.Injection>
 ---@field public latex render.md.Latex

@@ -1,6 +1,6 @@
 ---@class render.md.Extmark
 ---@field private id? integer
----@field mark render.md.Mark
+---@field private mark render.md.Mark
 local Extmark = {}
 Extmark.__index = Extmark
 
@@ -13,14 +13,9 @@ function Extmark.new(mark)
     return self
 end
 
----@param hidden Range2?
----@return boolean
-function Extmark:overlaps(hidden)
-    if hidden == nil then
-        return false
-    end
-    local row = self.mark.start_row
-    return row >= hidden[1] and row <= hidden[2]
+---@return render.md.Mark
+function Extmark:get_mark()
+    return self.mark
 end
 
 ---@param ns_id integer

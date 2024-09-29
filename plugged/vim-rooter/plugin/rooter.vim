@@ -36,7 +36,7 @@ if !exists('g:rooter_patterns')
 endif
 
 if !exists('g:rooter_targets')
-  let g:rooter_targets = '/,*'
+  let g:rooter_targets = ['/', '*']
 endif
 
 if !exists('g:rooter_change_directory_for_non_project_files')
@@ -102,7 +102,11 @@ endfunction
 function! s:activate()
   if index(g:rooter_buftypes, &buftype) == -1 | return 0 | endif
 
-  let patterns = split(g:rooter_targets, ',')
+  if type(g:rooter_targets) == type([])
+    let patterns = g:rooter_targets
+  else
+    let patterns = split(g:rooter_targets, ',')
+  endif
   let fn = s:current_file()
 
   " directory
@@ -115,8 +119,13 @@ function! s:activate()
   if !exists('*glob2regpat') | return 1 | endif
 
   for p in filter(copy(patterns), 'v:val != "/"')
+    if p[0] == '!'
+      let [p, verdict] = [p[1:], 0]
+    else
+      let [p, verdict] = [p, 1]
+    endif
     if fn =~ glob2regpat(p)
-      return 1
+      return verdict
     endif
   endfor
 

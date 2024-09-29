@@ -17,8 +17,9 @@ Plugin to improve viewing Markdown files in Neovim
 - Contained: runs entirely inside Neovim with no external windows
 - Configurable: all components, padding, icons, and colors can be modified
 - File type agnostic: can render `markdown` injected into any file
+  - Automatically runs on lazy load file types defined in `lazy.nvim` `ft`
 - Injections: can directly manipulate treesitter to add logical `markdown` sections
-- Mode based rendering: changes between `rendered` and `raw` view based on mode
+- Modal rendering: changes between `rendered` and `raw` view based on mode
 - Anti-conceal: hides virtual text added by this plugin on cursor line
 - Window options: changes option values between `rendered` and `raw` view
 - Large files: only renders visisble range, can be entirely disabled based on size
@@ -105,6 +106,7 @@ use({
 | `:RenderMarkdown expand`   | `require('render-markdown').expand()`   | Increase anti-conceal margin above and below by 1 |
 | `:RenderMarkdown contract` | `require('render-markdown').contract()` | Decrease anti-conceal margin above and below by 1 |
 | `:RenderMarkdown debug`    | `require('render-markdown').debug()`    | Prints information about marks on current line    |
+| `:RenderMarkdown config`   | `require('render-markdown').config()`   | Prints difference between config and default      |
 
 # Setup
 
@@ -119,7 +121,7 @@ Some of the more useful fields are discussed further down.
 
 <details>
 
-<summary>Full Default Configuration</summary>
+<summary>Default Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -161,8 +163,10 @@ require('render-markdown').setup({
             (list_marker_star)
         ] @list_marker
 
-        (task_list_marker_unchecked) @checkbox_unchecked
-        (task_list_marker_checked) @checkbox_checked
+        [
+            (task_list_marker_unchecked)
+            (task_list_marker_checked)
+        ] @checkbox
 
         (block_quote) @quote
 
@@ -191,6 +195,9 @@ require('render-markdown').setup({
     -- The level of logs to write to file: vim.fn.stdpath('state') .. '/render-markdown.log'
     -- Only intended to be used for plugin development / debugging
     log_level = 'error',
+    -- Print runtime of main update method
+    -- Only intended to be used for plugin development / debugging
+    log_runtime = false,
     -- Filetypes this plugin will run on
     file_types = { 'markdown' },
     -- Out of the box language injections for known filetypes that allow markdown to be
@@ -245,32 +252,44 @@ require('render-markdown').setup({
         position = 'overlay',
         -- Replaces '#+' of 'atx_h._marker'
         -- The number of '#' in the heading determines the 'level'
-        -- The 'level' is used to index into the array using a cycle
+        -- The 'level' is used to index into the list using a cycle
         icons = { '󰲡 ', '󰲣 ', '󰲥 ', '󰲧 ', '󰲩 ', '󰲫 ' },
         -- Added to the sign column if enabled
-        -- The 'level' is used to index into the array using a cycle
+        -- The 'level' is used to index into the list using a cycle
         signs = { '󰫎 ' },
         -- Width of the heading background:
         --  block: width of the heading text
         --  full:  full width of the window
-        -- Can also be an array of the above values in which case the 'level' is used
-        -- to index into the array using a clamp
+        -- Can also be a list of the above values in which case the 'level' is used
+        -- to index into the list using a clamp
         width = 'full',
+        -- Amount of margin to add to the left of headings
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Margin available space is computed after accounting for padding
+        -- Can also be a list of numbers in which case the 'level' is used to index into the list using a clamp
+        left_margin = 0,
         -- Amount of padding to add to the left of headings
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Can also be a list of numbers in which case the 'level' is used to index into the list using a clamp
         left_pad = 0,
         -- Amount of padding to add to the right of headings when width is 'block'
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Can also be a list of numbers in which case the 'level' is used to index into the list using a clamp
         right_pad = 0,
         -- Minimum width to use for headings when width is 'block'
+        -- Can also be a list of integers in which case the 'level' is used to index into the list using a clamp
         min_width = 0,
         -- Determins if a border is added above and below headings
         border = false,
+        -- Alway use virtual lines for heading borders instead of attempting to use empty lines
+        border_virtual = false,
         -- Highlight the start of the border using the foreground highlight
         border_prefix = false,
         -- Used above heading for border
         above = '▄',
         -- Used below heading for border
         below = '▀',
-        -- The 'level' is used to index into the array using a clamp
+        -- The 'level' is used to index into the list using a clamp
         -- Highlight for the heading icon and extends through the entire line
         backgrounds = {
             'RenderMarkdownH1Bg',
@@ -280,7 +299,7 @@ require('render-markdown').setup({
             'RenderMarkdownH5Bg',
             'RenderMarkdownH6Bg',
         },
-        -- The 'level' is used to index into the array using a clamp
+        -- The 'level' is used to index into the list using a clamp
         -- Highlight for the heading and sign icons
         foregrounds = {
             'RenderMarkdownH1',
@@ -307,17 +326,24 @@ require('render-markdown').setup({
         --  left:  left side of code block
         position = 'left',
         -- Amount of padding to add around the language
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
         language_pad = 0,
-        -- An array of language names for which background highlighting will be disabled
+        -- A list of language names for which background highlighting will be disabled
         -- Likely because that language has background highlights itself
         disable_background = { 'diff' },
         -- Width of the code block background:
         --  block: width of the code block
         --  full:  full width of the window
         width = 'full',
+        -- Amount of margin to add to the left of code blocks
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Margin available space is computed after accounting for padding
+        left_margin = 0,
         -- Amount of padding to add to the left of code blocks
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
         left_pad = 0,
         -- Amount of padding to add to the right of code blocks when width is 'block'
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
         right_pad = 0,
         -- Minimum width to use for code blocks when width is 'block'
         min_width = 0,
@@ -352,7 +378,7 @@ require('render-markdown').setup({
         enabled = true,
         -- Replaces '-'|'+'|'*' of 'list_item'
         -- How deeply nested the list is determines the 'level'
-        -- The 'level' is used to index into the array using a cycle
+        -- The 'level' is used to index into the list using a cycle
         -- If the item is a 'checkbox' a conceal is used to hide the bullet instead
         icons = { '●', '○', '◆', '◇' },
         -- Padding to add to the left of bullet point
@@ -566,16 +592,20 @@ require('render-markdown').setup({
 
 </details>
 
-We use the following definitions when discussing indexing into arrays:
+We use the following definitions when discussing indexing into lists:
 
 1. Cycle: Indexed `mod` the length.
    Example: `{ 1, 2, 3 }` @ 4 = 1.
-2. Clamp: Indexed normally but larger values use the last value in the array.
+2. Clamp: Indexed normally but larger values use the last value in the list.
    Example: `{ 1, 2, 3 }` @ 4 = 3.
 
 ## Headings
 
 [Wiki Page](https://github.com/MeanderingProgrammer/render-markdown.nvim/wiki/Headings)
+
+<details>
+
+<summary>Heading Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -590,32 +620,44 @@ require('render-markdown').setup({
         position = 'overlay',
         -- Replaces '#+' of 'atx_h._marker'
         -- The number of '#' in the heading determines the 'level'
-        -- The 'level' is used to index into the array using a cycle
+        -- The 'level' is used to index into the list using a cycle
         icons = { '󰲡 ', '󰲣 ', '󰲥 ', '󰲧 ', '󰲩 ', '󰲫 ' },
         -- Added to the sign column if enabled
-        -- The 'level' is used to index into the array using a cycle
+        -- The 'level' is used to index into the list using a cycle
         signs = { '󰫎 ' },
         -- Width of the heading background:
         --  block: width of the heading text
         --  full:  full width of the window
-        -- Can also be an array of the above values in which case the 'level' is used
-        -- to index into the array using a clamp
+        -- Can also be a list of the above values in which case the 'level' is used
+        -- to index into the list using a clamp
         width = 'full',
+        -- Amount of margin to add to the left of headings
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Margin available space is computed after accounting for padding
+        -- Can also be a list of numbers in which case the 'level' is used to index into the list using a clamp
+        left_margin = 0,
         -- Amount of padding to add to the left of headings
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Can also be a list of numbers in which case the 'level' is used to index into the list using a clamp
         left_pad = 0,
         -- Amount of padding to add to the right of headings when width is 'block'
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Can also be a list of numbers in which case the 'level' is used to index into the list using a clamp
         right_pad = 0,
         -- Minimum width to use for headings when width is 'block'
+        -- Can also be a list of integers in which case the 'level' is used to index into the list using a clamp
         min_width = 0,
         -- Determins if a border is added above and below headings
         border = false,
+        -- Alway use virtual lines for heading borders instead of attempting to use empty lines
+        border_virtual = false,
         -- Highlight the start of the border using the foreground highlight
         border_prefix = false,
         -- Used above heading for border
         above = '▄',
         -- Used below heading for border
         below = '▀',
-        -- The 'level' is used to index into the array using a clamp
+        -- The 'level' is used to index into the list using a clamp
         -- Highlight for the heading icon and extends through the entire line
         backgrounds = {
             'RenderMarkdownH1Bg',
@@ -625,7 +667,7 @@ require('render-markdown').setup({
             'RenderMarkdownH5Bg',
             'RenderMarkdownH6Bg',
         },
-        -- The 'level' is used to index into the array using a clamp
+        -- The 'level' is used to index into the list using a clamp
         -- Highlight for the heading and sign icons
         foregrounds = {
             'RenderMarkdownH1',
@@ -639,9 +681,15 @@ require('render-markdown').setup({
 })
 ```
 
+</details>
+
 ## Code Blocks
 
 [Wiki Page](https://github.com/MeanderingProgrammer/render-markdown.nvim/wiki/CodeBlocks)
+
+<details>
+
+<summary>Code Block Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -661,17 +709,24 @@ require('render-markdown').setup({
         --  left:  left side of code block
         position = 'left',
         -- Amount of padding to add around the language
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
         language_pad = 0,
-        -- An array of language names for which background highlighting will be disabled
+        -- A list of language names for which background highlighting will be disabled
         -- Likely because that language has background highlights itself
         disable_background = { 'diff' },
         -- Width of the code block background:
         --  block: width of the code block
         --  full:  full width of the window
         width = 'full',
+        -- Amount of margin to add to the left of code blocks
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Margin available space is computed after accounting for padding
+        left_margin = 0,
         -- Amount of padding to add to the left of code blocks
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
         left_pad = 0,
         -- Amount of padding to add to the right of code blocks when width is 'block'
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
         right_pad = 0,
         -- Minimum width to use for code blocks when width is 'block'
         min_width = 0,
@@ -691,9 +746,15 @@ require('render-markdown').setup({
 })
 ```
 
+</details>
+
 ## Dashed Line
 
 [Wiki Page](https://github.com/MeanderingProgrammer/render-markdown.nvim/wiki/DashedLine)
+
+<details>
+
+<summary>Dashed Line Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -713,9 +774,15 @@ require('render-markdown').setup({
 })
 ```
 
+</details>
+
 ## List Bullets
 
 [Wiki Page](https://github.com/MeanderingProgrammer/render-markdown.nvim/wiki/ListBullets)
+
+<details>
+
+<summary>Bullet Point Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -724,7 +791,7 @@ require('render-markdown').setup({
         enabled = true,
         -- Replaces '-'|'+'|'*' of 'list_item'
         -- How deeply nested the list is determines the 'level'
-        -- The 'level' is used to index into the array using a cycle
+        -- The 'level' is used to index into the list using a cycle
         -- If the item is a 'checkbox' a conceal is used to hide the bullet instead
         icons = { '●', '○', '◆', '◇' },
         -- Padding to add to the left of bullet point
@@ -737,9 +804,15 @@ require('render-markdown').setup({
 })
 ```
 
+</details>
+
 ## Checkboxes
 
 [Wiki Page](https://github.com/MeanderingProgrammer/render-markdown.nvim/wiki/Checkboxes)
+
+<details>
+
+<summary>Checkbox Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -778,9 +851,15 @@ require('render-markdown').setup({
 })
 ```
 
+</details>
+
 ## Block Quotes
 
 [Wiki Page](https://github.com/MeanderingProgrammer/render-markdown.nvim/wiki/BlockQuotes)
+
+<details>
+
+<summary>Block Quote Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -801,9 +880,15 @@ require('render-markdown').setup({
 })
 ```
 
+</details>
+
 ## Tables
 
 [Wiki Page](https://github.com/MeanderingProgrammer/render-markdown.nvim/wiki/Tables)
+
+<details>
+
+<summary>Table Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -850,9 +935,15 @@ require('render-markdown').setup({
 })
 ```
 
+</details>
+
 ## Callouts
 
 [Wiki Page](https://github.com/MeanderingProgrammer/render-markdown.nvim/wiki/Callouts)
+
+<details>
+
+<summary>Callout Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -895,9 +986,15 @@ require('render-markdown').setup({
 })
 ```
 
+</details>
+
 ## Links
 
 [Wiki Page](https://github.com/MeanderingProgrammer/render-markdown.nvim/wiki/Links)
+
+<details>
+
+<summary>Link Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -926,9 +1023,15 @@ require('render-markdown').setup({
 })
 ```
 
+</details>
+
 ## Signs
 
 [Wiki Page](https://github.com/MeanderingProgrammer/render-markdown.nvim/wiki/Signs)
+
+<details>
+
+<summary>Sign Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -941,9 +1044,15 @@ require('render-markdown').setup({
 })
 ```
 
+</details>
+
 ## Indent
 
 [Wiki Page](https://github.com/MeanderingProgrammer/render-markdown.nvim/wiki/Indent)
+
+<details>
+
+<summary>Indent Configuration</summary>
 
 ```lua
 require('render-markdown').setup({
@@ -962,6 +1071,8 @@ require('render-markdown').setup({
     },
 })
 ```
+
+</details>
 
 # Colors
 

@@ -2,12 +2,37 @@
 
 ## Pre-release
 
+## 7.2.0 (2024-09-26)
+
 ### Features
 
 - `pipe_table.cell` value `trimmed` [#175](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/175)
   [c686970](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/c68697085441d03a20eee15d4d78e2e5a771569a)
 - configurable padding highlight [#176](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/176)
   [095078d](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/095078d931ce23b544face8ca7b845adf7fad7e9)
+- pad setext header lines [75a0a95](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/75a0a9596a91130fae43d3b7c0d6c651645ef1df)
+- center headings and code blocks [#179](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/179)
+  [0986638](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/0986638b381a4b01eb108bb946f3a67a9eb3d0ec)
+  [67288fe](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/67288febca78b7aac8fae9543ef8980237e27d2a)
+- integrate with lazy.nvim filetypes [cb9a5e2](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/cb9a5e2412d21c7a89627e0d6da5459acbc0eb9c)
+- bullet left & right padding on all lines of items [#181](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/181)
+  [3adb9d5](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/3adb9d539a016bc63fee83aa740e38fa4eeab094)
+- heading margin / padding based on level [#182](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/182)
+  & border virtual option [#183](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/183)
+  [aad1a12](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/aad1a1220dc9da5757e3af3befbc7fc3869dd334)
+- config command to debug configurations [a9643f4](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/a9643f4377f39f4abf943fbc73be69f33f5f2f1d)
+- same buffer in multiple windows [#184](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/184)
+  [767707e](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/767707e928389996e8860f03552cf962afb0bfb2)
+
+### Bug Fixes
+
+- window options on alternate buffer switch [#177](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/177)
+  [f187721](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/f187721a5381f4443ef97ad1a7c0681a65511d28)
+- update when window scrolled [#185](https://github.com/MeanderingProgrammer/render-markdown.nvim/pull/185)
+
+### Collaborator Shoutouts
+
+- @Bekaboo
 
 ## 7.1.0 (2024-09-19)
 

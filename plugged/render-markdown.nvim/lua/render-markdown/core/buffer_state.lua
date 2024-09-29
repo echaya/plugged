@@ -2,8 +2,7 @@
 ---@field private buf integer
 ---@field private timer uv_timer_t
 ---@field private running boolean
----@field state? 'default'|'rendered'
----@field marks? render.md.Extmark[]
+---@field private marks? render.md.Extmark[]
 local BufferState = {}
 BufferState.__index = BufferState
 
@@ -14,7 +13,6 @@ function BufferState.new(buf)
     self.buf = buf
     self.timer = (vim.uv or vim.loop).new_timer()
     self.running = false
-    self.state = nil
     self.marks = nil
     return self
 end
@@ -29,6 +27,21 @@ function BufferState:debounce(ms, callback)
         self.running = true
         vim.schedule(callback)
     end
+end
+
+---@return boolean
+function BufferState:has_marks()
+    return self.marks ~= nil
+end
+
+---@return render.md.Extmark[]
+function BufferState:get_marks()
+    return self.marks or {}
+end
+
+---@param marks? render.md.Extmark[]
+function BufferState:set_marks(marks)
+    self.marks = marks
 end
 
 return BufferState

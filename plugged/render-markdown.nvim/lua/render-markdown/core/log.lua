@@ -9,7 +9,7 @@ local util = require('render-markdown.core.util')
 ---@class render.md.Log
 ---@field private level render.md.config.LogLevel
 ---@field private entries render.md.log.Entry[]
----@field file string
+---@field private file string
 local M = {}
 
 ---@param level render.md.config.LogLevel
@@ -29,10 +29,15 @@ function M.setup(level)
     end
 end
 
+function M.open()
+    M.flush()
+    vim.cmd.tabnew(M.file)
+end
+
 ---@param capture string
 ---@param info render.md.NodeInfo
-function M.debug_node_info(capture, info)
-    M.debug('node info', {
+function M.node_info(capture, info)
+    M.add('debug', 'node info', {
         capture = capture,
         text = info.text,
         rows = { info.start_row, info.end_row },
@@ -44,7 +49,7 @@ end
 ---@param group string
 ---@param capture string
 function M.unhandled_capture(group, capture)
-    M.error('unhandled capture', string.format('%s -> %s', group, capture))
+    M.add('error', 'unhandled capture', string.format('%s -> %s', group, capture))
 end
 
 ---Encountered if new type is seen for a particular group
@@ -52,44 +57,24 @@ end
 ---@param group string
 ---@param value string
 function M.unhandled_type(language, group, value)
-    M.error('unhandled type', string.format('%s -> %s -> %s', language, group, value))
+    M.add('error', 'unhandled type', string.format('%s -> %s -> %s', language, group, value))
 end
 
+---@param level render.md.config.LogLevel
 ---@param name string
 ---@param buf integer
 ---@param ... any
-function M.debug_buf(name, buf, ...)
-    M.debug(string.format('%s %d', name, buf), ...)
+function M.buf(level, name, buf, ...)
+    M.add(level, string.format('%s %d', name, buf), ...)
 end
 
----@param name string
----@param ... any
-function M.debug(name, ...)
-    if vim.tbl_contains({ 'debug' }, M.level) then
-        M.add('debug', name, ...)
-    end
-end
-
----@param name string
----@param buf integer
----@param ... any
-function M.error_buf(name, buf, ...)
-    M.error(string.format('%s %d', name, buf), ...)
-end
-
----@param name string
----@param ... any
-function M.error(name, ...)
-    if vim.tbl_contains({ 'debug', 'error' }, M.level) then
-        M.add('error', name, ...)
-    end
-end
-
----@private
 ---@param level render.md.config.LogLevel
 ---@param name string
 ---@param ... any
 function M.add(level, name, ...)
+    if M.level_value(level) < M.level_value(M.level) then
+        return
+    end
     local messages = {}
     local args = vim.F.pack_len(...)
     for i = 1, args.n do
@@ -110,6 +95,22 @@ function M.add(level, name, ...)
     end
 end
 
+---@private
+---@param level render.md.config.LogLevel
+---@return integer
+function M.level_value(level)
+    if level == 'debug' then
+        return 1
+    elseif level == 'info' then
+        return 2
+    elseif level == 'error' then
+        return 3
+    else
+        return 0
+    end
+end
+
+---@private
 function M.flush()
     if #M.entries == 0 then
         return

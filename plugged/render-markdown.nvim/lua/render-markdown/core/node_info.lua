@@ -1,6 +1,6 @@
 ---@class render.md.NodeInfo
 ---@field private buf integer
----@field node TSNode
+---@field private node TSNode
 ---@field type string
 ---@field text string
 ---@field start_row integer
@@ -38,6 +38,11 @@ function NodeInfo.__lt(a, b)
     end
 end
 
+---@return TSNode
+function NodeInfo:get_node()
+    return self.node
+end
+
 ---@return boolean
 function NodeInfo:has_error()
     return self.node:has_error()
@@ -59,16 +64,17 @@ end
 
 ---Walk through parent nodes, count the number of target nodes
 ---@param target string
----@return integer
+---@return integer, render.md.NodeInfo?
 function NodeInfo:level_in_section(target)
-    local level, parent = 0, self.node:parent()
+    local parent, level, root = self.node:parent(), 0, nil
     while parent ~= nil and parent:type() ~= 'section' do
         if parent:type() == target then
             level = level + 1
+            root = parent
         end
         parent = parent:parent()
     end
-    return level
+    return level, root ~= nil and NodeInfo.new(self.buf, root) or nil
 end
 
 ---@param target string

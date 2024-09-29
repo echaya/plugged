@@ -1,6 +1,7 @@
 local BufferState = require('render-markdown.core.buffer_state')
 local Context = require('render-markdown.core.context')
 local Extmark = require('render-markdown.core.extmark')
+local Iter = require('render-markdown.core.iter')
 local log = require('render-markdown.core.log')
 local state = require('render-markdown.state')
 local util = require('render-markdown.core.util')
@@ -51,9 +52,10 @@ function M.get_row_marks(buf, win)
     assert(row ~= nil and hidden ~= nil, 'Row & range must be known to get marks')
 
     local marks = {}
-    for _, extmark in ipairs(buffer_state.marks or {}) do
-        if extmark:overlaps(hidden) then
-            table.insert(marks, extmark.mark)
+    for _, extmark in ipairs(buffer_state:get_marks()) do
+        local mark = extmark:get_mark()
+        if hidden:contains(mark.start_row, mark.start_row) then
+            table.insert(marks, mark)
         end
     end
     return row, marks
@@ -64,7 +66,7 @@ end
 ---@param buffer_state render.md.BufferState
 function M.clear(buf, buffer_state)
     vim.api.nvim_buf_clear_namespace(buf, M.namespace, 0, -1)
-    buffer_state.marks = nil
+    buffer_state:set_marks(nil)
 end
 
 ---@param buf integer
@@ -72,21 +74,27 @@ end
 ---@param event string
 ---@param change boolean
 function M.debounce_update(buf, win, event, change)
-    log.debug_buf('update', buf, string.format('event %s', event), string.format('change %s', change))
+    log.buf('info', 'update', buf, string.format('event %s', event), string.format('change %s', change))
     if not util.valid(buf, win) then
         return
     end
 
     local config, buffer_state = state.get(buf), Cache.get(buf)
 
-    if not change and Context.contains_range(buf, win) then
-        vim.schedule(function()
-            M.update(buf, win, false)
-        end)
+    -- Need to parse when things change or we have not parsed the visible range yet
+    local parse = change or not Context.contains_range(buf, win)
+
+    local update = function()
+        M.update(buf, win, parse)
+    end
+    if parse and state.log_runtime then
+        update = util.wrap_runtime(update)
+    end
+
+    if parse and config.debounce > 0 then
+        buffer_state:debounce(config.debounce, update)
     else
-        buffer_state:debounce(config.debounce, function()
-            M.update(buf, win, true)
-        end)
+        vim.schedule(update)
     end
 end
 
@@ -101,23 +109,22 @@ function M.update(buf, win, parse)
 
     local config, buffer_state = state.get(buf), Cache.get(buf)
     local mode, row = util.mode(), util.row(buf, win)
-
     local next_state = M.next_state(config, win, mode)
-    if next_state ~= buffer_state.state then
-        for name, value in pairs(config.win_options) do
-            util.set_win(win, name, value[next_state])
-        end
+
+    log.buf('info', 'state', buf, next_state)
+    for name, value in pairs(config.win_options) do
+        util.set_win(win, name, value[next_state])
     end
-    buffer_state.state = next_state
 
     if next_state == 'rendered' then
-        if buffer_state.marks == nil or parse then
+        if not buffer_state:has_marks() or parse then
             M.clear(buf, buffer_state)
-            buffer_state.marks = M.parse_buffer(buf, win)
+            buffer_state:set_marks(M.parse_buffer(buf, win))
         end
         local hidden = config:hidden(mode, row)
-        for _, extmark in ipairs(buffer_state.marks) do
-            if extmark.mark.conceal and extmark:overlaps(hidden) then
+        for _, extmark in ipairs(buffer_state:get_marks()) do
+            local mark = extmark:get_mark()
+            if mark.conceal and hidden ~= nil and hidden:contains(mark.start_row, mark.start_row) then
                 extmark:hide(M.namespace, buf)
             else
                 extmark:show(M.namespace, buf)
@@ -156,13 +163,13 @@ end
 function M.parse_buffer(buf, win)
     local has_parser, parser = pcall(vim.treesitter.get_parser, buf)
     if not has_parser then
-        log.error_buf('fail', buf, 'no treesitter parser found')
+        log.buf('error', 'fail', buf, 'no treesitter parser found')
         return {}
     end
     -- Reset buffer context
     Context.reset(buf, win)
     -- Make sure injections are processed
-    parser:parse(Context.get(buf):range())
+    Context.get(buf):parse(parser)
     -- Parse markdown after all other nodes to take advantage of state
     local marks, markdown_roots = {}, {}
     parser:for_each_tree(function(tree, language_tree)
@@ -176,7 +183,7 @@ function M.parse_buffer(buf, win)
     for _, root in ipairs(markdown_roots) do
         vim.list_extend(marks, M.parse_tree(buf, 'markdown', root))
     end
-    return vim.tbl_map(Extmark.new, marks)
+    return Iter.list.map(marks, Extmark.new)
 end
 
 ---Run user & builtin handlers when available. User handler is always executed,
@@ -187,15 +194,15 @@ end
 ---@param root TSNode
 ---@return render.md.Mark[]
 function M.parse_tree(buf, language, root)
-    log.debug_buf('language', buf, language)
-    if not Context.get(buf):contains_node(root) then
+    log.buf('debug', 'language', buf, language)
+    if not Context.get(buf):overlaps_node(root) then
         return {}
     end
 
     local marks = {}
     local user = state.custom_handlers[language]
     if user ~= nil then
-        log.debug_buf('running handler', buf, 'user')
+        log.buf('debug', 'running handler', buf, 'user')
         vim.list_extend(marks, user.parse(root, buf))
         if not user.extends then
             return marks
@@ -203,7 +210,7 @@ function M.parse_tree(buf, language, root)
     end
     local builtin = builtin_handlers[language]
     if builtin ~= nil then
-        log.debug_buf('running handler', buf, 'builtin')
+        log.buf('debug', 'running handler', buf, 'builtin')
         vim.list_extend(marks, builtin.parse(root, buf))
     end
     return marks

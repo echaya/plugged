@@ -17,9 +17,7 @@ function M.toggle()
 end
 
 function M.log()
-    local log = require('render-markdown.core.log')
-    log.flush()
-    vim.cmd.tabnew(log.file)
+    require('render-markdown.core.log').open()
 end
 
 function M.expand()
@@ -36,6 +34,15 @@ function M.debug()
     local buf, win = vim.api.nvim_get_current_buf(), vim.api.nvim_get_current_win()
     local row, marks = require('render-markdown.core.ui').get_row_marks(buf, win)
     require('render-markdown.debug.marks').debug(row, marks)
+end
+
+function M.config()
+    local difference = state.difference(require('render-markdown').default_config)
+    if vim.tbl_count(difference) == 0 then
+        vim.print('Default Configuration')
+    else
+        vim.print(difference)
+    end
 end
 
 return M

@@ -22,9 +22,11 @@ local M = {}
 ---@field public enabled? boolean
 ---@field public query? string
 
+---@alias render.md.option.Value number|string|boolean
+
 ---@class (exact) render.md.UserWindowOption
----@field public default? number|string|boolean
----@field public rendered? number|string|boolean
+---@field public default? render.md.option.Value
+---@field public rendered? render.md.option.Value
 
 ---@class (exact) render.md.UserIndent
 ---@field public enabled? boolean
@@ -112,11 +114,12 @@ local M = {}
 ---@field public sign? boolean
 ---@field public style? render.md.code.Style
 ---@field public position? render.md.code.Position
----@field public language_pad? integer
+---@field public language_pad? number
 ---@field public disable_background? string[]
 ---@field public width? render.md.code.Width
----@field public left_pad? integer
----@field public right_pad? integer
+---@field public left_margin? number
+---@field public left_pad? number
+---@field public right_pad? number
 ---@field public min_width? integer
 ---@field public border? render.md.code.Border
 ---@field public above? string
@@ -134,10 +137,12 @@ local M = {}
 ---@field public icons? string[]
 ---@field public signs? string[]
 ---@field public width? render.md.heading.Width|(render.md.heading.Width)[]
----@field public left_pad? integer
----@field public right_pad? integer
----@field public min_width? integer
+---@field public left_margin? number|number[]
+---@field public left_pad? number|number[]
+---@field public right_pad? number|number[]
+---@field public min_width? integer|integer[]
 ---@field public border? boolean
+---@field public border_virtual? boolean
 ---@field public border_prefix? boolean
 ---@field public above? string
 ---@field public below? string
@@ -177,7 +182,7 @@ local M = {}
 ---@field public win_options? table<string, render.md.UserWindowOption>
 
 ---@alias render.md.config.Preset 'none'|'lazy'|'obsidian'
----@alias render.md.config.LogLevel 'debug'|'error'
+---@alias render.md.config.LogLevel 'debug'|'info'|'error'
 
 ---@class (exact) render.md.UserConfig: render.md.UserBufferConfig
 ---@field public preset? render.md.config.Preset
@@ -185,13 +190,13 @@ local M = {}
 ---@field public markdown_quote_query? string
 ---@field public inline_query? string
 ---@field public log_level? render.md.config.LogLevel
+---@field public log_runtime? boolean
 ---@field public file_types? string[]
 ---@field public injections? table<string, render.md.UserInjection>
 ---@field public latex? render.md.UserLatex
 ---@field public overrides? render.md.UserConfigOverrides
 ---@field public custom_handlers? table<string, render.md.Handler>
 
----@private
 ---@type render.md.Config
 M.default_config = {
     -- Whether Markdown should be rendered by default or not
@@ -232,8 +237,10 @@ M.default_config = {
             (list_marker_star)
         ] @list_marker
 
-        (task_list_marker_unchecked) @checkbox_unchecked
-        (task_list_marker_checked) @checkbox_checked
+        [
+            (task_list_marker_unchecked)
+            (task_list_marker_checked)
+        ] @checkbox
 
         (block_quote) @quote
 
@@ -262,6 +269,9 @@ M.default_config = {
     -- The level of logs to write to file: vim.fn.stdpath('state') .. '/render-markdown.log'
     -- Only intended to be used for plugin development / debugging
     log_level = 'error',
+    -- Print runtime of main update method
+    -- Only intended to be used for plugin development / debugging
+    log_runtime = false,
     -- Filetypes this plugin will run on
     file_types = { 'markdown' },
     -- Out of the box language injections for known filetypes that allow markdown to be
@@ -316,32 +326,44 @@ M.default_config = {
         position = 'overlay',
         -- Replaces '#+' of 'atx_h._marker'
         -- The number of '#' in the heading determines the 'level'
-        -- The 'level' is used to index into the array using a cycle
+        -- The 'level' is used to index into the list using a cycle
         icons = { '󰲡 ', '󰲣 ', '󰲥 ', '󰲧 ', '󰲩 ', '󰲫 ' },
         -- Added to the sign column if enabled
-        -- The 'level' is used to index into the array using a cycle
+        -- The 'level' is used to index into the list using a cycle
         signs = { '󰫎 ' },
         -- Width of the heading background:
         --  block: width of the heading text
         --  full:  full width of the window
-        -- Can also be an array of the above values in which case the 'level' is used
-        -- to index into the array using a clamp
+        -- Can also be a list of the above values in which case the 'level' is used
+        -- to index into the list using a clamp
         width = 'full',
+        -- Amount of margin to add to the left of headings
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Margin available space is computed after accounting for padding
+        -- Can also be a list of numbers in which case the 'level' is used to index into the list using a clamp
+        left_margin = 0,
         -- Amount of padding to add to the left of headings
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Can also be a list of numbers in which case the 'level' is used to index into the list using a clamp
         left_pad = 0,
         -- Amount of padding to add to the right of headings when width is 'block'
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Can also be a list of numbers in which case the 'level' is used to index into the list using a clamp
         right_pad = 0,
         -- Minimum width to use for headings when width is 'block'
+        -- Can also be a list of integers in which case the 'level' is used to index into the list using a clamp
         min_width = 0,
         -- Determins if a border is added above and below headings
         border = false,
+        -- Alway use virtual lines for heading borders instead of attempting to use empty lines
+        border_virtual = false,
         -- Highlight the start of the border using the foreground highlight
         border_prefix = false,
         -- Used above heading for border
         above = '▄',
         -- Used below heading for border
         below = '▀',
-        -- The 'level' is used to index into the array using a clamp
+        -- The 'level' is used to index into the list using a clamp
         -- Highlight for the heading icon and extends through the entire line
         backgrounds = {
             'RenderMarkdownH1Bg',
@@ -351,7 +373,7 @@ M.default_config = {
             'RenderMarkdownH5Bg',
             'RenderMarkdownH6Bg',
         },
-        -- The 'level' is used to index into the array using a clamp
+        -- The 'level' is used to index into the list using a clamp
         -- Highlight for the heading and sign icons
         foregrounds = {
             'RenderMarkdownH1',
@@ -378,17 +400,24 @@ M.default_config = {
         --  left:  left side of code block
         position = 'left',
         -- Amount of padding to add around the language
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
         language_pad = 0,
-        -- An array of language names for which background highlighting will be disabled
+        -- A list of language names for which background highlighting will be disabled
         -- Likely because that language has background highlights itself
         disable_background = { 'diff' },
         -- Width of the code block background:
         --  block: width of the code block
         --  full:  full width of the window
         width = 'full',
+        -- Amount of margin to add to the left of code blocks
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
+        -- Margin available space is computed after accounting for padding
+        left_margin = 0,
         -- Amount of padding to add to the left of code blocks
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
         left_pad = 0,
         -- Amount of padding to add to the right of code blocks when width is 'block'
+        -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
         right_pad = 0,
         -- Minimum width to use for code blocks when width is 'block'
         min_width = 0,
@@ -423,7 +452,7 @@ M.default_config = {
         enabled = true,
         -- Replaces '-'|'+'|'*' of 'list_item'
         -- How deeply nested the list is determines the 'level'
-        -- The 'level' is used to index into the array using a cycle
+        -- The 'level' is used to index into the list using a cycle
         -- If the item is a 'checkbox' a conceal is used to hide the bullet instead
         icons = { '●', '○', '◆', '◇' },
         -- Padding to add to the left of bullet point
