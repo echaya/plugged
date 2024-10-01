@@ -14,9 +14,6 @@ local configs = {}
 ---@field file_types string[]
 ---@field latex render.md.Latex
 ---@field custom_handlers table<string, render.md.Handler>
----@field markdown_query vim.treesitter.Query
----@field markdown_quote_query vim.treesitter.Query
----@field inline_query vim.treesitter.Query
 local M = {}
 
 ---@return boolean
@@ -47,11 +44,6 @@ function M.setup(default_config, user_config)
     M.file_types = config.file_types
     M.latex = config.latex
     M.custom_handlers = config.custom_handlers
-    vim.schedule(function()
-        M.markdown_query = vim.treesitter.query.parse('markdown', config.markdown_query)
-        M.markdown_quote_query = vim.treesitter.query.parse('markdown', config.markdown_quote_query)
-        M.inline_query = vim.treesitter.query.parse('markdown_inline', config.inline_query)
-    end)
     log.setup(config.log_level)
     for _, language in ipairs(M.file_types) do
         treesitter.inject(language, config.injections[language])
@@ -189,8 +181,13 @@ function M.validate()
         validator
             :spec(path, config, { 'checkbox', 'unchecked' }, nilable)
             :type({ 'icon', 'highlight' }, 'string')
+            :type('scope_highlight', { 'string', 'nil' })
             :check()
-        validator:spec(path, config, { 'checkbox', 'checked' }, nilable):type({ 'icon', 'highlight' }, 'string'):check()
+        validator
+            :spec(path, config, { 'checkbox', 'checked' }, nilable)
+            :type({ 'icon', 'highlight' }, 'string')
+            :type('scope_highlight', { 'string', 'nil' })
+            :check()
         validator:spec(path, config, { 'checkbox', 'custom' }, nilable):for_each(function(spec)
             spec:type({ 'raw', 'rendered', 'highlight' }, 'string'):check()
         end)
@@ -248,7 +245,6 @@ function M.validate()
         :type({ 'quote', 'pipe_table', 'callout', 'link', 'sign', 'indent', 'win_options' }, 'table')
         :list('render_modes', 'string', 'boolean')
         :type('log_runtime', 'boolean')
-        :type({ 'markdown_query', 'markdown_quote_query', 'inline_query' }, 'string')
         :type({ 'injections', 'latex', 'overrides', 'custom_handlers' }, 'table')
         :list('file_types', 'string')
         :one_of('preset', { 'none', 'lazy', 'obsidian' })

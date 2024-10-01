@@ -6,9 +6,9 @@ Plugin to improve viewing Markdown files in Neovim
 
 |           |         |
 | --------- | ------- |
-| ![Heading](https://github.com/user-attachments/assets/663a34c5-0438-4688-8204-332065f65835) | ![Table](https://github.com/user-attachments/assets/162986e1-91f0-4e13-a83f-6183d58b0fcb) |
-| ![Quote](https://github.com/user-attachments/assets/5343ca45-d5e1-4de0-9065-46499e1ed919)   | ![LaTeX](https://github.com/user-attachments/assets/9e8909e4-7256-45fc-b481-4aba8850ebc3) |
-| ![Callout](https://github.com/user-attachments/assets/4324ea72-a017-4175-9f9d-363da5e5f6ba) | |
+| ![Heading](https://github.com/user-attachments/assets/6d5ca2d3-3263-4ccd-beaf-b5795167d776) | ![Table](https://github.com/user-attachments/assets/7c7e6351-baff-4e72-b668-2e4fac76e276) |
+| ![Quote](https://github.com/user-attachments/assets/dba88e99-bff5-4b33-9017-ab55c1058d21)   | ![LaTeX](https://github.com/user-attachments/assets/85bac8f1-c7df-4078-9e9c-374de9b08e03) |
+| ![Callout](https://github.com/user-attachments/assets/bea7e1b9-d77f-4c3f-abf8-f6262b05fad2) | |
 
 <!-- panvimdoc-ignore-end -->
 
@@ -139,59 +139,6 @@ require('render-markdown').setup({
     --  lazy:     will attempt to stay up to date with LazyVim configuration
     --  none:     does nothing
     preset = 'none',
-    -- Capture groups that get pulled from markdown
-    markdown_query = [[
-        (section) @section
-
-        (atx_heading [
-            (atx_h1_marker)
-            (atx_h2_marker)
-            (atx_h3_marker)
-            (atx_h4_marker)
-            (atx_h5_marker)
-            (atx_h6_marker)
-        ] @heading)
-        (setext_heading) @heading
-
-        (thematic_break) @dash
-
-        (fenced_code_block) @code
-
-        [
-            (list_marker_plus)
-            (list_marker_minus)
-            (list_marker_star)
-        ] @list_marker
-
-        [
-            (task_list_marker_unchecked)
-            (task_list_marker_checked)
-        ] @checkbox
-
-        (block_quote) @quote
-
-        (pipe_table) @table
-    ]],
-    -- Capture groups that get pulled from quote nodes
-    markdown_quote_query = [[
-        [
-            (block_quote_marker)
-            (block_continuation)
-        ] @quote_marker
-    ]],
-    -- Capture groups that get pulled from inline markdown
-    inline_query = [[
-        (code_span) @code
-
-        (shortcut_link) @shortcut
-
-        [
-            (image)
-            (email_autolink)
-            (inline_link)
-            (full_reference_link)
-        ] @link
-    ]],
     -- The level of logs to write to file: vim.fn.stdpath('state') .. '/render-markdown.log'
     -- Only intended to be used for plugin development / debugging
     log_level = 'error',
@@ -402,12 +349,16 @@ require('render-markdown').setup({
             icon = '󰄱 ',
             -- Highlight for the unchecked icon
             highlight = 'RenderMarkdownUnchecked',
+            -- Highlight for item associated with unchecked checkbox
+            scope_highlight = nil,
         },
         checked = {
             -- Replaces '[x]' of 'task_list_marker_checked'
             icon = '󰱒 ',
             -- Highligh for the checked icon
             highlight = 'RenderMarkdownChecked',
+            -- Highlight for item associated with checked checkbox
+            scope_highlight = nil,
         },
         -- Define custom checkbox states, more involved as they are not part of the markdown grammar
         -- As a result this requires neovim >= 0.10.0 since it relies on 'inline' extmarks
@@ -830,12 +781,16 @@ require('render-markdown').setup({
             icon = '󰄱 ',
             -- Highlight for the unchecked icon
             highlight = 'RenderMarkdownUnchecked',
+            -- Highlight for item associated with unchecked checkbox
+            scope_highlight = nil,
         },
         checked = {
             -- Replaces '[x]' of 'task_list_marker_checked'
             icon = '󰱒 ',
             -- Highligh for the checked icon
             highlight = 'RenderMarkdownChecked',
+            -- Highlight for item associated with checked checkbox
+            scope_highlight = nil,
         },
         -- Define custom checkbox states, more involved as they are not part of the markdown grammar
         -- As a result this requires neovim >= 0.10.0 since it relies on 'inline' extmarks

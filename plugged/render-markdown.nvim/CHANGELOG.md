@@ -2,6 +2,17 @@
 
 ## Pre-release
 
+### Features
+
+- chechbox scope highlight [cb90caf](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/cb90caf64951b5b7515def7783b32e73883e374c)
+- plus / minus metadata dash rendering [35c37ca](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/35c37ca9f7955f9fa57eaee1c16edb3c80c40462)
+
+### Bug Fixes
+
+- only set option value if it changes [#186](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/186)
+  [91ce0b5](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/91ce0b5a6314b091bcba1541f557f591c7ddfe06)
+- handle offset conceal nodes [0cab868](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/0cab868ce2b017ff9deccee87c289dc1915317be)
+
 ## 7.2.0 (2024-09-26)
 
 ### Features

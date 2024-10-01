@@ -67,20 +67,21 @@ local M = {}
 ---@field public row? string
 ---@field public filler? string
 
----@class (exact) render.md.UserCustomComponent
----@field public raw? string
----@field public rendered? string
----@field public highlight? string
-
 ---@class (exact) render.md.UserQuote
 ---@field public enabled? boolean
 ---@field public icon? string
 ---@field public repeat_linebreak? boolean
 ---@field public highlight? string
 
+---@class (exact) render.md.UserCustomComponent
+---@field public raw? string
+---@field public rendered? string
+---@field public highlight? string
+
 ---@class (exact) render.md.UserCheckboxComponent
 ---@field public icon? string
 ---@field public highlight? string
+---@field public scope_highlight? string
 
 ---@alias render.md.checkbox.Position 'overlay'|'inline'
 
@@ -89,7 +90,7 @@ local M = {}
 ---@field public position? render.md.checkbox.Position
 ---@field public unchecked? render.md.UserCheckboxComponent
 ---@field public checked? render.md.UserCheckboxComponent
----@field public custom? table<string, render.md.CustomComponent>
+---@field public custom? table<string, render.md.UserCustomComponent>
 
 ---@class (exact) render.md.UserBullet
 ---@field public enabled? boolean
@@ -186,9 +187,6 @@ local M = {}
 
 ---@class (exact) render.md.UserConfig: render.md.UserBufferConfig
 ---@field public preset? render.md.config.Preset
----@field public markdown_query? string
----@field public markdown_quote_query? string
----@field public inline_query? string
 ---@field public log_level? render.md.config.LogLevel
 ---@field public log_runtime? boolean
 ---@field public file_types? string[]
@@ -213,59 +211,6 @@ M.default_config = {
     --  lazy:     will attempt to stay up to date with LazyVim configuration
     --  none:     does nothing
     preset = 'none',
-    -- Capture groups that get pulled from markdown
-    markdown_query = [[
-        (section) @section
-
-        (atx_heading [
-            (atx_h1_marker)
-            (atx_h2_marker)
-            (atx_h3_marker)
-            (atx_h4_marker)
-            (atx_h5_marker)
-            (atx_h6_marker)
-        ] @heading)
-        (setext_heading) @heading
-
-        (thematic_break) @dash
-
-        (fenced_code_block) @code
-
-        [
-            (list_marker_plus)
-            (list_marker_minus)
-            (list_marker_star)
-        ] @list_marker
-
-        [
-            (task_list_marker_unchecked)
-            (task_list_marker_checked)
-        ] @checkbox
-
-        (block_quote) @quote
-
-        (pipe_table) @table
-    ]],
-    -- Capture groups that get pulled from quote nodes
-    markdown_quote_query = [[
-        [
-            (block_quote_marker)
-            (block_continuation)
-        ] @quote_marker
-    ]],
-    -- Capture groups that get pulled from inline markdown
-    inline_query = [[
-        (code_span) @code
-
-        (shortcut_link) @shortcut
-
-        [
-            (image)
-            (email_autolink)
-            (inline_link)
-            (full_reference_link)
-        ] @link
-    ]],
     -- The level of logs to write to file: vim.fn.stdpath('state') .. '/render-markdown.log'
     -- Only intended to be used for plugin development / debugging
     log_level = 'error',
@@ -476,12 +421,16 @@ M.default_config = {
             icon = '󰄱 ',
             -- Highlight for the unchecked icon
             highlight = 'RenderMarkdownUnchecked',
+            -- Highlight for item associated with unchecked checkbox
+            scope_highlight = nil,
         },
         checked = {
             -- Replaces '[x]' of 'task_list_marker_checked'
             icon = '󰱒 ',
             -- Highligh for the checked icon
             highlight = 'RenderMarkdownChecked',
+            -- Highlight for item associated with checked checkbox
+            scope_highlight = nil,
         },
         -- Define custom checkbox states, more involved as they are not part of the markdown grammar
         -- As a result this requires neovim >= 0.10.0 since it relies on 'inline' extmarks

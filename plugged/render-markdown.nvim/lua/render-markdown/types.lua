@@ -50,20 +50,21 @@
 ---@field public row string
 ---@field public filler string
 
----@class (exact) render.md.CustomComponent
----@field public raw string
----@field public rendered string
----@field public highlight string
-
 ---@class (exact) render.md.Quote
 ---@field public enabled boolean
 ---@field public icon string
 ---@field public repeat_linebreak boolean
 ---@field public highlight string
 
+---@class (exact) render.md.CustomComponent
+---@field public raw string
+---@field public rendered string
+---@field public highlight string
+
 ---@class (exact) render.md.CheckboxComponent
 ---@field public icon string
 ---@field public highlight string
+---@field public scope_highlight? string
 
 ---@class (exact) render.md.Checkbox
 ---@field public enabled boolean
@@ -156,9 +157,6 @@
 
 ---@class (exact) render.md.Config: render.md.BufferConfig
 ---@field public preset render.md.config.Preset
----@field public markdown_query string
----@field public markdown_quote_query string
----@field public inline_query string
 ---@field public log_level render.md.config.LogLevel
 ---@field public log_runtime boolean
 ---@field public file_types string[]
