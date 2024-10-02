@@ -1,6 +1,6 @@
 local api = vim.api
 local lsp = vim.lsp
-local uv = vim.loop
+local uv = vim.uv
 
 local async = require 'lspconfig.async'
 local util = require 'lspconfig.util'
@@ -117,7 +117,7 @@ function M:_start_new_client(bufnr, new_config, root_dir, single_file)
   if not new_config.cmd then
     vim.notify(
       string.format(
-        '[lspconfig] cmd not defined for %q. Manually set cmd in the setup {} call according to server_configurations.md, see :help lspconfig-index.',
+        '[lspconfig] cmd not defined for %q. Manually set cmd in the setup {} call according to configs.md, see :help lspconfig-setup.',
         new_config.name
       ),
       vim.log.levels.ERROR

@@ -2,7 +2,7 @@ require 'lspconfig'
 local configs = require 'lspconfig.configs'
 local util = require 'lspconfig.util'
 local inspect = vim.inspect
-local uv = vim.loop
+local uv = vim.uv
 local fn = vim.fn
 
 local function template(s, params)
@@ -13,6 +13,17 @@ local function map_list(t, func)
   local res = {}
   for i, v in ipairs(t) do
     local x = func(v, i)
+    if x ~= nil then
+      table.insert(res, x)
+    end
+  end
+  return res
+end
+
+local function map_sorted(t, func)
+  local res = {}
+  for k, v in vim.spairs(t) do
+    local x = func(k, v)
     if x ~= nil then
       table.insert(res, x)
     end
@@ -56,14 +67,6 @@ local function readfile(path)
   return io.open(path):read '*a'
 end
 
-local function sorted_map_table(t, func)
-  local keys = vim.tbl_keys(t)
-  table.sort(keys)
-  return map_list(keys, function(k)
-    return func(k, t[k])
-  end)
-end
-
 local lsp_section_template = [[
 ## {{template_name}}
 
@@ -88,9 +91,9 @@ local function require_all_configs()
   vim.env.XDG_CACHE_HOME = '/home/user/.cache'
 
   -- Configs are lazy-loaded, tickle them to populate the `configs` singleton.
-  for _, v in ipairs(vim.fn.glob('lua/lspconfig/server_configurations/*.lua', 1, 1)) do
+  for _, v in ipairs(vim.fn.glob('lua/lspconfig/configs/*.lua', 1, 1)) do
     local module_name = v:gsub('.*/', ''):gsub('%.lua$', '')
-    configs[module_name] = require('lspconfig.server_configurations.' .. module_name)
+    configs[module_name] = require('lspconfig.configs.' .. module_name)
   end
 
   -- Reset the environment variables
@@ -102,8 +105,8 @@ local function make_lsp_sections()
   return make_section(
     0,
     '\n',
-    sorted_map_table(configs, function(template_name, template_object)
-      local template_def = template_object.document_config
+    map_sorted(configs, function(template_name, template_object)
+      local template_def = template_object.config_def
       local docs = template_def.docs
 
       local params = {
@@ -120,7 +123,7 @@ local function make_lsp_sections()
           end
           return '**Commands:**\n'
             .. make_section(0, '\n', {
-              sorted_map_table(template_def.commands, function(name, def)
+              map_sorted(template_def.commands, function(name, def)
                 if def.description then
                   return string.format('- %s: %s', name, def.description)
                 end
@@ -136,7 +139,7 @@ local function make_lsp_sections()
             return
           end
           return make_section(0, '\n', {
-            sorted_map_table(template_def.default_config, function(k, v)
+            map_sorted(template_def.default_config, function(k, v)
               local description = ((docs or {}).default_config or {})[k]
               if description and type(description) ~= 'string' then
                 description = inspect(description)
@@ -186,7 +189,7 @@ local function make_lsp_sections()
                     make_section(
                       0,
                       '\n\n',
-                      sorted_map_table(default_settings.properties, function(k, v)
+                      map_sorted(default_settings.properties, function(k, v)
                         local function tick(s)
                           return string.format('`%s`', s)
                         end
@@ -254,7 +257,7 @@ local function make_implemented_servers_list()
   return make_section(
     0,
     '\n',
-    sorted_map_table(configs, function(k)
+    map_sorted(configs, function(k)
       return template('- [{{server}}](#{{server}})', { server = k })
     end)
   )
@@ -268,10 +271,10 @@ local function generate_readme(template_file, params)
   local input_template = readfile(template_file)
   local readme_data = template(input_template, params)
 
-  local writer = io.open('doc/server_configurations.md', 'w')
+  local writer = assert(io.open('doc/configs.md', 'w'))
   writer:write(readme_data)
   writer:close()
-  uv.fs_copyfile('doc/server_configurations.md', 'doc/server_configurations.txt')
+  uv.fs_copyfile('doc/configs.md', 'doc/configs.txt')
 end
 
 require_all_configs()
