@@ -160,6 +160,7 @@ Nvim by running `:help lspconfig-all`.
 - [lwc_ls](#lwc_ls)
 - [m68k](#m68k)
 - [markdown_oxide](#markdown_oxide)
+- [marko-js](#marko-js)
 - [marksman](#marksman)
 - [matlab_ls](#matlab_ls)
 - [mdx_analyzer](#mdx_analyzer)
@@ -309,6 +310,7 @@ Nvim by running `:help lspconfig-all`.
 - [typos_lsp](#typos_lsp)
 - [typst_lsp](#typst_lsp)
 - [uiua](#uiua)
+- [ungrammar_languageserver](#ungrammar_languageserver)
 - [unison](#unison)
 - [unocss](#unocss)
 - [uvls](#uvls)
@@ -4088,6 +4090,9 @@ https://sr.ht/~xerool/fennel-ls/
 
 A language server for fennel.
 
+fennel-ls is configured using the closest file to your working directory named `flsproject.fnl`.
+All fennel-ls configuration options [can be found here](https://git.sr.ht/~xerool/fennel-ls/tree/HEAD/docs/manual.md#configuration).
+
 
 
 **Snippet to enable the language server:**
@@ -6901,6 +6906,40 @@ require'lspconfig'.markdown_oxide.setup{}
   - `single_file_support` : 
   ```lua
   true
+  ```
+
+
+## marko-js
+
+      https://github.com/marko-js/language-server
+
+      Using the Language Server Protocol to improve Marko's developer experience.
+
+      Can be installed via npm:
+      ```
+      npm i -g @marko/language-server
+      ```
+    
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.marko-js.setup{}
+```
+
+
+**Default values:**
+  - `cmd` : 
+  ```lua
+  { "marko-language-server", "--stdio" }
+  ```
+  - `filetypes` : 
+  ```lua
+  { "marko" }
+  ```
+  - `root_dir` : 
+  ```lua
+  see source file
   ```
 
 
@@ -12987,6 +13026,56 @@ require'lspconfig'.uiua.setup{}
   ```
 
 
+## ungrammar_languageserver
+
+https://github.com/binhtran432k/ungrammar-language-features
+Language Server for Ungrammar.
+
+Ungrammar Language Server can be installed via npm:
+```sh
+npm i ungrammar-languageserver -g
+```
+    
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.ungrammar_languageserver.setup{}
+```
+
+
+**Default values:**
+  - `cmd` : 
+  ```lua
+  { "ungrammar-languageserver", "--stdio" }
+  ```
+  - `filetypes` : 
+  ```lua
+  { "ungrammar" }
+  ```
+  - `root_dir` : 
+  ```lua
+  util.find_git_ancestor
+  ```
+  - `settings` : 
+  ```lua
+  {
+    ungrammar = {
+      format = {
+        enable = true
+      },
+      validate = {
+        enable = true
+      }
+    }
+  }
+  ```
+  - `single_file_support` : 
+  ```lua
+  true
+  ```
+
+
 ## unison
 
 https://github.com/unisonweb/unison/blob/trunk/docs/language-server.markdown
@@ -13044,7 +13133,7 @@ require'lspconfig'.unocss.setup{}
   ```
   - `filetypes` : 
   ```lua
-  { "html", "javascriptreact", "rescript", "typescriptreact", "vue", "svelte" }
+  { "erb", "haml", "hbs", "html", "css", "postcss", "javascript", "javascriptreact", "markdown", "ejs", "php", "svelte", "typescript", "typescriptreact", "vue-html", "vue", "sass", "scss", "less", "stylus", "astro", "rescript", "rust" }
   ```
   - `root_dir` : 
   ```lua

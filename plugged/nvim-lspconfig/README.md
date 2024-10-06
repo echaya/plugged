@@ -19,7 +19,7 @@ View the [documentation for all configs](doc/configs.md) or `:help lspconfig-all
 
 [![LuaRocks](https://img.shields.io/luarocks/v/neovim/nvim-lspconfig?logo=lua&color=purple)](https://luarocks.org/modules/neovim/nvim-lspconfig)
 
-* Requires Nvim 0.10 above. Update Nvim and nvim-lspconfig before reporting an issue.
+* Requires Nvim 0.9 above. Update Nvim and nvim-lspconfig before reporting an issue.
 * Install nvim-lspconfig using Vim's "packages" feature:
   ```
   git clone https://github.com/neovim/nvim-lspconfig ~/.config/nvim/pack/nvim/start/nvim-lspconfig
@@ -120,7 +120,7 @@ Most of the time, the reason for failure is present in the logs.
 
 ## Commands
 
-* `:LspInfo` shows the status of active and configured language servers.
+* `:LspInfo` (deprecated alias to `:che lspconfig`) shows the status of active and configured language servers.
 * `:LspStart <config_name>` Start the requested server name. Will only successfully start if the command detects a root directory matching the current config. Pass `autostart = false` to your `.setup{}` call for a language server if you would like to launch clients solely with this command. Defaults to all servers matching current buffer filetype.
 * `:LspStop <client_id>` Defaults to stopping all buffer clients.
 * `:LspRestart <client_id>` Defaults to restarting all buffer clients.

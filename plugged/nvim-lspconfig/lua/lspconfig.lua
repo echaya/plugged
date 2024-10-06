@@ -9,7 +9,7 @@ local M = {
 ---@class Alias
 ---@field to string The new name of the server
 ---@field version string The version that the alias will be removed in
----@field inconfig? boolean need shown in lspinfo
+---@field inconfig? boolean should display in healthcheck (`:checkhealth lspconfig`)
 local aliases = {
   ['fennel-ls'] = {
     to = 'fennel_ls',
@@ -48,6 +48,20 @@ M.server_aliases = function(name)
   return used_aliases
 end
 
+-- Temporary port of Nvim 0.10 vim.version:tostring.
+---@param version vim.Version
+local function version_string(version)
+  assert(version.major and version.minor and version.patch, 'invalid vim.Version table')
+  local ret = table.concat({ version.major, version.minor, version.patch }, '.')
+  if version.prerelease then
+    ret = ret .. '-' .. version.prerelease
+  end
+  if version.build and version.build ~= vim.NIL then
+    ret = ret .. '+' .. version.build
+  end
+  return ret
+end
+
 local mt = {}
 function mt:__index(k)
   if configs[k] == nil then
@@ -74,6 +88,16 @@ function mt:__index(k)
     end
   end
   return configs[k]
+end
+
+local minimum_neovim_version = '0.9'
+if vim.fn.has('nvim-' .. minimum_neovim_version) == 0 then
+  local msg = string.format(
+    'nvim-lspconfig requires Nvim version %s, but you are running: %s',
+    minimum_neovim_version,
+    vim.version and version_string(vim.version()) or 'older than v0.5.0'
+  )
+  error(msg)
 end
 
 return setmetatable(M, mt)
