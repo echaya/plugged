@@ -23,6 +23,7 @@ Nvim by running `:help lspconfig-all`.
 - [ballerina](#ballerina)
 - [basedpyright](#basedpyright)
 - [bashls](#bashls)
+- [basics_ls](#basics_ls)
 - [bazelrc_lsp](#bazelrc_lsp)
 - [beancount](#beancount)
 - [bicep](#bicep)
@@ -149,11 +150,13 @@ Nvim by running `:help lspconfig-all`.
 - [kcl](#kcl)
 - [koka](#koka)
 - [kotlin_language_server](#kotlin_language_server)
+- [kulala_ls](#kulala_ls)
 - [lean3ls](#lean3ls)
 - [leanls](#leanls)
 - [lelwel_ls](#lelwel_ls)
 - [lemminx](#lemminx)
 - [lexical](#lexical)
+- [lsp_ai](#lsp_ai)
 - [ltex](#ltex)
 - [lua_ls](#lua_ls)
 - [luau_lsp](#luau_lsp)
@@ -1143,6 +1146,51 @@ require'lspconfig'.bashls.setup{}
   {
     bashIde = {
       globPattern = "*@(.sh|.inc|.bash|.command)"
+    }
+  }
+  ```
+  - `single_file_support` : 
+  ```lua
+  true
+  ```
+
+
+## basics_ls
+
+https://github.com/antonk52/basics-language-server/
+
+Buffer, path, and snippet completion
+
+```sh
+npm install -g basics-language-server
+```
+
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.basics_ls.setup{}
+```
+
+
+**Default values:**
+  - `cmd` : 
+  ```lua
+  { "basics-language-server" }
+  ```
+  - `settings` : 
+  ```lua
+  {
+    buffer = {
+      enable = true,
+      minCompletionLength = 4
+    },
+    path = {
+      enable = true
+    },
+    snippet = {
+      enable = false,
+      sources = {}
     }
   }
   ```
@@ -5242,7 +5290,7 @@ require'lspconfig'.harper_ls.setup{}
   ```
   - `filetypes` : 
   ```lua
-  { "markdown", "rust", "typescript", "typescriptreact", "javascript", "python", "go", "c", "cpp", "ruby", "swift", "csharp", "toml", "lua", "gitcommit", "java", "html" }
+  { "markdown", "rust", "typescript", "typescriptreact", "javascript", "python", "go", "c", "cpp", "ruby", "swift", "cs", "toml", "lua", "gitcommit", "java", "html" }
   ```
   - `root_dir` : 
   ```lua
@@ -6399,6 +6447,39 @@ require'lspconfig'.kotlin_language_server.setup{}
   ```
 
 
+## kulala_ls
+
+https://github.com/mistweaverco/kulala-ls
+
+A minimal language server for HTTP syntax.
+
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.kulala_ls.setup{}
+```
+
+
+**Default values:**
+  - `cmd` : 
+  ```lua
+  { "kulala-ls", "--stdio" }
+  ```
+  - `filetypes` : 
+  ```lua
+  { "http" }
+  ```
+  - `root_dir` : 
+  ```lua
+  root_pattern('.git')
+  ```
+  - `single_file_support` : 
+  ```lua
+  true
+  ```
+
+
 ## lean3ls
 
 https://github.com/leanprover/lean-client-js/tree/master/lean-language-server
@@ -6588,6 +6669,40 @@ require'lspconfig'.lexical.setup{}
   - `root_dir` : 
   ```lua
   see source file
+  ```
+  - `single_file_support` : 
+  ```lua
+  true
+  ```
+
+
+## lsp_ai
+
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.lsp_ai.setup{}
+```
+
+
+**Default values:**
+  - `cmd` : 
+  ```lua
+  { "lsp-ai" }
+  ```
+  - `filetypes` : 
+  ```lua
+  {}
+  ```
+  - `init_options` : 
+  ```lua
+  {
+    memory = {
+      file_store = vim.empty_dict()
+    },
+    models = vim.empty_dict()
+  }
   ```
   - `single_file_support` : 
   ```lua
@@ -14278,4 +14393,6 @@ require'lspconfig'.zls.setup{}
 
 
 
+<!--
 vim:ft=markdown
+-->
