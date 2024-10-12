@@ -1,4 +1,4 @@
-*render-markdown.txt*          For 0.10.0         Last change: 2024 October 07
+*render-markdown.txt*          For 0.10.0         Last change: 2024 October 11
 
 ==============================================================================
 Table of Contents                          *render-markdown-table-of-contents*
@@ -238,6 +238,10 @@ Default Configuration ~
             top_pad = 0,
             -- Amount of empty lines below LaTeX blocks
             bottom_pad = 0,
+        },
+        on = {
+            -- Called when plugin initially attaches to a buffer
+            attach = function() end,
         },
         heading = {
             -- Turn on / off heading icon & background rendering

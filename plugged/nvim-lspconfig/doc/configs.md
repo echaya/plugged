@@ -1976,7 +1976,7 @@ require'lspconfig'.circom-lsp.setup{}
 
 https://clangd.llvm.org/installation.html
 
-- **NOTE:** Clang >= 11 is recommended! See [#23](https://github.com/neovim/nvim-lsp/issues/23).
+- **NOTE:** Clang >= 11 is recommended! See [#23](https://github.com/neovim/nvim-lspconfig/issues/23).
 - If `compile_commands.json` lives in a build directory, you should
   symlink it to the root of your source tree.
   ```
@@ -6677,6 +6677,16 @@ require'lspconfig'.lexical.setup{}
 
 
 ## lsp_ai
+
+https://github.com/SilasMarvin/lsp-ai
+
+LSP-AI is an open source language server that serves as a backend for AI-powered functionality in your favorite code
+editors. It offers features like in-editor chatting with LLMs and code completions.
+
+
+You will need to provide configuration for the inference backends and models you want to use, as well as configure
+completion/code actions. See the [wiki docs](https://github.com/SilasMarvin/lsp-ai/wiki/Configuration) and
+[examples](https://github.com/SilasMarvin/lsp-ai/blob/main/examples/nvim) for more information.
 
 
 

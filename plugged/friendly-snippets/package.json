@@ -45,8 +45,11 @@
             {
                 "language": "pydoc",
                 "path": "./snippets/python/pydoc.json"
+            },
+            {
+                "language": "python",
+                "path": "./snippets/python/pandas.json"
             }
         ]
     }
 }
-

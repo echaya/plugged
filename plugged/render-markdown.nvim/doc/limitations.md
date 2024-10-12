@@ -7,34 +7,49 @@
 `LaTeX` formula evaluations are placed above text rather than overlayed.
 
 A way around this is to use a separate plugin for `LaTeX` and disable that feature
-in this plugin.
+in this plugin. Different plugins will have different setups, below are some examples:
 
-As an example you can use [latex.nvim](https://github.com/ryleelyman/latex.nvim):
+[latex.nvim](https://github.com/ryleelyman/latex.nvim)
 
 ```lua
 {
-    'ryleelyman/latex.nvim',
-    config = function()
-        require('latex').setup({})
-    end,
+    { 'ryleelyman/latex.nvim', opts = {} },
+    {
+        'MeanderingProgrammer/render-markdown.nvim',
+        dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' },
+        opts = {
+            latex = { enabled = false },
+            win_options = { conceallevel = { rendered = 2 } },
+        },
+    },
 }
 ```
 
-Then disable `LaTeX` from this plugin:
+[nabla.nvim](https://github.com/jbyuki/nabla.nvim)
 
 ```lua
-require('render-markdown').setup({
-    latex = { enabled = false },
-    win_options = {
-        conceallevel = { rendered = 2 },
+{
+    { 'jbyuki/nabla.nvim' },
+    {
+        'MeanderingProgrammer/render-markdown.nvim',
+        dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' },
+        opts = {
+            latex = { enabled = false },
+            win_options = { conceallevel = { rendered = 2 } },
+            on = {
+                attach = function()
+                    require('nabla').enable_virt({ autogen = true })
+                end,
+            },
+        },
     },
-})
+}
 ```
 
 > [!NOTE]
 >
 > These plugins can rely on a specific `conceallevel` to work properly, which
-> you will need to configure in this plugin like in the example above.
+> you will need to configure in this plugin like in the examples above.
 
 ## Does Not Run in Telescope Preview
 
