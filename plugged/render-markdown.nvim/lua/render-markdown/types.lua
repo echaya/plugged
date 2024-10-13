@@ -33,12 +33,17 @@
 ---@field public icon string
 ---@field public highlight string
 
+---@class (exact) render.md.WikiLink
+---@field public icon string
+---@field public highlight string
+
 ---@class (exact) render.md.Link
 ---@field public enabled boolean
 ---@field public image string
 ---@field public email string
 ---@field public hyperlink string
 ---@field public highlight string
+---@field public wiki render.md.WikiLink
 ---@field public custom table<string, render.md.LinkComponent>
 
 ---@class (exact) render.md.CustomCallout
@@ -101,6 +106,7 @@
 ---@field public style render.md.code.Style
 ---@field public position render.md.code.Position
 ---@field public language_pad number
+---@field public language_name boolean
 ---@field public disable_background string[]
 ---@field public width render.md.code.Width
 ---@field public left_margin number
@@ -112,6 +118,7 @@
 ---@field public below string
 ---@field public highlight string
 ---@field public highlight_inline string
+---@field public highlight_language? string
 
 ---@class (exact) render.md.Paragraph
 ---@field public enabled boolean
@@ -142,6 +149,7 @@
 
 ---@class (exact) render.md.AntiConceal
 ---@field public enabled boolean
+---@field public ignore table<render.md.Element, boolean>
 ---@field public above integer
 ---@field public below integer
 

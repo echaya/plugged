@@ -46,12 +46,17 @@ local M = {}
 ---@field public icon? string
 ---@field public highlight? string
 
+---@class (exact) render.md.UserWikiLink
+---@field public icon? string
+---@field public highlight? string
+
 ---@class (exact) render.md.UserLink
 ---@field public enabled? boolean
 ---@field public image? string
 ---@field public email? string
 ---@field public hyperlink? string
 ---@field public highlight? string
+---@field public wiki? render.md.UserWikiLink
 ---@field public custom? table<string, render.md.UserLinkComponent>
 
 ---@class (exact) render.md.UserCustomCallout
@@ -125,6 +130,7 @@ local M = {}
 ---@field public style? render.md.code.Style
 ---@field public position? render.md.code.Position
 ---@field public language_pad? number
+---@field public language_name? boolean
 ---@field public disable_background? string[]
 ---@field public width? render.md.code.Width
 ---@field public left_margin? number
@@ -136,6 +142,7 @@ local M = {}
 ---@field public below? string
 ---@field public highlight? string
 ---@field public highlight_inline? string
+---@field public highlight_language? string
 
 ---@class (exact) render.md.UserParagraph
 ---@field public enabled? boolean
@@ -167,8 +174,26 @@ local M = {}
 ---@class (exact) render.md.UserPadding
 ---@field public highlight? string
 
+---@alias render.md.Element
+---| 'head_icon'
+---| 'head_background'
+---| 'head_border'
+---| 'code_language'
+---| 'code_background'
+---| 'code_border'
+---| 'dash'
+---| 'bullet'
+---| 'check_icon'
+---| 'check_scope'
+---| 'quote'
+---| 'table_border'
+---| 'callout'
+---| 'link'
+---| 'sign'
+
 ---@class (exact) render.md.UserAntiConceal
 ---@field public enabled? boolean
+---@field public ignore? table<render.md.Element, boolean>
 ---@field public above? integer
 ---@field public below? integer
 
@@ -255,6 +280,13 @@ M.default_config = {
     anti_conceal = {
         -- This enables hiding any added text on the line the cursor is on
         enabled = true,
+        -- Which elements to always show, ignoring anti conceal behavior. Possible values are:
+        --  head_icon, head_background, head_border, code_language, code_background, code_border
+        --  dash, bullet, check_icon, check_scope, quote, table_border, callout, link, sign
+        ignore = {
+            code_background = true,
+            sign = true,
+        },
         -- Number of lines above cursor to show
         above = 0,
         -- Number of lines below cursor to show
@@ -376,6 +408,8 @@ M.default_config = {
         -- Amount of padding to add around the language
         -- If a floating point value < 1 is provided it is treated as a percentage of the available window space
         language_pad = 0,
+        -- Whether to include the language name next to the icon
+        language_name = true,
         -- A list of language names for which background highlighting will be disabled
         -- Likely because that language has background highlights itself
         disable_background = { 'diff' },
@@ -407,6 +441,8 @@ M.default_config = {
         highlight = 'RenderMarkdownCode',
         -- Highlight for inline code
         highlight_inline = 'RenderMarkdownCodeInline',
+        -- Highlight for language, overrides icon provider value
+        highlight_language = nil,
     },
     dash = {
         -- Turn on / off thematic break rendering
@@ -574,6 +610,8 @@ M.default_config = {
         hyperlink = '󰌹 ',
         -- Applies to the fallback inlined icon
         highlight = 'RenderMarkdownLink',
+        -- Applies to WikiLink elements
+        wiki = { icon = '󱗖 ', highlight = 'RenderMarkdownWikiLink' },
         -- Define custom destination patterns so icons can quickly inform you of what a link
         -- contains. Applies to 'inline_link' and wikilink nodes.
         -- Can specify as many additional values as you like following the 'web' pattern below
