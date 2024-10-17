@@ -74,6 +74,7 @@ local M = {}
 ---@field public preset? render.md.table.Preset
 ---@field public style? render.md.table.Style
 ---@field public cell? render.md.table.Cell
+---@field public padding? integer
 ---@field public min_width? integer
 ---@field public border? string[]
 ---@field public alignment_indicator? string
@@ -91,6 +92,7 @@ local M = {}
 ---@field public raw? string
 ---@field public rendered? string
 ---@field public highlight? string
+---@field public scope_highlight? string
 
 ---@class (exact) render.md.UserCheckboxComponent
 ---@field public icon? string
@@ -191,9 +193,11 @@ local M = {}
 ---| 'link'
 ---| 'sign'
 
+---@alias render.md.config.conceal.Ignore table<render.md.Element, string[]|boolean>
+
 ---@class (exact) render.md.UserAntiConceal
 ---@field public enabled? boolean
----@field public ignore? table<render.md.Element, boolean>
+---@field public ignore? render.md.config.conceal.Ignore
 ---@field public above? integer
 ---@field public below? integer
 
@@ -280,7 +284,9 @@ M.default_config = {
     anti_conceal = {
         -- This enables hiding any added text on the line the cursor is on
         enabled = true,
-        -- Which elements to always show, ignoring anti conceal behavior. Possible values are:
+        -- Which elements to always show, ignoring anti conceal behavior. Values can either be booleans
+        -- to fix the behavior or string lists representing modes where anti conceal behavior will be
+        -- ignored. Possible keys are:
         --  head_icon, head_background, head_border, code_language, code_background, code_border
         --  dash, bullet, check_icon, check_scope, quote, table_border, callout, link, sign
         ignore = {
@@ -501,11 +507,12 @@ M.default_config = {
         -- As a result this requires neovim >= 0.10.0 since it relies on 'inline' extmarks
         -- Can specify as many additional states as you like following the 'todo' pattern below
         --   The key in this case 'todo' is for healthcheck and to allow users to change its values
-        --   'raw':       Matched against the raw text of a 'shortcut_link'
-        --   'rendered':  Replaces the 'raw' value when rendering
-        --   'highlight': Highlight for the 'rendered' icon
+        --   'raw':             Matched against the raw text of a 'shortcut_link'
+        --   'rendered':        Replaces the 'raw' value when rendering
+        --   'highlight':       Highlight for the 'rendered' icon
+        --   'scope_highlight': Highlight for item associated with custom checkbox
         custom = {
-            todo = { raw = '[-]', rendered = '󰥔 ', highlight = 'RenderMarkdownTodo' },
+            todo = { raw = '[-]', rendered = '󰥔 ', highlight = 'RenderMarkdownTodo', scope_highlight = nil },
         },
     },
     quote = {
@@ -542,6 +549,8 @@ M.default_config = {
         --  padded:  raw + cells are padded to maximum visual width for each column
         --  trimmed: padded except empty space is subtracted from visual width calculation
         cell = 'padded',
+        -- Amount of space to put between cell contents and border
+        padding = 1,
         -- Minimum column width to use for padded or trimmed cell
         min_width = 0,
         -- Characters used to replace table border

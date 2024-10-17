@@ -369,6 +369,7 @@ FORMATTERS                                                    *conform-formatter
 `jsonnetfmt` - jsonnetfmt is a command line tool to format jsonnet files.
 `just` - Format Justfile.
 `kcl` - The KCL Format tool modifies the files according to the KCL code style.
+`kdlfmt` - A formatter for kdl documents.
 `ktfmt` - Reformats Kotlin source code to comply with the common community
         standard conventions.
 `ktlint` - An anti-bikeshedding Kotlin linter with built-in formatter.
@@ -483,6 +484,7 @@ FORMATTERS                                                    *conform-formatter
 `twig-cs-fixer` - Automatically fix Twig Coding Standards issues
 `typos` - Source code spell checker
 `typstyle` - Beautiful and reliable typst code formatter.
+`ufmt` - Safe, atomic formatting with black and µsort.
 `uncrustify` - A source code beautifier for C, C++, C#, ObjectiveC, D, Java,
              Pawn and Vala.
 `usort` - Safe, minimal import sorting for Python projects.

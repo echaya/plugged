@@ -6,9 +6,9 @@ Plugin to improve viewing Markdown files in Neovim
 
 |           |         |
 | --------- | ------- |
-| ![Heading](https://github.com/user-attachments/assets/6d5ca2d3-3263-4ccd-beaf-b5795167d776) | ![Table](https://github.com/user-attachments/assets/7c7e6351-baff-4e72-b668-2e4fac76e276) |
-| ![Quote](https://github.com/user-attachments/assets/dba88e99-bff5-4b33-9017-ab55c1058d21)   | ![LaTeX](https://github.com/user-attachments/assets/85bac8f1-c7df-4078-9e9c-374de9b08e03) |
-| ![Callout](https://github.com/user-attachments/assets/bea7e1b9-d77f-4c3f-abf8-f6262b05fad2) | |
+| ![Heading](https://github.com/user-attachments/assets/6184ea2d-1769-4c37-bdc4-e6b0d1ca5c00) | ![Table](https://github.com/user-attachments/assets/328473e7-450a-4f52-bc0e-02ccc85e6268) |
+| ![Quote](https://github.com/user-attachments/assets/e7da67bc-7a3f-49f0-b8f6-3e61cf59197b)   | ![LaTeX](https://github.com/user-attachments/assets/58da917b-5ca5-4705-9cad-978e7bb8574a) |
+| ![Callout](https://github.com/user-attachments/assets/73253fa4-ff4f-4562-a721-30c0a218c280) | |
 
 <!-- panvimdoc-ignore-end -->
 
@@ -33,7 +33,7 @@ Plugin to improve viewing Markdown files in Neovim
   - Checkboxes: icon, color, user defined states [^1]
   - Block quotes: icon, color, line breaks [^1]
   - Callouts: icon, color, user defined values, Github & Obsidian defaults
-  - Tables: border, color, alignment indicator, auto align cells always to left [^1]
+  - Tables: border, color, alignment indicator, auto align cells [^1]
   - Links [^1]: icon, color, user defined destinations
   - `LaTeX` blocks [^3]: renders formulas
   - Org indent mode [^1]: per level padding
@@ -169,7 +169,9 @@ require('render-markdown').setup({
     anti_conceal = {
         -- This enables hiding any added text on the line the cursor is on
         enabled = true,
-        -- Which elements to always show, ignoring anti conceal behavior. Possible values are:
+        -- Which elements to always show, ignoring anti conceal behavior. Values can either be booleans
+        -- to fix the behavior or string lists representing modes where anti conceal behavior will be
+        -- ignored. Possible keys are:
         --  head_icon, head_background, head_border, code_language, code_background, code_border
         --  dash, bullet, check_icon, check_scope, quote, table_border, callout, link, sign
         ignore = {
@@ -390,11 +392,12 @@ require('render-markdown').setup({
         -- As a result this requires neovim >= 0.10.0 since it relies on 'inline' extmarks
         -- Can specify as many additional states as you like following the 'todo' pattern below
         --   The key in this case 'todo' is for healthcheck and to allow users to change its values
-        --   'raw':       Matched against the raw text of a 'shortcut_link'
-        --   'rendered':  Replaces the 'raw' value when rendering
-        --   'highlight': Highlight for the 'rendered' icon
+        --   'raw':             Matched against the raw text of a 'shortcut_link'
+        --   'rendered':        Replaces the 'raw' value when rendering
+        --   'highlight':       Highlight for the 'rendered' icon
+        --   'scope_highlight': Highlight for item associated with custom checkbox
         custom = {
-            todo = { raw = '[-]', rendered = '󰥔 ', highlight = 'RenderMarkdownTodo' },
+            todo = { raw = '[-]', rendered = '󰥔 ', highlight = 'RenderMarkdownTodo', scope_highlight = nil },
         },
     },
     quote = {
@@ -431,6 +434,8 @@ require('render-markdown').setup({
         --  padded:  raw + cells are padded to maximum visual width for each column
         --  trimmed: padded except empty space is subtracted from visual width calculation
         cell = 'padded',
+        -- Amount of space to put between cell contents and border
+        padding = 1,
         -- Minimum column width to use for padded or trimmed cell
         min_width = 0,
         -- Characters used to replace table border
@@ -854,11 +859,12 @@ require('render-markdown').setup({
         -- As a result this requires neovim >= 0.10.0 since it relies on 'inline' extmarks
         -- Can specify as many additional states as you like following the 'todo' pattern below
         --   The key in this case 'todo' is for healthcheck and to allow users to change its values
-        --   'raw':       Matched against the raw text of a 'shortcut_link'
-        --   'rendered':  Replaces the 'raw' value when rendering
-        --   'highlight': Highlight for the 'rendered' icon
+        --   'raw':             Matched against the raw text of a 'shortcut_link'
+        --   'rendered':        Replaces the 'raw' value when rendering
+        --   'highlight':       Highlight for the 'rendered' icon
+        --   'scope_highlight': Highlight for item associated with custom checkbox
         custom = {
-            todo = { raw = '[-]', rendered = '󰥔 ', highlight = 'RenderMarkdownTodo' },
+            todo = { raw = '[-]', rendered = '󰥔 ', highlight = 'RenderMarkdownTodo', scope_highlight = nil },
         },
     },
 })
@@ -925,6 +931,8 @@ require('render-markdown').setup({
         --  padded:  raw + cells are padded to maximum visual width for each column
         --  trimmed: padded except empty space is subtracted from visual width calculation
         cell = 'padded',
+        -- Amount of space to put between cell contents and border
+        padding = 1,
         -- Minimum column width to use for padded or trimmed cell
         min_width = 0,
         -- Characters used to replace table border

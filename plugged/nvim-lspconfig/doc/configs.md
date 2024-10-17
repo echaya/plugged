@@ -1359,7 +1359,7 @@ require'lspconfig'.biome.setup{}
   ```
   - `filetypes` : 
   ```lua
-  { "javascript", "javascriptreact", "json", "jsonc", "typescript", "typescript.tsx", "typescriptreact", "astro", "svelte", "vue", "css" }
+  { "astro", "css", "graphql", "javascript", "javascriptreact", "json", "jsonc", "svelte", "typescript", "typescript.tsx", "typescriptreact", "vue" }
   ```
   - `root_dir` : 
   ```lua
@@ -6158,7 +6158,7 @@ cp $(go env GOPATH)/bin/jq-lsp /usr/local/bin
 Note: To activate properly nvim needs to know the jq filetype.
 You can add it via:
 ```lua
-vim.cmd(\[\[au BufRead,BufNewFile *.jq setfiletype jq\]\])
+vim.cmd([[au BufRead,BufNewFile *.jq setfiletype jq]])
 ```
 
 
@@ -12518,7 +12518,6 @@ require'lspconfig'.texlab.setup{}
   ```lua
   {
     texlab = {
-      auxDirectory = ".",
       bibtexFormatter = "texlab",
       build = {
         args = { "-pdf", "-interaction=nonstopmode", "-synctex=1", "%f" },
@@ -13313,7 +13312,7 @@ cargo install --path .
 Note: To activate properly nvim needs to know the uvl filetype.
 You can add it via:
 ```lua
-vim.cmd(\[\[au BufRead,BufNewFile *.uvl setfiletype uvl\]\])
+vim.cmd([[au BufRead,BufNewFile *.uvl setfiletype uvl]])
 ```
 
 

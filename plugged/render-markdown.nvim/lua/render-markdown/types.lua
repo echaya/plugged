@@ -57,6 +57,7 @@
 ---@field public preset render.md.table.Preset
 ---@field public style render.md.table.Style
 ---@field public cell render.md.table.Cell
+---@field public padding integer
 ---@field public min_width integer
 ---@field public border string[]
 ---@field public alignment_indicator string
@@ -74,6 +75,7 @@
 ---@field public raw string
 ---@field public rendered string
 ---@field public highlight string
+---@field public scope_highlight? string
 
 ---@class (exact) render.md.CheckboxComponent
 ---@field public icon string
@@ -149,7 +151,7 @@
 
 ---@class (exact) render.md.AntiConceal
 ---@field public enabled boolean
----@field public ignore table<render.md.Element, boolean>
+---@field public ignore render.md.config.conceal.Ignore
 ---@field public above integer
 ---@field public below integer
 
