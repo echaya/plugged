@@ -68,7 +68,7 @@ end
 local function try_fmt_version(prog)
   local all = nil --- Collected output from all attempts.
   local tried = '' --- Attempted commands.
-  for _, v_arg in ipairs { '--version', '-v', 'version', '--help', '-h' } do
+  for _, v_arg in ipairs { '--version', '-version', 'version', '--help' } do
     local cmd = { prog, v_arg }
     local out = try_get_cmd_output(cmd)
     all = out and ('%s\n%s'):format(all or '', out) or all
@@ -88,9 +88,11 @@ local function fmtpath(p)
   if vim.startswith(p, 'Running') then
     return p
   end
+  local isdir = 0 ~= vim.fn.isdirectory(vim.fn.expand(p))
   local r = vim.fn.fnamemodify(p, ':~')
-  -- If the path ends with "~" add a space (:checkhealth currently uses ft=help).
-  return r .. (vim.endswith(r, '~') and ' ' or '')
+  -- Force directory path to end with "/".
+  -- Bonus: avoids wrong highlighting for "~" (because :checkhealth currently uses ft=help).
+  return r .. ((isdir and not r:find('[/\\\\]%s*$')) and '/' or '')
 end
 
 local cmd_type = {
@@ -121,10 +123,11 @@ local function make_info(config_or_client)
   info.autostart = (config.autostart and 'true') or 'false'
   info.filetypes = table.concat(config.filetypes or {}, ', ')
 
+  local version = type(config.cmd) == 'function' and '? (cmd is a function)' or try_fmt_version(config.cmd[1])
   local info_lines = {
     'filetypes:         ' .. info.filetypes,
     'cmd:               ' .. fmtpath(info.cmd_desc),
-    ('%-18s %s'):format('version:', try_fmt_version(config.cmd[1])),
+    ('%-18s %s'):format('version:', version),
     'executable:        ' .. info.cmd_is_executable,
     'autostart:         ' .. info.autostart,
   }
@@ -204,17 +207,16 @@ local function make_client_info(client, fname)
       end
     end
   end
-
   if not client_info.root_dir then
     client_info.root_dir = 'Running in single file mode.'
   end
-  client_info.attached_buffers_list = table.concat(vim.lsp.get_buffers_by_client_id(client.id), ', ')
 
-  table.insert(
-    info_lines,
-    1,
-    ('Client: %s (id: %s, bufnr: [%s])'):format(client.name, client.id, client_info.attached_buffers_list)
-  )
+  client_info.attached_bufs = table.concat(vim.lsp.get_buffers_by_client_id(client.id), ', ')
+
+  info_lines = vim.list_extend({
+    ('Client: `%s` (id: %s, bufnr: [%s])'):format(client.name, client.id, client_info.attached_bufs),
+    'root directory:    ' .. fmtpath(client_info.root_dir),
+  }, info_lines)
 
   return table.concat(info_lines, '\n')
 end

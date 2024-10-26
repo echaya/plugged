@@ -91,7 +91,8 @@
 
 ---@class (exact) render.md.Bullet
 ---@field public enabled boolean
----@field public icons string[]
+---@field public icons (string|string[])[]
+---@field public ordered_icons (string|string[])[]
 ---@field public left_pad integer
 ---@field public right_pad integer
 ---@field public highlight string

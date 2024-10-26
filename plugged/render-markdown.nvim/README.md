@@ -4,11 +4,13 @@ Plugin to improve viewing Markdown files in Neovim
 
 <!-- panvimdoc-ignore-start -->
 
-|           |         |
-| --------- | ------- |
-| ![Heading](https://github.com/user-attachments/assets/6184ea2d-1769-4c37-bdc4-e6b0d1ca5c00) | ![Table](https://github.com/user-attachments/assets/328473e7-450a-4f52-bc0e-02ccc85e6268) |
-| ![Quote](https://github.com/user-attachments/assets/e7da67bc-7a3f-49f0-b8f6-3e61cf59197b)   | ![LaTeX](https://github.com/user-attachments/assets/58da917b-5ca5-4705-9cad-978e7bb8574a) |
-| ![Callout](https://github.com/user-attachments/assets/73253fa4-ff4f-4562-a721-30c0a218c280) | |
+| Screenshot | Video     |
+| ---------- | --------- |
+| ![Heading](https://github.com/user-attachments/assets/36f0fbb6-99bc-4cb2-8f69-fbea3d10abf1) | ![Heading](https://github.com/user-attachments/assets/e57a53ea-f0bf-48db-90c1-0c2365ab3c54) |
+| ![Table](https://github.com/user-attachments/assets/cbb81758-820d-467c-bc44-07003cb532bb)   | ![Table](https://github.com/user-attachments/assets/5cd2b69d-ef17-4c6e-9510-59ed10e385d5)   |
+| ![Quote](https://github.com/user-attachments/assets/822ae62c-bc0f-40a7-b8bb-fb3a885a95f9)   | ![Quote](https://github.com/user-attachments/assets/aa002ac7-b30f-4079-bba9-505160a4ad78)   |
+| ![Callout](https://github.com/user-attachments/assets/397ddd7b-bb82-47d0-ad9d-bdbe2f9858d7) | ![Callout](https://github.com/user-attachments/assets/250aaeda-6141-4f4c-b72c-103875ca6eb8) |
+| ![LaTeX](https://github.com/user-attachments/assets/7b859c0a-1bf6-4398-88b5-7bcde12f2390)   | ![LaTeX](https://github.com/user-attachments/assets/9ef14030-f688-47fd-95ff-befab1253322)   |
 
 <!-- panvimdoc-ignore-end -->
 
@@ -22,7 +24,7 @@ Plugin to improve viewing Markdown files in Neovim
 - Modal rendering: changes between `rendered` and `raw` view based on mode
 - Anti-conceal: hides virtual text added by this plugin on cursor line
 - Window options: changes option values between `rendered` and `raw` view
-- Large files: only renders visisble range, can be entirely disabled based on size
+- Large files: only renders visible range, can be entirely disabled based on size
 - Custom rendering: provides extension point where user can add anything
 - Renders the following `markdown` components out of the box:
   - Headings: icon, color, border, padding [^1], width
@@ -164,7 +166,7 @@ require('render-markdown').setup({
         },
     },
     -- Vim modes that will show a rendered view of the markdown file
-    -- All other modes will be uneffected by this plugin
+    -- All other modes will be unaffected by this plugin
     render_modes = { 'n', 'c' },
     anti_conceal = {
         -- This enables hiding any added text on the line the cursor is on
@@ -241,9 +243,9 @@ require('render-markdown').setup({
         -- Minimum width to use for headings when width is 'block'
         -- Can also be a list of integers in which case the 'level' is used to index into the list using a clamp
         min_width = 0,
-        -- Determins if a border is added above and below headings
+        -- Determines if a border is added above and below headings
         border = false,
-        -- Alway use virtual lines for heading borders instead of attempting to use empty lines
+        -- Always use virtual lines for heading borders instead of attempting to use empty lines
         border_virtual = false,
         -- Highlight the start of the border using the foreground highlight
         border_prefix = false,
@@ -320,7 +322,7 @@ require('render-markdown').setup({
         right_pad = 0,
         -- Minimum width to use for code blocks when width is 'block'
         min_width = 0,
-        -- Determins how the top / bottom of code block are rendered:
+        -- Determines how the top / bottom of code block are rendered:
         --  thick: use the same highlight as the code body
         --  thin:  when lines are empty overlay the above & below icons
         border = 'thin',
@@ -356,6 +358,10 @@ require('render-markdown').setup({
         -- The 'level' is used to index into the list using a cycle
         -- If the item is a 'checkbox' a conceal is used to hide the bullet instead
         icons = { '●', '○', '◆', '◇' },
+        -- Replaces 'n.'|'n)' of 'list_item'
+        -- How deeply nested the list is determines the 'level'
+        -- The 'level' is used to index into the list using a cycle
+        ordered_icons = {},
         -- Padding to add to the left of bullet point
         left_pad = 0,
         -- Padding to add to the right of bullet point
@@ -383,7 +389,7 @@ require('render-markdown').setup({
         checked = {
             -- Replaces '[x]' of 'task_list_marker_checked'
             icon = '󰱒 ',
-            -- Highligh for the checked icon
+            -- Highlight for the checked icon
             highlight = 'RenderMarkdownChecked',
             -- Highlight for item associated with checked checkbox
             scope_highlight = nil,
@@ -447,7 +453,7 @@ require('render-markdown').setup({
             '└', '┴', '┘',
             '│', '─',
         },
-        -- Gets placed in delimiter row for each column, position is based on alignmnet
+        -- Gets placed in delimiter row for each column, position is based on alignment
         alignment_indicator = '━',
         -- Highlight for table heading, delimiter, and the line above
         head = 'RenderMarkdownTableHead',
@@ -633,9 +639,9 @@ require('render-markdown').setup({
         -- Minimum width to use for headings when width is 'block'
         -- Can also be a list of integers in which case the 'level' is used to index into the list using a clamp
         min_width = 0,
-        -- Determins if a border is added above and below headings
+        -- Determines if a border is added above and below headings
         border = false,
-        -- Alway use virtual lines for heading borders instead of attempting to use empty lines
+        -- Always use virtual lines for heading borders instead of attempting to use empty lines
         border_virtual = false,
         -- Highlight the start of the border using the foreground highlight
         border_prefix = false,
@@ -742,7 +748,7 @@ require('render-markdown').setup({
         right_pad = 0,
         -- Minimum width to use for code blocks when width is 'block'
         min_width = 0,
-        -- Determins how the top / bottom of code block are rendered:
+        -- Determines how the top / bottom of code block are rendered:
         --  thick: use the same highlight as the code body
         --  thin:  when lines are empty overlay the above & below icons
         border = 'thin',
@@ -808,6 +814,10 @@ require('render-markdown').setup({
         -- The 'level' is used to index into the list using a cycle
         -- If the item is a 'checkbox' a conceal is used to hide the bullet instead
         icons = { '●', '○', '◆', '◇' },
+        -- Replaces 'n.'|'n)' of 'list_item'
+        -- How deeply nested the list is determines the 'level'
+        -- The 'level' is used to index into the list using a cycle
+        ordered_icons = {},
         -- Padding to add to the left of bullet point
         left_pad = 0,
         -- Padding to add to the right of bullet point
@@ -850,7 +860,7 @@ require('render-markdown').setup({
         checked = {
             -- Replaces '[x]' of 'task_list_marker_checked'
             icon = '󰱒 ',
-            -- Highligh for the checked icon
+            -- Highlight for the checked icon
             highlight = 'RenderMarkdownChecked',
             -- Highlight for item associated with checked checkbox
             scope_highlight = nil,
@@ -944,7 +954,7 @@ require('render-markdown').setup({
             '└', '┴', '┘',
             '│', '─',
         },
-        -- Gets placed in delimiter row for each column, position is based on alignmnet
+        -- Gets placed in delimiter row for each column, position is based on alignment
         alignment_indicator = '━',
         -- Highlight for table heading, delimiter, and the line above
         head = 'RenderMarkdownTableHead',

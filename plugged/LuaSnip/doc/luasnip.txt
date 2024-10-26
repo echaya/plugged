@@ -1,4 +1,4 @@
-*luasnip.txt*          For NVIM v0.8.0          Last change: 2024 September 12
+*luasnip.txt*           For NVIM v0.8.0           Last change: 2024 October 23
 
 ==============================================================================
 Table of Contents                                  *luasnip-table-of-contents*
@@ -3487,7 +3487,10 @@ These are the settings you can provide to `luasnip.setup()`:
 
 ADDING SNIPPETS                      *luasnip-troubleshooting-adding-snippets*
 
-### Loaders
+
+
+
+LOADERS ~
 
 - **Filetypes**. LuaSnip uses `all` as the global filetype. As most snippet
     collections don’t explicitly target LuaSnip, they may not provide global
