@@ -2798,7 +2798,7 @@ Default config:
   ```
 - `filetypes` :
   ```lua
-  { "javascript", "javascriptreact", "typescript", "typescriptreact", "json", "jsonc", "markdown", "python", "toml", "rust", "roslyn" }
+  { "javascript", "javascriptreact", "typescript", "typescriptreact", "json", "jsonc", "markdown", "python", "toml", "rust", "roslyn", "graphql" }
   ```
 - `root_dir` source (use "gF" to visit): [../lua/lspconfig/configs/dprint.lua:4](../lua/lspconfig/configs/dprint.lua#L4)
 - `settings` :
@@ -4408,7 +4408,7 @@ Default config:
   ```
 - `filetypes` :
   ```lua
-  { "markdown", "rust", "typescript", "typescriptreact", "javascript", "python", "go", "c", "cpp", "ruby", "swift", "cs", "toml", "lua", "gitcommit", "java", "html" }
+  { "c", "cpp", "cs", "gitcommit", "go", "html", "java", "javascript", "lua", "markdown", "nix", "python", "ruby", "rust", "swift", "toml", "typescript", "typescriptreact" }
   ```
 - `root_dir` source (use "gF" to visit): [../lua/lspconfig/configs/harper_ls.lua:4](../lua/lspconfig/configs/harper_ls.lua#L4)
 - `single_file_support` : `true`
