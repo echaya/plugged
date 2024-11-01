@@ -33,7 +33,7 @@
     "revision": "28dc7059722be090d04cd751aed915b2fee2f89a"
   },
   "beancount": {
-    "revision": "01c0da29e0fc7130420a09d939ecc524e09b6ba6"
+    "revision": "9bc460a05b5f096d69568b5fb36105032ff4ff97"
   },
   "bibtex": {
     "revision": "ccfd77db0ed799b6c22c214fe9d2937f47bc8b34"
@@ -101,6 +101,9 @@
   "cue": {
     "revision": "8a5f273bfa281c66354da562f2307c2d394b6c81"
   },
+  "cylc": {
+    "revision": "8b895c278f98d05e67997f5e3a43fb5531933023"
+  },
   "d": {
     "revision": "45e5f1e9d6de2c68591bc8e5ec662cf18e950b4a"
   },
@@ -108,7 +111,7 @@
     "revision": "9ac03bb2154316624fb4c41fe0f372a5f1597b43"
   },
   "desktop": {
-    "revision": "0d8b8cf7c9311fe3f1730df8e193d836f6dd9d1b"
+    "revision": "f3985c2695998ec98c1df50d5567ccdecaa97755"
   },
   "devicetree": {
     "revision": "16c9cb959675bc9bc4f4e5bebe473d511a12a06d"
@@ -144,7 +147,7 @@
     "revision": "8e635b0b723c620774dfb8abf382a7f531894b40"
   },
   "editorconfig": {
-    "revision": "38cf8d0af6049025de0e5486a40881dac06285b4"
+    "revision": "5eca41a689dc03534e9c459b066d116f8befb4ef"
   },
   "eds": {
     "revision": "26d529e6cfecde391a03c21d1474eb51e0285805"
@@ -237,7 +240,7 @@
     "revision": "f4685bf11ac466dd278449bcfe5fd014e94aa504"
   },
   "gleam": {
-    "revision": "57c9951b290c8084d7c60b0aee7a2b30986ea031"
+    "revision": "2702fe84b986e4403a071bcb112d48e3dcde0ca4"
   },
   "glimmer": {
     "revision": "da605af8c5999b43e6839b575eae5e6cafabb06f"
@@ -309,7 +312,7 @@
     "revision": "9e3ec9848f28d26845ba300fd73c740459b83e9b"
   },
   "heex": {
-    "revision": "6dd0303acf7138dd2b9b432a229e16539581c701"
+    "revision": "9359017bd0dc6b023044713aa215544885663637"
   },
   "helm": {
     "revision": "ca52fbfc98366c585b84f4cb3745df49f33cd140"
@@ -735,7 +738,7 @@
     "revision": "1a8ee0da9a4f2df5a8a22f4d637ac863623a78a7"
   },
   "superhtml": {
-    "revision": "e561df3b5ce94e598a4c3d0ee4abd9635bad63b3"
+    "revision": "7d61cccdb865b2028301a0597b55ac8b225af6cf"
   },
   "surface": {
     "revision": "f4586b35ac8548667a9aaa4eae44456c1f43d032"
@@ -783,7 +786,7 @@
     "revision": "a7f11d946b44244f71df41d2a78af0665d618dae"
   },
   "tlaplus": {
-    "revision": "ffb6c4b91862a03af767d6b0e627d3d20539b79a"
+    "revision": "d711f24c93221cdfc9a9b4dbb0998f528fc982ac"
   },
   "tmux": {
     "revision": "0252ecd080016e45e6305ef1a943388f5ae2f4b4"
@@ -837,7 +840,7 @@
     "revision": "ea538758a1273b59774dc9179cde460d9c73fd89"
   },
   "vala": {
-    "revision": "8f690bfa639f2b83d1fb938ed3dd98a7ba453e8b"
+    "revision": "97e6db3c8c73b15a9541a458d8e797a07f588ef4"
   },
   "vento": {
     "revision": "3321077d7446c1b3b017c294fd56ce028ed817fe"
