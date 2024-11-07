@@ -105,6 +105,16 @@ Themes can be changed in three ways:
 - Using the `background` option:
   Any change to the value of `vim.o.background` will select the theme mapped by `config.background`.
   Use `vim.o.background = ""` to unset this option.
+  You can thus map the value of `vim.o.background` to all three kanagawa variants:
+  ```lua
+    {
+        ...
+        theme = "wave",              -- vim.o.background = ""
+        background = {               
+            dark = "dragon",         -- vim.o.background = "dark"
+            light = "lotus"          -- vim.o.background = "light"
+    }
+  ```
 - Loading the colorscheme directly with:
   ```lua
   vim.cmd("colorscheme kanagawa-wave")
@@ -164,7 +174,7 @@ require('kanagawa').setup({
 })
 ```
 
-You can also conveniently add/modify `hlgroups` using the `config.overrides` option.
+You can also conveniently add/modify any `hlgroups` using the `config.overrides` option, allowing you to customize the looks of specific built-in elements, or any other external plugins that provides `hlgroups`. (See `:help highlight` for more information on `hlgroups`.)
 Supported keywords are the same for `:h nvim_set_hl` `{val}` parameter.
 
 ```lua
@@ -266,6 +276,27 @@ overrides = function(colors)
         PmenuThumb = { bg = theme.ui.bg_p2 },
     }
 end,
+```
+
+#### Tint background of diagnostic messages with their foreground color
+
+This immitates a style of diagnostic messages seen, for example, in [tokyonight.nvim](https://github.com/folke/tokyonight.nvim).
+
+```lua
+overrides = function(colors)
+  local theme = colors.theme
+  local makeDiagnosticColor = function(color)
+    local c = require("kanagawa.lib.color")
+    return { fg = color, bg = c(color):blend(theme.ui.bg, 0.95):to_hex() }
+  end
+
+  return {
+    DiagnosticVirtualTextHint  = makeDiagnosticColor(theme.diag.hint),
+    DiagnosticVirtualTextInfo  = makeDiagnosticColor(theme.diag.info),
+    DiagnosticVirtualTextWarn  = makeDiagnosticColor(theme.diag.warning),
+    DiagnosticVirtualTextError = makeDiagnosticColor(theme.diag.error),
+  }
+end
 ```
 
 ## Integration
