@@ -85,6 +85,7 @@ The colorscheme comes with some useful commands:
 - `:OneDarkProCache` force generate new cache files for the themes (you won't often need this)
 - `:OneDarkProClean` removes existing cache files for the themes
 - `:OneDarkProColors` output all of the current themes colors to a scratch buffer
+- `:OneDarkProExtras` generates the extras files from the `/extras` folder using your config
 
 ## :wrench: Configuration
 
@@ -606,6 +607,27 @@ require("onedarkpro").setup({
   }
 })
 ```
+
+### Configuring additional themes
+
+Users can define their own themes by creating a local file and referencing it in their configuration:
+
+```lua
+-- Your configuration
+require("onedarkpro").setup({
+  themes = {
+    vaporwave = "~/.config/nvim/lua/plugins/colors/vaporwave.lua",
+  },
+})
+vim.cmd([[colorscheme vaporwave]])
+
+-- ~/.config/nvim/colors/vaporwave.lua
+require("onedarkpro.config").set_theme("vaporwave")
+require("onedarkpro").load()
+
+```
+
+In the example above, we've setup our custom theme in our configuration and pointed it to a file which implements the required colors. Please see the [existing themes](https://github.com/olimorris/onedarkpro.nvim/tree/main/lua/onedarkpro/themes) in the plugin for the correct structure. We've then created another file in the `colors` directory of our config which points to the onedarkpro setup.
 
 ## :rainbow: Helpers
 
