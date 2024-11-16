@@ -1,0 +1,165 @@
+*snacks-toggle.txt*                                                snacks.nvim
+
+==============================================================================
+Table of Contents                            *snacks-toggle-table-of-contents*
+
+1. Config                                               |snacks-toggle-config|
+2. Types                                                 |snacks-toggle-types|
+3. Module                                               |snacks-toggle-module|
+  - Snacks.toggle()                     |snacks-toggle-module-snacks.toggle()|
+  - Snacks.toggle.diagnostics()|snacks-toggle-module-snacks.toggle.diagnostics()|
+  - Snacks.toggle.inlay_hints()|snacks-toggle-module-snacks.toggle.inlay_hints()|
+  - Snacks.toggle.line_number()|snacks-toggle-module-snacks.toggle.line_number()|
+  - Snacks.toggle.new()             |snacks-toggle-module-snacks.toggle.new()|
+  - Snacks.toggle.option()       |snacks-toggle-module-snacks.toggle.option()|
+  - Snacks.toggle.treesitter()|snacks-toggle-module-snacks.toggle.treesitter()|
+  - toggle:get()                           |snacks-toggle-module-toggle:get()|
+  - toggle:map()                           |snacks-toggle-module-toggle:map()|
+  - toggle:set()                           |snacks-toggle-module-toggle:set()|
+  - toggle:toggle()                     |snacks-toggle-module-toggle:toggle()|
+4. Links                                                 |snacks-toggle-links|
+Toggle keymaps integrated with which-key icons / colors
+
+
+==============================================================================
+1. Config                                               *snacks-toggle-config*
+
+>lua
+    ---@class snacks.toggle.Config
+    ---@field icon? string|{ enabled: string, disabled: string }
+    ---@field color? string|{ enabled: string, disabled: string }
+    {
+      map = vim.keymap.set, -- keymap.set function to use
+      which_key = true, -- integrate with which-key to show enabled/disabled icons and colors
+      notify = true, -- show a notification when toggling
+      -- icons for enabled/disabled states
+      icon = {
+        enabled = " ",
+        disabled = " ",
+      },
+      -- colors for enabled/disabled states
+      color = {
+        enabled = "green",
+        disabled = "yellow",
+      },
+    }
+<
+
+
+==============================================================================
+2. Types                                                 *snacks-toggle-types*
+
+>lua
+    ---@class snacks.toggle.Opts: snacks.toggle.Config
+    ---@field name string
+    ---@field get fun():boolean
+    ---@field set fun(state:boolean)
+<
+
+
+==============================================================================
+3. Module                                               *snacks-toggle-module*
+
+>lua
+    ---@class snacks.toggle
+    ---@field opts snacks.toggle.Opts
+    Snacks.toggle = {}
+<
+
+
+`Snacks.toggle()`                                            *Snacks.toggle()*
+
+>lua
+    ---@type fun(... :snacks.toggle.Opts): snacks.toggle
+    Snacks.toggle()
+<
+
+
+`Snacks.toggle.diagnostics()`                    *Snacks.toggle.diagnostics()*
+
+>lua
+    ---@param opts? snacks.toggle.Config
+    Snacks.toggle.diagnostics(opts)
+<
+
+
+`Snacks.toggle.inlay_hints()`                    *Snacks.toggle.inlay_hints()*
+
+>lua
+    ---@param opts? snacks.toggle.Config
+    Snacks.toggle.inlay_hints(opts)
+<
+
+
+`Snacks.toggle.line_number()`                    *Snacks.toggle.line_number()*
+
+>lua
+    ---@param opts? snacks.toggle.Config
+    Snacks.toggle.line_number(opts)
+<
+
+
+`Snacks.toggle.new()`                                    *Snacks.toggle.new()*
+
+>lua
+    ---@param ... snacks.toggle.Opts
+    ---@return snacks.toggle
+    Snacks.toggle.new(...)
+<
+
+
+`Snacks.toggle.option()`                              *Snacks.toggle.option()*
+
+>lua
+    ---@param option string
+    ---@param opts? snacks.toggle.Config | {on?: unknown, off?: unknown}
+    Snacks.toggle.option(option, opts)
+<
+
+
+`Snacks.toggle.treesitter()`                      *Snacks.toggle.treesitter()*
+
+>lua
+    ---@param opts? snacks.toggle.Config
+    Snacks.toggle.treesitter(opts)
+<
+
+
+TOGGLE:GET()                               *snacks-toggle-module-toggle:get()*
+
+>lua
+    toggle:get()
+<
+
+
+TOGGLE:MAP()                               *snacks-toggle-module-toggle:map()*
+
+>lua
+    ---@param keys string
+    ---@param opts? vim.keymap.set.Opts | { mode: string|string[]}
+    toggle:map(keys, opts)
+<
+
+
+TOGGLE:SET()                               *snacks-toggle-module-toggle:set()*
+
+>lua
+    ---@param state boolean
+    toggle:set(state)
+<
+
+
+TOGGLE:TOGGLE()                         *snacks-toggle-module-toggle:toggle()*
+
+>lua
+    toggle:toggle()
+<
+
+==============================================================================
+4. Links                                                 *snacks-toggle-links*
+
+1. *image*: https://github.com/user-attachments/assets/6d843acd-1ac1-44fd-b318-58b4c17de2d5
+
+Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
+
+vim:tw=78:ts=8:noet:ft=help:norl:
