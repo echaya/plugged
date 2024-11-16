@@ -44,7 +44,7 @@ Install the plugin with your package manager:
 > [!caution]
 > You need to explicitely pass options for a plugin or set `enabled = true` to enable it.
 
-> ![tip]
+> [!tip]
 > It' a good idea to run `:checkhealth snacks` to see if everything is set up correctly.
 
 ```lua
@@ -137,7 +137,7 @@ See the example below for how to configure `snacks.nvim`.
     { "<leader>gB", function() Snacks.gitbrowse() end, desc = "Git Browse" },
     { "<leader>gf", function() Snacks.lazygit.log_file() end, desc = "Lazygit Current File History" },
     { "<leader>gl", function() Snacks.lazygit.log() end, desc = "Lazygit Log (cwd)" },
-    { "<leader>cR", function() Snacks.rename() end, desc = "Rename File" },
+    { "<leader>cR", function() Snacks.rename.rename_file() end, desc = "Rename File" },
     { "<c-/>",      function() Snacks.terminal() end, desc = "Toggle Terminal" },
     { "<c-_>",      function() Snacks.terminal() end, desc = "which_key_ignore" },
     { "]]",         function() Snacks.words.jump(vim.v.count1) end, desc = "Next Reference", mode = { "n", "t" } },

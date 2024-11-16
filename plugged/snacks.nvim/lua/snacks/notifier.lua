@@ -106,6 +106,9 @@ local defaults = {
   margin = { top = 0, right = 1, bottom = 0 },
   padding = true, -- add 1 cell of left/right padding to the notification window
   sort = { "level", "added" }, -- sort by level and time
+  -- minimum log level to display. TRACE is the lowest
+  -- all notifications are stored in history
+  level = vim.log.levels.TRACE,
   icons = {
     error = " ",
     warn = " ",
@@ -144,10 +147,11 @@ end
 N.styles = {
   -- style using border title
   compact = function(buf, notif, ctx)
-    ctx.opts.title = {
-      { " " .. vim.trim(notif.icon .. " " .. (notif.title or "")) .. " ", ctx.hl.title },
-    }
-    ctx.opts.title_pos = "center"
+    local title = vim.trim(notif.icon .. " " .. (notif.title or ""))
+    if title ~= "" then
+      ctx.opts.title = { { " " .. title .. " ", ctx.hl.title } }
+      ctx.opts.title_pos = "center"
+    end
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(notif.msg, "\n"))
   end,
   minimal = function(buf, notif, ctx)
@@ -227,6 +231,12 @@ local function normlevel(level)
   return type(level) == "string" and (vim.tbl_contains(N.level_names, level:lower()) and level:lower() or "info")
     or N.levels[level]
     or "info"
+end
+
+---@param level number|string
+---@return integer
+local function numlevel(level)
+  return type(level) == "number" and level or vim.log.levels[normlevel(level):upper()] or 0
 end
 
 local function ts()
@@ -347,7 +357,9 @@ function N:add(opts)
     notif.dirty = true
   end
   self.sorted = nil
-  self.queue[notif.id] = notif
+  if numlevel(notif.level) >= numlevel(self.opts.level) then
+    self.queue[notif.id] = notif
+  end
   self.history[notif.id] = notif
   return notif.id
 end
@@ -531,7 +543,7 @@ function N:sort(notifs, fields)
     for _, key in ipairs(fields) do
       local function v(n)
         if key == "level" then
-          return 10 - vim.log.levels[n[key]:upper()]
+          return 10 - numlevel(n[key])
         end
         return n[key]
       end

@@ -101,6 +101,10 @@ function M.open(cmd, opts)
       once = true,
       buffer = terminal.buf,
       callback = function()
+        if type(vim.v.event) == "table" and vim.v.event.status ~= 0 then
+          Snacks.notify.error("Terminal exited with code " .. vim.v.event.status .. ".\nCheck for any errors.")
+          return
+        end
         terminal:close()
         vim.cmd.checktime()
       end,
