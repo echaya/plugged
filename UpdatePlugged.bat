@@ -10,6 +10,7 @@ for /d /r . %%d in (.github) do if exist "%%d" rd /s/q "%%d"
 
 del d:\Workspace\PluggedRepo\plugged\nvim-treesitter\parser-info\.gitignore
 del d:\Workspace\PluggedRepo\plugged\nvim-treesitter\parser\.gitignore
+del d:\Workspace\PluggedRepo\plugged\telescope-fzf-native.nvim\.gitignore
 
 lazygit
 :: cmd /k
