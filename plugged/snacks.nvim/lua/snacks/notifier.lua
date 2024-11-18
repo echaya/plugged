@@ -116,6 +116,9 @@ local defaults = {
     debug = " ",
     trace = " ",
   },
+  keep = function(notif)
+    return vim.fn.getcmdpos() > 0
+  end,
   ---@type snacks.notifier.style
   style = "compact",
   top_down = true, -- place notifications from top to bottom

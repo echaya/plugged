@@ -93,4 +93,44 @@ function M.log(...)
   fd:close()
 end
 
+---@alias snacks.debug.Trace {name: string, time: number, [number]:snacks.debug.Trace}
+
+---@type snacks.debug.Trace[]
+M._traces = { { name = "snacks" } }
+
+---@param name string?
+function M.trace(name)
+  if name then
+    local entry = { name = name, time = uv.hrtime() } ---@type snacks.debug.Trace
+    table.insert(M._traces[#M._traces], entry)
+    table.insert(M._traces, entry)
+    return entry
+  else
+    local entry = assert(table.remove(M._traces), "trace not ended?") ---@type snacks.debug.Trace
+    entry.time = uv.hrtime() - entry.time
+    return entry
+  end
+end
+
+---@param opts? {min?: number}
+function M.stats(opts)
+  opts = opts or {}
+  local lines = {}
+  ---@param stat snacks.debug.Trace
+  ---@param level number
+  local function collect(stat, level)
+    for _, entry in ipairs(stat) do
+      local ms = math.floor(entry.time / 1e4) / 1e2
+      if ms >= (opts.min or 0) then
+        table.insert(lines, ("%s- `%s`: **%.2f**ms"):format(("  "):rep(level), entry.name, entry.time / 1e6))
+        if entry[1] then
+          collect(entry, level + 1)
+        end
+      end
+    end
+  end
+  collect(M._traces[1], 0)
+  Snacks.notify.warn(lines, { title = "Traces" })
+end
+
 return M

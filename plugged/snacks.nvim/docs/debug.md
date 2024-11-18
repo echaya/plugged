@@ -27,6 +27,12 @@ What this does:
 
 <!-- docgen -->
 
+## 📚 Types
+
+```lua
+---@alias snacks.debug.Trace {name: string, time: number, [number]:snacks.debug.Trace}
+```
+
 ## 📦 Module
 
 ### `Snacks.debug()`
@@ -80,4 +86,18 @@ Very simple function to profile a lua function.
 ---@param fn fun()
 ---@param opts? {count?: number, flush?: boolean}
 Snacks.debug.profile(fn, opts)
+```
+
+### `Snacks.debug.stats()`
+
+```lua
+---@param opts? {min?: number}
+Snacks.debug.stats(opts)
+```
+
+### `Snacks.debug.trace()`
+
+```lua
+---@param name string?
+Snacks.debug.trace(name)
 ```
