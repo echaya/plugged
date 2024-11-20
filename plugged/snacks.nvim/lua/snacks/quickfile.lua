@@ -15,6 +15,9 @@ function M.setup()
   if vim.v.vim_did_enter == 1 then
     return
   end
+  if vim.bo.filetype == "bigfile" then
+    return
+  end
 
   local buf = vim.api.nvim_get_current_buf()
 

@@ -1,4 +1,4 @@
-*snacks.nvim.txt*           For Neovim           Last change: 2024 November 18
+*snacks.nvim.txt*           For Neovim           Last change: 2024 November 20
 
 ==============================================================================
 Table of Contents                              *snacks.nvim-table-of-contents*
@@ -26,7 +26,9 @@ FEATURES                                    *snacks.nvim-snacks.nvim-features*
 
   bufdelete             Deletebuffers without disrupting window layout  
 
-  debug                 Pretty inspect & backtraces for debugging       
+  dashboard             Beautiful declarative dashboards                
+
+  debug                 Prettyinspect & backtraces for debugging        
 
   git                   Useful functions for Git                        
 
@@ -126,6 +128,7 @@ Default Options ~
     ---@field quickfile? { enabled: boolean }
     ---@field statuscolumn? snacks.statuscolumn.Config  | { enabled: boolean }
     ---@field styles? table<string, snacks.win.Config>
+    ---@field dashboard? snacks.dashboard.Config  | { enabled: boolean }
     ---@field terminal? snacks.terminal.Config
     ---@field toggle? snacks.toggle.Config
     ---@field win? snacks.win.Config
@@ -133,6 +136,7 @@ Default Options ~
     {
       styles = {},
       bigfile = { enabled = false },
+      dashboard = { enabled = false },
       notifier = { enabled = false },
       quickfile = { enabled = false },
       statuscolumn = { enabled = false },
@@ -153,6 +157,7 @@ See the example below for how to configure `snacks.nvim`.
       ---@type snacks.Config
       opts = {
         bigfile = { enabled = true },
+        dashboard = { enabled = true },
         notifier = {
           enabled = true,
           timeout = 3000,
@@ -232,80 +237,120 @@ HIGHLIGHT GROUPS                    *snacks.nvim-snacks.nvim-highlight-groups*
 
 Click to see all highlight groups ~
 
-  --------------------------------------------------------------------------
-  Highlight Group             Default Group     Description
-  --------------------------- ----------------- ----------------------------
-  SnacksNormal                NormalFloat       Normal for the float window
+  -----------------------------------------------------------------------------
+  Highlight Group             Default Group           Description
+  --------------------------- ----------------------- -------------------------
+  SnacksNormal                NormalFloat             Normal for the float
+                                                      window
 
-  SnacksWinBar                Title             Title of the window
+  SnacksWinBar                Title                   Title of the window
 
-  SnacksBackdrop              none              Backdrop
+  SnacksBackdrop              none                    Backdrop
 
-  SnacksNormalNC              NormalFloat       Normal for non-current
-                                                windows
+  SnacksNormalNC              NormalFloat             Normal for non-current
+                                                      windows
 
-  SnacksWinBarNC              SnacksWinBar      Title for non-current
-                                                windows
+  SnacksWinBarNC              SnacksWinBar            Title for non-current
+                                                      windows
 
-  SnacksNotifierInfo          none              Notification window for Info
+  SnacksNotifierInfo          none                    Notification window for
+                                                      Info
 
-  SnacksNotifierWarn          none              Notification window for Warn
+  SnacksNotifierWarn          none                    Notification window for
+                                                      Warn
 
-  SnacksNotifierDebug         none              Notification window for
-                                                Debug
+  SnacksNotifierDebug         none                    Notification window for
+                                                      Debug
 
-  SnacksNotifierError         none              Notification window for
-                                                Error
+  SnacksNotifierError         none                    Notification window for
+                                                      Error
 
-  SnacksNotifierTrace         none              Notification window for
-                                                Trace
+  SnacksNotifierTrace         none                    Notification window for
+                                                      Trace
 
-  SnacksNotifierIconInfo      none              Icon for Info notification
+  SnacksNotifierIconInfo      none                    Icon for Info
+                                                      notification
 
-  SnacksNotifierIconWarn      none              Icon for Warn notification
+  SnacksNotifierIconWarn      none                    Icon for Warn
+                                                      notification
 
-  SnacksNotifierIconDebug     none              Icon for Debug notification
+  SnacksNotifierIconDebug     none                    Icon for Debug
+                                                      notification
 
-  SnacksNotifierIconError     none              Icon for Error notification
+  SnacksNotifierIconError     none                    Icon for Error
+                                                      notification
 
-  SnacksNotifierIconTrace     none              Icon for Trace notification
+  SnacksNotifierIconTrace     none                    Icon for Trace
+                                                      notification
 
-  SnacksNotifierTitleInfo     none              Title for Info notification
+  SnacksNotifierTitleInfo     none                    Title for Info
+                                                      notification
 
-  SnacksNotifierTitleWarn     none              Title for Warn notification
+  SnacksNotifierTitleWarn     none                    Title for Warn
+                                                      notification
 
-  SnacksNotifierTitleDebug    none              Title for Debug notification
+  SnacksNotifierTitleDebug    none                    Title for Debug
+                                                      notification
 
-  SnacksNotifierTitleError    none              Title for Error notification
+  SnacksNotifierTitleError    none                    Title for Error
+                                                      notification
 
-  SnacksNotifierTitleTrace    none              Title for Trace notification
+  SnacksNotifierTitleTrace    none                    Title for Trace
+                                                      notification
 
-  SnacksNotifierBorderInfo    none              Border for Info notification
+  SnacksNotifierBorderInfo    none                    Border for Info
+                                                      notification
 
-  SnacksNotifierBorderWarn    none              Border for Warn notification
+  SnacksNotifierBorderWarn    none                    Border for Warn
+                                                      notification
 
-  SnacksNotifierBorderDebug   none              Border for Debug
-                                                notification
+  SnacksNotifierBorderDebug   none                    Border for Debug
+                                                      notification
 
-  SnacksNotifierBorderError   none              Border for Error
-                                                notification
+  SnacksNotifierBorderError   none                    Border for Error
+                                                      notification
 
-  SnacksNotifierBorderTrace   none              Border for Trace
-                                                notification
+  SnacksNotifierBorderTrace   none                    Border for Trace
+                                                      notification
 
-  SnacksNotifierFooterInfo    DiagnosticInfo    Footer for Info notification
+  SnacksNotifierFooterInfo    DiagnosticInfo          Footer for Info
+                                                      notification
 
-  SnacksNotifierFooterWarn    DiagnosticWarn    Footer for Warn notification
+  SnacksNotifierFooterWarn    DiagnosticWarn          Footer for Warn
+                                                      notification
 
-  SnacksNotifierFooterDebug   DiagnosticHint    Footer for Debug
-                                                notification
+  SnacksNotifierFooterDebug   DiagnosticHint          Footer for Debug
+                                                      notification
 
-  SnacksNotifierFooterError   DiagnosticError   Footer for Error
-                                                notification
+  SnacksNotifierFooterError   DiagnosticError         Footer for Error
+                                                      notification
 
-  SnacksNotifierFooterTrace   DiagnosticHint    Footer for Trace
-                                                notification
-  --------------------------------------------------------------------------
+  SnacksNotifierFooterTrace   DiagnosticHint          Footer for Trace
+                                                      notification
+
+  SnacksDashboardNormal       Normal                  Normal for the dashboard
+
+  SnacksDashboardDesc         Special                 Description text in
+                                                      dashboard
+
+  SnacksDashboardFile         Special                 Dashboard file items
+
+  SnacksDashboardDir          NonText                 Directory items
+
+  SnacksDashboardFooter       Title                   Dashboard footer text
+
+  SnacksDashboardHeader       Title                   Dashboard header text
+
+  SnacksDashboardIcon         Special                 Dashboard icons
+
+  SnacksDashboardKey          Number                  Keybind text
+
+  SnacksDashboardTerminal     SnacksDashboardNormal   Terminal text
+
+  SnacksDashboardSpecial      Special                 Special elements
+
+  SnacksDashboardTitle        Title                   Title text
+  -----------------------------------------------------------------------------
 
 Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
 

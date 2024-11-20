@@ -210,6 +210,7 @@ You can view this list in vim with `:help conform-formatters`
 - [cljstyle](https://github.com/greglook/cljstyle) - Formatter for Clojure code.
 - [cmake_format](https://github.com/cheshirekow/cmake_format) - Parse cmake listfiles and format them nicely.
 - [codespell](https://github.com/codespell-project/codespell) - Check code for common misspellings.
+- [commitmsgfmt](https://gitlab.com/mkjeldsen/commitmsgfmt) - Formats commit messages better than fmt(1) and Vim.
 - [crlfmt](https://github.com/cockroachdb/crlfmt) - Formatter for CockroachDB's additions to the Go style guide.
 - [crystal](https://crystal-lang.org/) - Format Crystal code.
 - [csharpier](https://github.com/belav/csharpier) - The opinionated C# code formatter.
@@ -346,6 +347,7 @@ You can view this list in vim with `:help conform-formatters`
 - [swift_format](https://github.com/apple/swift-format) - Swift formatter from apple. Requires building from source with `swift build`.
 - [swiftformat](https://github.com/nicklockwood/SwiftFormat) - SwiftFormat is a code library and command-line tool for reformatting `swift` code on macOS or Linux.
 - [swiftlint](https://github.com/realm/SwiftLint) - A tool to enforce Swift style and conventions.
+- [syntax_tree](https://github.com/ruby-syntax-tree/syntax_tree) - Syntax Tree is a suite of tools built on top of the internal CRuby parser.
 - [taplo](https://github.com/tamasfe/taplo) - A TOML toolkit written in Rust.
 - [templ](https://templ.guide/commands-and-tools/cli/#formatting-templ-files) - Formats templ template files.
 - [terraform_fmt](https://www.terraform.io/docs/cli/commands/fmt.html) - The terraform-fmt command rewrites `terraform` configuration files to a canonical format and style.

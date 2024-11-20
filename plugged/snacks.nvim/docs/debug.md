@@ -31,6 +31,7 @@ What this does:
 
 ```lua
 ---@alias snacks.debug.Trace {name: string, time: number, [number]:snacks.debug.Trace}
+---@alias snacks.debug.Stat {name:string, time:number, count?:number, depth?:number}
 ```
 
 ## 📦 Module
@@ -91,7 +92,8 @@ Snacks.debug.profile(fn, opts)
 ### `Snacks.debug.stats()`
 
 ```lua
----@param opts? {min?: number}
+---@param opts? {min?: number, show?:boolean}
+---@return {summary:table<string, snacks.debug.Stat>, trace:snacks.debug.Stat[], traces:snacks.debug.Trace[]}
 Snacks.debug.stats(opts)
 ```
 
@@ -100,4 +102,13 @@ Snacks.debug.stats(opts)
 ```lua
 ---@param name string?
 Snacks.debug.trace(name)
+```
+
+### `Snacks.debug.tracemod()`
+
+```lua
+---@param modname string
+---@param mod? table
+---@param suffix? string
+Snacks.debug.tracemod(modname, mod, suffix)
 ```
