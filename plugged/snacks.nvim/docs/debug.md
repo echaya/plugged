@@ -85,7 +85,7 @@ Very simple function to profile a lua function.
 
 ```lua
 ---@param fn fun()
----@param opts? {count?: number, flush?: boolean}
+---@param opts? {count?: number, flush?: boolean, title?: string}
 Snacks.debug.profile(fn, opts)
 ```
 

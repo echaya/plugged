@@ -26,6 +26,7 @@ Snacks.config.style("terminal", {
   },
   wo = {},
   keys = {
+    q = "hide",
     gf = function(self)
       local f = vim.fn.findfile(vim.fn.expand("<cfile>"), "**")
       if f == "" then
@@ -120,21 +121,30 @@ function M.open(cmd, opts)
   return terminal
 end
 
+--- Get or create a terminal window.
+--- The terminal id is based on the `cmd`, `cwd`, `env` and `vim.v.count1` options.
+--- `opts.create` defaults to `true`.
+---@param cmd? string | string[]
+---@param opts? snacks.terminal.Opts| {create?: boolean}
+---@return snacks.win? terminal, boolean? created
+function M.get(cmd, opts)
+  opts = opts or {}
+  local id = vim.inspect({ cmd = cmd, cwd = opts.cwd, env = opts.env, count = vim.v.count1 })
+  local created = false
+  if not (terminals[id] and terminals[id]:buf_valid()) and (opts.create ~= false) then
+    terminals[id] = M.open(cmd, opts)
+    created = true
+  end
+  return terminals[id], created
+end
+
 --- Toggle a terminal window.
 --- The terminal id is based on the `cmd`, `cwd`, `env` and `vim.v.count1` options.
 ---@param cmd? string | string[]
 ---@param opts? snacks.terminal.Opts
 function M.toggle(cmd, opts)
-  opts = opts or {}
-
-  local id = vim.inspect({ cmd = cmd, cwd = opts.cwd, env = opts.env, count = vim.v.count1 })
-
-  if terminals[id] and terminals[id]:buf_valid() then
-    terminals[id]:toggle()
-  else
-    terminals[id] = M.open(cmd, opts)
-  end
-  return terminals[id]
+  local terminal, created = M.get(cmd, opts)
+  return created and terminal or assert(terminal):toggle()
 end
 
 --- Parses a shell command into a table of arguments.

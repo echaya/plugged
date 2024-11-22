@@ -36,11 +36,11 @@ Open the repo of the active file in the browser (e.g., GitHub)
     { "%.git$"                            , "" },
   },
   url_patterns = {
-    ["github.com"] = {
+    ["github%.com"] = {
       branch = "/tree/{branch}",
       file = "/blob/{branch}/{file}#L{line}",
     },
-    ["gitlab.com"] = {
+    ["gitlab%.com"] = {
       branch = "/-/tree/{branch}",
       file = "/-/blob/{branch}/{file}#L{line}",
     },

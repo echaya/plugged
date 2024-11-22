@@ -12,6 +12,7 @@ Table of Contents                          *snacks-terminal-table-of-contents*
 5. Module                                             |snacks-terminal-module|
   - Snacks.terminal()               |snacks-terminal-module-snacks.terminal()|
   - Snacks.terminal.colorize()|snacks-terminal-module-snacks.terminal.colorize()|
+  - Snacks.terminal.get()       |snacks-terminal-module-snacks.terminal.get()|
   - Snacks.terminal.open()     |snacks-terminal-module-snacks.terminal.open()|
   - Snacks.terminal.toggle() |snacks-terminal-module-snacks.terminal.toggle()|
 6. Links                                               |snacks-terminal-links|
@@ -81,6 +82,7 @@ TERMINAL                                     *snacks-terminal-styles-terminal*
       },
       wo = {},
       keys = {
+        q = "hide",
         gf = function(self)
           local f = vim.fn.findfile(vim.fn.expand("<cfile>"), "**")
           if f == "" then
@@ -155,6 +157,19 @@ Example:
 
 >lua
     Snacks.terminal.colorize()
+<
+
+
+`Snacks.terminal.get()`                                *Snacks.terminal.get()*
+
+Get or create a terminal window. The terminal id is based on the `cmd`, `cwd`,
+`env` and `vim.v.count1` options. `opts.create` defaults to `true`.
+
+>lua
+    ---@param cmd? string | string[]
+    ---@param opts? snacks.terminal.Opts| {create?: boolean}
+    ---@return snacks.win? terminal, boolean? created
+    Snacks.terminal.get(cmd, opts)
 <
 
 

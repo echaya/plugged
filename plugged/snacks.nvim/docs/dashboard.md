@@ -13,11 +13,11 @@
   - **session**: session support
   - **startup**: startup time (lazy.nvim)
   - **terminal**: colored terminal output
-- super fast `terminal` sections with autmomatic caching
+- super fast `terminal` sections with automatic caching
 
 ## 🚀 Usage
 
-The dashboards comes with a set of default sections, that
+The dashboard comes with a set of default sections, that
 can be customized with `opts.preset` or
 fully replaced with `opts.sections`.
 
@@ -190,7 +190,7 @@ A more advanced example using multiple panes
       icon = " ",
       title = "Git Status",
       section = "terminal",
-      enabled = vim.fn.isdirectory(".git") == 1,
+      enabled = Snacks.git.get_root() ~= nil,
       cmd = "hub status --short --branch --renames",
       height = 5,
       padding = 1,
@@ -334,8 +334,8 @@ The other options are used with `:lua Snacks.dashboard()`
 ```lua
 {
   zindex = 10,
-  height = 0.6,
-  width = 0.6,
+  height = 0,
+  width = 0,
   bo = {
     bufhidden = "wipe",
     buftype = "nofile",
@@ -535,4 +535,12 @@ Check if the dashboard should be opened
 
 ```lua
 Snacks.dashboard.setup()
+```
+
+### `Snacks.dashboard.update()`
+
+Update the dashboard
+
+```lua
+Snacks.dashboard.update()
 ```

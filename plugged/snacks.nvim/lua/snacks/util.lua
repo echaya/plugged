@@ -15,15 +15,25 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 
 --- Ensures the hl groups are always set, even after a colorscheme change.
 ---@param groups snacks.util.hl
----@param opts? { prefix?:string, default?:boolean }
+---@param opts? { prefix?:string, default?:boolean, managed?:boolean }
 function M.set_hl(groups, opts)
   for hl_group, hl in pairs(groups) do
     hl_group = opts and opts.prefix and opts.prefix .. hl_group or hl_group
     hl = type(hl) == "string" and { link = hl } or hl --[[@as vim.api.keyset.highlight]]
     hl.default = not (opts and opts.default == false)
-    hl_groups[hl_group] = hl
+    if not (opts and opts.managed == false) then
+      hl_groups[hl_group] = hl
+    end
     vim.api.nvim_set_hl(0, hl_group, hl)
   end
+end
+
+---@param group string
+---@param prop? string
+function M.color(group, prop)
+  prop = prop or "fg"
+  local hl = vim.api.nvim_get_hl(0, { name = group, link = false })
+  return hl[prop] and string.format("#%06x", hl[prop])
 end
 
 ---@param win number

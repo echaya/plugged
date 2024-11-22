@@ -225,6 +225,7 @@ end
 
 function M:hide()
   self:close({ buf = false })
+  return self
 end
 
 function M:toggle()
@@ -233,6 +234,7 @@ function M:toggle()
   else
     self:show()
   end
+  return self
 end
 
 ---@private

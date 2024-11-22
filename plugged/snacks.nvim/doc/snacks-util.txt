@@ -6,6 +6,7 @@ Table of Contents                              *snacks-util-table-of-contents*
 1. Types                                                   |snacks-util-types|
 2. Module                                                 |snacks-util-module|
   - Snacks.util.bo()                     |snacks-util-module-snacks.util.bo()|
+  - Snacks.util.color()               |snacks-util-module-snacks.util.color()|
   - Snacks.util.set_hl()             |snacks-util-module-snacks.util.set_hl()|
   - Snacks.util.wo()                     |snacks-util-module-snacks.util.wo()|
 
@@ -30,13 +31,22 @@ Table of Contents                              *snacks-util-table-of-contents*
 <
 
 
+`Snacks.util.color()`                                    *Snacks.util.color()*
+
+>lua
+    ---@param group string
+    ---@param prop? string
+    Snacks.util.color(group, prop)
+<
+
+
 `Snacks.util.set_hl()`                                  *Snacks.util.set_hl()*
 
 Ensures the hl groups are always set, even after a colorscheme change.
 
 >lua
     ---@param groups snacks.util.hl
-    ---@param opts? { prefix?:string, default?:boolean }
+    ---@param opts? { prefix?:string, default?:boolean, managed?:boolean }
     Snacks.util.set_hl(groups, opts)
 <
 

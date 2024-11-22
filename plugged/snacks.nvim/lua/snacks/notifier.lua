@@ -123,6 +123,11 @@ local defaults = {
   style = "compact",
   top_down = true, -- place notifications from top to bottom
   date_format = "%R", -- time format for notifications
+  -- format for footer when more lines are available
+  -- `%d` is replaced with the number of lines.
+  -- only works for styles with a border
+  ---@type string|boolean
+  more_format = " ↓ %d lines ",
   refresh = 50, -- refresh at most every 50ms
 }
 
@@ -519,7 +524,7 @@ function N:render(notif)
   for _, line in ipairs(lines) do
     width = math.max(width, vim.fn.strdisplaywidth(line) + pad)
   end
-  if win.opts.border and win.opts.border ~= "none" and win.opts.border ~= "" then
+  if win:has_border() then
     width = width + 2
   end
   width = dim(width, self.opts.width.min, self.opts.width.max, vim.o.columns)
@@ -532,7 +537,13 @@ function N:render(notif)
       height = height + math.ceil((vim.fn.strdisplaywidth(line) + pad) / width)
     end
   end
+  local wanted_height = height
   height = dim(height, self.opts.height.min, self.opts.height.max, vim.o.lines)
+
+  if wanted_height > height and win:has_border() and self.opts.more_format and not win.opts.footer then
+    win.opts.footer = self.opts.more_format:format(wanted_height - height)
+    win.opts.footer_pos = "right"
+  end
 
   win.opts.width = width
   win.opts.height = height
@@ -632,6 +643,9 @@ function N:layout()
           notif.shown = notif.shown or ts()
           notif.win:show()
         end
+      elseif notif.win then
+        notif.shown = nil
+        notif.win:hide()
       end
     end
   end

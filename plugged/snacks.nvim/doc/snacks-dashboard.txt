@@ -34,6 +34,7 @@ Table of Contents                         *snacks-dashboard-table-of-contents*
   - Snacks.dashboard.sections.startup()|snacks-dashboard-module-snacks.dashboard.sections.startup()|
   - Snacks.dashboard.sections.terminal()|snacks-dashboard-module-snacks.dashboard.sections.terminal()|
   - Snacks.dashboard.setup()|snacks-dashboard-module-snacks.dashboard.setup()|
+  - Snacks.dashboard.update()|snacks-dashboard-module-snacks.dashboard.update()|
 8. Links                                              |snacks-dashboard-links|
 
 ==============================================================================
@@ -50,14 +51,14 @@ Table of Contents                         *snacks-dashboard-table-of-contents*
     - **session**session support
     - **startup**startup time (lazy.nvim)
     - **terminal**colored terminal output
-- super fast `terminal` sections with autmomatic caching
+- super fast `terminal` sections with automatic caching
 
 
 ==============================================================================
 2. Usage                                              *snacks-dashboard-usage*
 
-The dashboards comes with a set of default sections, that can be customized
-with `opts.preset` or fully replaced with `opts.sections`.
+The dashboard comes with a set of default sections, that can be customized with
+`opts.preset` or fully replaced with `opts.sections`.
 
 The default preset comes with support for:
 
@@ -232,7 +233,7 @@ A more advanced example using multiple panes
           icon = " ",
           title = "Git Status",
           section = "terminal",
-          enabled = vim.fn.isdirectory(".git") == 1,
+          enabled = Snacks.git.get_root() ~= nil,
           cmd = "hub status --short --branch --renames",
           height = 5,
           padding = 1,
@@ -379,8 +380,8 @@ Snacks.dashboard()`
 >lua
     {
       zindex = 10,
-      height = 0.6,
-      width = 0.6,
+      height = 0,
+      width = 0,
       bo = {
         bufhidden = "wipe",
         buftype = "nofile",
@@ -599,6 +600,15 @@ Check if the dashboard should be opened
 
 >lua
     Snacks.dashboard.setup()
+<
+
+
+`Snacks.dashboard.update()`                        *Snacks.dashboard.update()*
+
+Update the dashboard
+
+>lua
+    Snacks.dashboard.update()
 <
 
 ==============================================================================

@@ -18,13 +18,21 @@
 Snacks.util.bo(buf, bo)
 ```
 
+### `Snacks.util.color()`
+
+```lua
+---@param group string
+---@param prop? string
+Snacks.util.color(group, prop)
+```
+
 ### `Snacks.util.set_hl()`
 
 Ensures the hl groups are always set, even after a colorscheme change.
 
 ```lua
 ---@param groups snacks.util.hl
----@param opts? { prefix?:string, default?:boolean }
+---@param opts? { prefix?:string, default?:boolean, managed?:boolean }
 Snacks.util.set_hl(groups, opts)
 ```
 

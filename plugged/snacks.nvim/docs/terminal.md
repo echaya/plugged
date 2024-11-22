@@ -62,6 +62,7 @@ Based on the provided options, some defaults will be set:
   },
   wo = {},
   keys = {
+    q = "hide",
     gf = function(self)
       local f = vim.fn.findfile(vim.fn.expand("<cfile>"), "**")
       if f == "" then
@@ -131,6 +132,19 @@ ls -la --color=always | nvim - -c "lua Snacks.terminal.colorize()"
 
 ```lua
 Snacks.terminal.colorize()
+```
+
+### `Snacks.terminal.get()`
+
+Get or create a terminal window.
+The terminal id is based on the `cmd`, `cwd`, `env` and `vim.v.count1` options.
+`opts.create` defaults to `true`.
+
+```lua
+---@param cmd? string | string[]
+---@param opts? snacks.terminal.Opts| {create?: boolean}
+---@return snacks.win? terminal, boolean? created
+Snacks.terminal.get(cmd, opts)
 ```
 
 ### `Snacks.terminal.open()`
