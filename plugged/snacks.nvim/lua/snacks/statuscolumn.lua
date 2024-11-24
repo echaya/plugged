@@ -216,6 +216,12 @@ function M.get()
   return table.concat(components, "")
 end
 
+local get = M.get
+function M.get()
+  local ok, ret = pcall(get)
+  return not ok and "" or ret
+end
+
 ---@private
 function M.health()
   local ready = vim.o.statuscolumn:find("snacks.statuscolumn", 1, true)

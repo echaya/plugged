@@ -610,7 +610,7 @@ do
       "n",
       fold_cmd,
       compat_fold(fold_cmd),
-      -- { desc = "diffview_ignore" },
+      { desc = "diffview_ignore" },
     })
   end
 end

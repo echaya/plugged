@@ -212,8 +212,9 @@ require('render-markdown').setup({
         -- Turn on / off any sign column related rendering
         sign = true,
         -- Determines how icons fill the available space:
-        --  inline:  underlying '#'s are concealed resulting in a left aligned icon
-        --  overlay: result is left padded with spaces to hide any additional '#'
+        --  right:   '#'s are concealed and icon is appended to right side
+        --  inline:  '#'s are concealed and icon is inlined on left side
+        --  overlay: icon is left padded with spaces and inserted on left hiding any additional '#'
         position = 'overlay',
         -- Replaces '#+' of 'atx_h._marker'
         -- The number of '#' in the heading determines the 'level'
@@ -245,6 +246,7 @@ require('render-markdown').setup({
         -- Can also be a list of integers in which case the 'level' is used to index into the list using a clamp
         min_width = 0,
         -- Determines if a border is added above and below headings
+        -- Can also be a list of booleans in which case the 'level' is used to index into the list using a clamp
         border = false,
         -- Always use virtual lines for heading borders instead of attempting to use empty lines
         border_virtual = false,
@@ -618,8 +620,9 @@ require('render-markdown').setup({
         -- Turn on / off any sign column related rendering
         sign = true,
         -- Determines how icons fill the available space:
-        --  inline:  underlying '#'s are concealed resulting in a left aligned icon
-        --  overlay: result is left padded with spaces to hide any additional '#'
+        --  right:   '#'s are concealed and icon is appended to right side
+        --  inline:  '#'s are concealed and icon is inlined on left side
+        --  overlay: icon is left padded with spaces and inserted on left hiding any additional '#'
         position = 'overlay',
         -- Replaces '#+' of 'atx_h._marker'
         -- The number of '#' in the heading determines the 'level'
@@ -651,6 +654,7 @@ require('render-markdown').setup({
         -- Can also be a list of integers in which case the 'level' is used to index into the list using a clamp
         min_width = 0,
         -- Determines if a border is added above and below headings
+        -- Can also be a list of booleans in which case the 'level' is used to index into the list using a clamp
         border = false,
         -- Always use virtual lines for heading borders instead of attempting to use empty lines
         border_virtual = false,

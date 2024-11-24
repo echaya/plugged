@@ -79,7 +79,7 @@ local defaults = {
     ---@type fun(cmd:string, opts:table)|nil
     pick = nil,
     -- Used by the `keys` section to show keymaps.
-    -- Set your curstom keymaps here.
+    -- Set your custom keymaps here.
     -- When using a function, the `items` argument are the default keymaps.
     -- stylua: ignore
     ---@type snacks.dashboard.Item[]
@@ -203,7 +203,9 @@ function M.open(opts)
   local self = setmetatable({}, { __index = D })
   self.opts = Snacks.config.get("dashboard", defaults, opts) --[[@as snacks.dashboard.Opts]]
   self.buf = self.opts.buf or vim.api.nvim_create_buf(false, true)
+  self.buf = self.buf == 0 and vim.api.nvim_get_current_buf() or self.buf
   self.win = self.opts.win or Snacks.win({ style = "dashboard", buf = self.buf, enter = true }).win --[[@as number]]
+  self.win = self.win == 0 and vim.api.nvim_get_current_win() or self.win
   self.augroup = vim.api.nvim_create_augroup("snacks_dashboard", { clear = true })
   self:init()
   self:update()
@@ -741,8 +743,8 @@ function M.sections.session(item)
     { "persisted.nvim", ":lua require('persisted').load()" },
     { "neovim-session-manager", ":SessionManager load_current_dir_session" },
     { "possession.nvim", ":PossessionLoadCwd" },
-    { "mini.sessions", ":lua require('mini.sessions').read('local')" },
-    { "mini.nvim", ":lua require('mini.sessions').read('local')" },
+    { "mini.sessions", ":lua require('mini.sessions').read()" },
+    { "mini.nvim", ":lua require('mini.sessions').read()" },
   }
   for _, plugin in pairs(plugins) do
     if M.have_plugin(plugin[1]) then

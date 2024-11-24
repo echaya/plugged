@@ -65,6 +65,9 @@ local uv = vim.uv or vim.loop
 ---@class snacks.notifier.history
 ---@field filter? snacks.notifier.level|fun(notif: snacks.notifier.Notif): boolean
 ---@field sort? string[] # sort fields, default: {"added"}
+---@field reverse? boolean
+
+---@type snacks.notifier.history
 local history_opts = {
   sort = { "added" },
 }
@@ -313,18 +316,36 @@ function N:start()
         return
       end
       xpcall(function()
-        self:update()
-        self:layout()
+        self:process()
       end, function(err)
-        local trace = debug.traceback(err, 2)
-        print(err)
-        vim.api.nvim_err_writeln(
-          ("Snacks notifier failed. Dropping queue. Error:\n%s\n\nTrace:\n%s"):format(error, trace)
-        )
+        if err:find("E565") then
+          return
+        end
+        local trace = debug.traceback(2)
+        vim.schedule(function()
+          vim.api.nvim_err_writeln(
+            ("Snacks notifier failed. Dropping queue. Error:\n%s\n\nTrace:\n%s"):format(err, trace)
+          )
+        end)
         self.queue = {}
       end)
     end)
   )
+end
+
+function N:process()
+  self:update()
+  self:layout()
+end
+
+function N:is_blocking()
+  local mode = vim.api.nvim_get_mode()
+  for _, m in ipairs({ "ic", "ix", "c", "no", "r%?", "rm" }) do
+    if mode.mode:find(m) == 1 then
+      return true
+    end
+  end
+  return mode.blocking
 end
 
 local health_msg = false
@@ -369,6 +390,11 @@ function N:add(opts)
     self.queue[notif.id] = notif
   end
   self.history[notif.id] = notif
+  if self:is_blocking() then
+    pcall(function()
+      self:process()
+    end)
+  end
   return notif.id
 end
 
@@ -404,7 +430,15 @@ function N:get_history(opts)
     end
   end
   notifs = filter and vim.tbl_filter(filter, notifs) or notifs
-  return self:sort(notifs, opts.sort)
+  local ret = self:sort(notifs, opts.sort)
+  if opts.reverse then
+    local rev = {}
+    for i = #ret, 1, -1 do
+      table.insert(rev, ret[i])
+    end
+    ret = rev
+  end
+  return ret
 end
 
 ---@param opts? snacks.notifier.history
@@ -549,8 +583,8 @@ function N:render(notif)
   win.opts.height = height
 end
 
----@param fields? string[]
 ---@param notifs? snacks.notifier.Notif[]
+---@param fields? string[]
 function N:sort(notifs, fields)
   fields = fields or self.opts.sort
   notifs = notifs or vim.tbl_values(self.queue)
@@ -623,8 +657,9 @@ function N:layout()
       local prev_layout = notif.layout
         and { top = notif.layout.top, height = notif.layout.height, width = notif.layout.width }
       if not notif.win or notif.dirty or not notif.win:buf_valid() or type(notif.opts) == "function" then
-        notif.dirty = false
+        notif.dirty = true
         self:render(notif)
+        notif.dirty = false
         notif.layout = notif.win:size()
         notif.layout.top = prev_layout and prev_layout.top
         prev_layout = nil -- always re-render since opts might've changed

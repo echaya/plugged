@@ -208,8 +208,7 @@ function M:close(opts)
   if buf then
     self.buf = nil
   end
-
-  vim.schedule(function()
+  local close = function()
     if win and vim.api.nvim_win_is_valid(win) then
       vim.api.nvim_win_close(win, true)
     end
@@ -220,7 +219,15 @@ function M:close(opts)
       pcall(vim.api.nvim_del_augroup_by_id, self.augroup)
       self.augroup = nil
     end
-  end)
+  end
+  local try_close
+  try_close = function()
+    local ok, err = pcall(close)
+    if not ok and err and err:find("E565") then
+      vim.defer_fn(try_close, 50)
+    end
+  end
+  vim.schedule(try_close)
 end
 
 function M:hide()

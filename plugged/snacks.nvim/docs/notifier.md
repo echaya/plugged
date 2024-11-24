@@ -244,6 +244,15 @@ Notification object
 ---@field ns number
 ```
 
+### History
+
+```lua
+---@class snacks.notifier.history
+---@field filter? snacks.notifier.level|fun(notif: snacks.notifier.Notif): boolean
+---@field sort? string[] # sort fields, default: {"added"}
+---@field reverse? boolean
+```
+
 ```lua
 ---@alias snacks.notifier.level "trace"|"debug"|"info"|"warn"|"error"
 ```

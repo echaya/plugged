@@ -18,21 +18,16 @@ function Handler.new(buf)
     local self = setmetatable({}, Handler)
     self.config = state.get(buf)
     self.context = Context.get(buf)
-    self.marks = List.new_marks(buf, self.config.anti_conceal.ignore)
+    self.marks = List.new_marks(buf, false)
     self.query = treesitter.parse(
         'markdown',
         [[
             (section) @section
 
-            (atx_heading [
-                (atx_h1_marker)
-                (atx_h2_marker)
-                (atx_h3_marker)
-                (atx_h4_marker)
-                (atx_h5_marker)
-                (atx_h6_marker)
-            ] @heading)
-            (setext_heading) @heading
+            [
+                (atx_heading)
+                (setext_heading)
+            ] @heading
 
             (section (paragraph) @paragraph)
 

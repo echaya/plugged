@@ -25,7 +25,8 @@ end
 ---@param default_config render.md.Config
 ---@param user_config render.md.UserConfig
 function M.setup(default_config, user_config)
-    local config = vim.tbl_deep_extend('force', default_config, presets.get(user_config), user_config)
+    local preset_config = presets.get(user_config)
+    local config = vim.tbl_deep_extend('force', default_config, preset_config, user_config)
     -- Override settings that require neovim >= 0.10.0 and have compatible alternatives
     if not util.has_10 then
         config.code.position = 'right'
@@ -152,11 +153,12 @@ function M.validate()
             end)
             :nested('heading', function(heading)
                 heading
-                    :type({ 'enabled', 'sign', 'border', 'border_virtual', 'border_prefix' }, 'boolean')
+                    :type({ 'enabled', 'sign', 'border_virtual', 'border_prefix' }, 'boolean')
                     :type({ 'above', 'below' }, 'string')
+                    :list('border', 'boolean', 'boolean')
                     :list({ 'left_margin', 'left_pad', 'right_pad', 'min_width' }, 'number', 'number')
                     :list({ 'icons', 'signs', 'backgrounds', 'foregrounds' }, 'string')
-                    :one_of('position', { 'overlay', 'inline' })
+                    :one_of('position', { 'overlay', 'inline', 'right' })
                     :one_or_list_of('width', { 'full', 'block' })
                     :check()
             end)

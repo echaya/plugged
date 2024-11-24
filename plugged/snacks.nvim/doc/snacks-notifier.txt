@@ -12,6 +12,7 @@ Table of Contents                          *snacks-notifier-table-of-contents*
 5. Types                                               |snacks-notifier-types|
   - Notifications                        |snacks-notifier-types-notifications|
   - Rendering                                |snacks-notifier-types-rendering|
+  - History                                    |snacks-notifier-types-history|
 6. Module                                             |snacks-notifier-module|
   - Snacks.notifier()               |snacks-notifier-module-snacks.notifier()|
   - Snacks.notifier.get_history()|snacks-notifier-module-snacks.notifier.get_history()|
@@ -259,6 +260,16 @@ RENDERING                                    *snacks-notifier-types-rendering*
     ---@field notifier snacks.notifier.Class
     ---@field hl snacks.notifier.hl
     ---@field ns number
+<
+
+
+HISTORY                                        *snacks-notifier-types-history*
+
+>lua
+    ---@class snacks.notifier.history
+    ---@field filter? snacks.notifier.level|fun(notif: snacks.notifier.Notif): boolean
+    ---@field sort? string[] # sort fields, default: {"added"}
+    ---@field reverse? boolean
 <
 
 >lua

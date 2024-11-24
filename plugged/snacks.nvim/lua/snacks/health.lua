@@ -24,6 +24,19 @@ function M.check()
   else
     M.error("setup not called")
   end
+  if package.loaded.lazy then
+    local plugin = require("lazy.core.config").spec.plugins["snacks.nvim"]
+    if plugin then
+      if plugin.lazy ~= false then
+        M.warn("`snacks.nvim` should not be lazy-loaded. Add `lazy=false` to the plugin spec")
+      end
+      if (plugin.priority or 0) < 1000 then
+        M.warn("`snacks.nvim` should have a priority of 1000 or higher. Add `priority=1000` to the plugin spec")
+      end
+    else
+      M.error("`snacks.nvim` not found in lazy")
+    end
+  end
   local root = debug.getinfo(1, "S").source:match("@(.*)")
   root = vim.fn.fnamemodify(root, ":h")
   for file, t in vim.fs.dir(root, { depth = 1 }) do

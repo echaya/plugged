@@ -1,22 +1,25 @@
 local Context = require('render-markdown.core.context')
 local Str = require('render-markdown.lib.str')
 local log = require('render-markdown.core.log')
+local state = require('render-markdown.state')
 local util = require('render-markdown.core.util')
 
 ---@class render.md.Marks
 ---@field private context render.md.Context
 ---@field private ignore render.md.config.conceal.Ignore
+---@field private update boolean
 ---@field private marks render.md.Mark[]
 local Marks = {}
 Marks.__index = Marks
 
 ---@param buf integer
----@param ignore? render.md.config.conceal.Ignore
+---@param update boolean
 ---@return render.md.Marks
-function Marks.new(buf, ignore)
+function Marks.new(buf, update)
     local self = setmetatable({}, Marks)
     self.context = Context.get(buf)
-    self.ignore = ignore or {}
+    self.ignore = state.get(buf).anti_conceal.ignore
+    self.update = update
     self.marks = {}
     return self
 end
@@ -29,11 +32,13 @@ end
 ---@param element boolean|render.md.Element
 ---@param node render.md.Node
 ---@param opts vim.api.keyset.set_extmark
+---@param offset? Range4
 ---@return boolean
-function Marks:add_over(element, node, opts)
-    opts.end_row = node.end_row
-    opts.end_col = node.end_col
-    return self:add(element, node.start_row, node.start_col, opts)
+function Marks:add_over(element, node, opts, offset)
+    offset = offset or { 0, 0, 0, 0 }
+    opts.end_row = node.end_row + offset[3]
+    opts.end_col = node.end_col + offset[4]
+    return self:add(element, node.start_row + offset[1], node.start_col + offset[2], opts)
 end
 
 ---@param element boolean|render.md.Element
@@ -58,7 +63,9 @@ function Marks:add(element, start_row, start_col, opts)
         return false
     end
     log.add('debug', 'mark', mark)
-    self:update_context(mark)
+    if self.update then
+        self:update_context(mark)
+    end
     table.insert(self.marks, mark)
     return true
 end
