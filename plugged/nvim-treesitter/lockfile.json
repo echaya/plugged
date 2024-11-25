@@ -54,7 +54,7 @@
     "revision": "e8841a6a9431b7365ac9055688429e1deb8db90f"
   },
   "c_sharp": {
-    "revision": "362a8a41b265056592a0c3771664a21d23a71392"
+    "revision": "285c993f01d9955932b45a6192055003aa70a570"
   },
   "cairo": {
     "revision": "6238f609bea233040fe927858156dee5515a0745"
@@ -63,7 +63,7 @@
     "revision": "7b0883c03e5edd34ef7bcf703194204299d7099f"
   },
   "chatito": {
-    "revision": "a461f20dedb43905febb12c1635bc7d2e43e96f0"
+    "revision": "b4cbe9ab7672d5106e9550d8413835395a1be362"
   },
   "clojure": {
     "revision": "f4236d4da8aa92bc105d9c118746474c608e6af7"
@@ -147,7 +147,7 @@
     "revision": "8e635b0b723c620774dfb8abf382a7f531894b40"
   },
   "editorconfig": {
-    "revision": "511d5f387426ba555d7fb33e726ab6770f477a49"
+    "revision": "5f4f84f0e79049e4526c0a1db669378092ecb256"
   },
   "eds": {
     "revision": "26d529e6cfecde391a03c21d1474eb51e0285805"
@@ -261,7 +261,7 @@
     "revision": "3c895f5d9c0b3a3c7e02383766b462c21913c000"
   },
   "go": {
-    "revision": "0942d76fc517739b5d29a0e420b5e602d19c724d"
+    "revision": "12fe553fdaaa7449f764bc876fd777704d4fb752"
   },
   "goctl": {
     "revision": "49c43532689fe1f53e8b9e009d0521cab02c432b"
@@ -282,7 +282,7 @@
     "revision": "949a8a470559543857a62102c84700d291fc984c"
   },
   "gpg": {
-    "revision": "f99323fb8f3f10b6c69db0c2f6d0a14bd7330675"
+    "revision": "63e80cfe1302da9f9c7ee8d9df295f47d7d181bf"
   },
   "graphql": {
     "revision": "5e66e961eee421786bdda8495ed1db045e06b5fe"
@@ -330,7 +330,7 @@
     "revision": "c390f10519ae69fdb03b3e5764f5592fb6924bcc"
   },
   "hoon": {
-    "revision": "a24c5a39d1d7e993a8bee913c8e8b6a652ca5ae8"
+    "revision": "2ac017d168aca1e75b3df94dbbb6b3083f79cdfe"
   },
   "html": {
     "revision": "d9219ada6e1a2c8f0ab0304a8bd9ca4285ae0468"
@@ -474,7 +474,7 @@
     "revision": "173b0ab53a9c07962c9777189c4c70e90f1c1837"
   },
   "nasm": {
-    "revision": "570f3d7be01fffc751237f4cfcf52d04e20532d1"
+    "revision": "d1b3638d017f2a8585e26dcfc66fe1df94185e30"
   },
   "nginx": {
     "revision": "281d184b8240b2b22670b8907b57b6d6842db6f3"
@@ -501,7 +501,7 @@
     "revision": "14e6da1627aaef21d2b2aa0c37d04269766dcc1d"
   },
   "nu": {
-    "revision": "9eedcb303de0b4e046477161fb3d2932a0146d2a"
+    "revision": "74e6037383ce3a77ed6fdb8281bbd69316c723a4"
   },
   "objc": {
     "revision": "62e61b6f5c0289c376d61a8c91faf6435cde9012"
@@ -531,7 +531,7 @@
     "revision": "20239395eacdc2e0923a7e5683ad3605aee7b716"
   },
   "pem": {
-    "revision": "217ff2af3f2db15a79ab7e3d21ea1e0c17e71a1a"
+    "revision": "1d16b8e063fdf4385e389096c4bc4999eaaef05f"
   },
   "perl": {
     "revision": "71206326a8bcbdc2032f852bab8698e315bf5910"
@@ -555,7 +555,7 @@
     "revision": "0bf8387987c21bf2f8ed41d2575a8f22b139687f"
   },
   "poe_filter": {
-    "revision": "592476d81f95d2451f2ca107dc872224c76fecdf"
+    "revision": "908ba6accbd9cd3fdf0a208fdc186b9ca3db123c"
   },
   "pony": {
     "revision": "73ff874ae4c9e9b45462673cbc0a1e350e2522a7"
@@ -675,7 +675,7 @@
     "revision": "cf85bbd5da0c5ad243301d889c7f84d790a4cae4"
   },
   "rust": {
-    "revision": "32c17ce5463818032a9c252a849b910315b6e485"
+    "revision": "cad8a206f2e4194676b9699f26f6560d07130d3f"
   },
   "scala": {
     "revision": "c33925aa8aabaa5b61f1db860b2628c41ce84684"
@@ -780,7 +780,7 @@
     "revision": "635e61625949a0711f63b52cfaaac1c75769885c"
   },
   "templ": {
-    "revision": "c926ed73e101bbdef3f54eaa05b8fa30d2676dfe"
+    "revision": "dc41c080783c6305d66471672a9c9147561126e4"
   },
   "terraform": {
     "revision": "9e3ec9848f28d26845ba300fd73c740459b83e9b"
@@ -894,7 +894,7 @@
     "revision": "4b64dd3a03ec002258d6268d712fd93716d6ab57"
   },
   "xresources": {
-    "revision": "2fb18b8ca7d3717a0475f35c5c7e8142a82f3200"
+    "revision": "ce8129b03f03413f18f8cd989f88c05c59151bb5"
   },
   "yaml": {
     "revision": "7b03feefd36b5f155465ca736c6304aca983b267"
