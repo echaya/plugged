@@ -44,6 +44,11 @@ Open the repo of the active file in the browser (e.g., GitHub)
       branch = "/-/tree/{branch}",
       file = "/-/blob/{branch}/{file}#L{line}",
     },
+    ["bitbucket%.org"] = {
+      branch = "/src/{branch}",
+      file = "/src/{branch}/{file}#lines-{line}",
+      commit = "/commits/{commit}",
+    },
   },
 }
 ```
