@@ -29,6 +29,14 @@
 }
 ```
 
+## 📚 Types
+
+```lua
+---@class snacks.Config.base
+---@field example? string
+---@field config? fun(opts: table, defaults: table)
+```
+
 ## 📦 Module
 
 ```lua
@@ -45,6 +53,7 @@
 ---@field notify snacks.notify
 ---@field quickfile snacks.quickfile
 ---@field health snacks.health
+---@field profiler snacks.profiler
 ---@field rename snacks.rename
 ---@field statuscolumn snacks.statuscolumn
 ---@field terminal snacks.terminal
@@ -53,6 +62,17 @@
 ---@field win snacks.win
 ---@field words snacks.words
 Snacks = {}
+```
+
+### `Snacks.config.example()`
+
+Get an example config from the docs/examples directory.
+
+```lua
+---@param snack string
+---@param name string
+---@param opts? table
+Snacks.config.example(snack, name, opts)
 ```
 
 ### `Snacks.config.get()`

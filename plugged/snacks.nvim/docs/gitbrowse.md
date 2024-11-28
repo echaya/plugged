@@ -18,7 +18,7 @@ Open the repo of the active file in the browser (e.g., GitHub)
     end
     vim.ui.open(url)
   end,
-  ---@type "repo" | "branch" | "file"
+  ---@type "repo" | "branch" | "file" | "commit"
   what = "file", -- what to open. not all remotes support all types
   -- patterns to transform remotes to an actual URL
   remote_patterns = {
@@ -39,10 +39,12 @@ Open the repo of the active file in the browser (e.g., GitHub)
     ["github%.com"] = {
       branch = "/tree/{branch}",
       file = "/blob/{branch}/{file}#L{line}",
+      commit = "/commit/{commit}",
     },
     ["gitlab%.com"] = {
       branch = "/-/tree/{branch}",
       file = "/-/blob/{branch}/{file}#L{line}",
+      commit = "/-/commit/{commit}",
     },
     ["bitbucket%.org"] = {
       branch = "/src/{branch}",

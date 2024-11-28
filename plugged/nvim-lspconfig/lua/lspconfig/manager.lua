@@ -58,10 +58,12 @@ end
 --- @param root_dir string
 --- @param client vim.lsp.Client
 function M:_notify_workspace_folder_added(root_dir, client)
-  if
-    is_dir_in_workspace_folders(client, root_dir)
-    or not vim.tbl_get(client, 'server_capabilities', 'workspace', 'workspaceFolders', 'supported')
-  then
+  if is_dir_in_workspace_folders(client, root_dir) then
+    return
+  end
+
+  local supported = vim.tbl_get(client, 'server_capabilities', 'workspace', 'workspaceFolders', 'supported')
+  if not supported then
     return
   end
 
@@ -71,7 +73,7 @@ function M:_notify_workspace_folder_added(root_dir, client)
       removed = {},
     },
   }
-  client.rpc.notify(lsp.protocol.Methods.workspace_didChangeWorkspaceFolders, params)
+  client.rpc.notify('workspace/didChangeWorkspaceFolders', params)
   if not client.workspace_folders then
     client.workspace_folders = {}
   end
@@ -130,10 +132,6 @@ function M:_start_client(bufnr, new_config, root_dir, single_file, silent)
     bufnr = bufnr,
     silent = silent,
     reuse_client = function(existing_client)
-      if not vim.tbl_get(existing_client, 'server_capabilities', 'workspace', 'workspaceFolders', 'supported') then
-        return false
-      end
-
       if (self._clients[root_dir] or {})[existing_client.name] then
         self:_notify_workspace_folder_added(root_dir, existing_client)
         return true
@@ -159,7 +157,7 @@ end
 ---@param bufnr integer
 ---@param silent boolean
 function M:add(root_dir, single_file, bufnr, silent)
-  root_dir = util.path.sanitize(root_dir)
+  root_dir = vim.fs.normalize(root_dir)
   local new_config = self.make_config(root_dir)
   self:_start_client(bufnr, new_config, root_dir, single_file, silent)
 end
@@ -201,7 +199,7 @@ function M:try_add(bufnr, project_root, silent)
     return
   end
 
-  local buf_path = util.path.sanitize(bufname)
+  local buf_path = vim.fs.normalize(bufname)
 
   local get_root_dir = self.config.root_dir
 
@@ -222,7 +220,7 @@ function M:try_add(bufnr, project_root, silent)
     if root_dir then
       self:add(root_dir, false, bufnr, silent)
     elseif self.config.single_file_support then
-      local pseudo_root = #bufname == 0 and pwd or util.path.dirname(buf_path)
+      local pseudo_root = #bufname == 0 and pwd or vim.fs.dirname(buf_path)
       self:add(pseudo_root, true, bufnr, silent)
     end
   end)

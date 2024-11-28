@@ -32,7 +32,9 @@ local config = Snacks.config.get("statuscolumn", defaults)
 
 -- Cache for signs per buffer and line
 ---@type table<number,table<number,snacks.statuscolumn.Sign[]>>
-local cache = {}
+local sign_cache = {}
+local cache = {} ---@type table<string,string>
+local icon_cache = {} ---@type table<string,string>
 
 local did_setup = false
 
@@ -44,6 +46,7 @@ function M.setup()
   did_setup = true
   local timer = assert((vim.uv or vim.loop).new_timer())
   timer:start(config.refresh, config.refresh, function()
+    sign_cache = {}
     cache = {}
   end)
 end
@@ -63,10 +66,6 @@ end
 ---@return table<number, snacks.statuscolumn.Sign[]>
 ---@param buf number
 function M.buf_signs(buf)
-  if cache[buf] then
-    return cache[buf]
-  end
-
   -- Get regular signs
   ---@type table<number, snacks.statuscolumn.Sign[]>
   local signs = {}
@@ -111,7 +110,6 @@ function M.buf_signs(buf)
     end
   end
 
-  cache[buf] = signs
   return signs
 end
 
@@ -122,7 +120,12 @@ end
 ---@param lnum number
 ---@return snacks.statuscolumn.Sign[]
 function M.line_signs(win, buf, lnum)
-  local signs = M.buf_signs(buf)[lnum] or {}
+  local buf_signs = sign_cache[buf]
+  if not buf_signs then
+    buf_signs = M.buf_signs(buf)
+    sign_cache[buf] = buf_signs
+  end
+  local signs = buf_signs[lnum] or {}
 
   -- Get fold signs
   vim.api.nvim_win_call(win, function()
@@ -142,18 +145,25 @@ end
 
 ---@private
 ---@param sign? snacks.statuscolumn.Sign
----@param len? number
-function M.icon(sign, len)
-  sign = sign or {}
-  len = len or 2
-  local text = vim.fn.strcharpart(sign.text or "", 0, len) ---@type string
-  text = text .. string.rep(" ", len - vim.fn.strchars(text))
-  return sign.texthl and ("%#" .. sign.texthl .. "#" .. text .. "%*") or text
+function M.icon(sign)
+  if not sign then
+    return "  "
+  end
+  local key = (sign.text or "") .. (sign.texthl or "")
+  if icon_cache[key] then
+    return icon_cache[key]
+  end
+  local text = vim.fn.strcharpart(sign.text or "", 0, 2) ---@type string
+  text = text .. string.rep(" ", 2 - vim.fn.strchars(text))
+  icon_cache[key] = sign.texthl and ("%#" .. sign.texthl .. "#" .. text .. "%*") or text
+  return icon_cache[key]
 end
 
 ---@return string
-function M.get()
-  M.setup()
+function M._get()
+  if not did_setup then
+    M.setup()
+  end
   local win = vim.g.statusline_winid
   local buf = vim.api.nvim_win_get_buf(win)
   local is_file = vim.bo[buf].buftype == ""
@@ -188,8 +198,8 @@ function M.get()
       end
     end
 
-    components[1] = M.icon(left) -- left
-    components[3] = is_file and M.icon(right) or "" -- right
+    components[1] = left and M.icon(left) or "  " -- left
+    components[3] = is_file and (right and M.icon(right) or "  ") or "" -- right
   end
 
   -- Numbers in Neovim are weird
@@ -216,10 +226,19 @@ function M.get()
   return table.concat(components, "")
 end
 
-local get = M.get
 function M.get()
-  local ok, ret = pcall(get)
-  return not ok and "" or ret
+  local win = vim.g.statusline_winid
+  local buf = vim.api.nvim_win_get_buf(win)
+  local key = ("%d:%d:%d"):format(win, buf, vim.v.lnum)
+  if cache[key] then
+    return cache[key]
+  end
+  local ok, ret = pcall(M._get)
+  if ok then
+    cache[key] = ret
+    return ret
+  end
+  return ""
 end
 
 ---@private

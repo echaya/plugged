@@ -102,33 +102,18 @@ M.path = (function()
     return path:gsub('([%[%]%?%*])', '\\%1')
   end
 
-  --- @param path string
-  --- @return string
-  local function sanitize(path)
-    if iswin then
-      path = path:sub(1, 1):upper() .. path:sub(2)
-      path = path:gsub('\\', '/')
-    end
-    return path
-  end
-
-  --- @param filename string
-  --- @return string|false
-  local function exists(filename)
-    local stat = uv.fs_stat(filename)
-    return stat and stat.type or false
-  end
-
   --- @param filename string
   --- @return boolean
   local function is_dir(filename)
-    return exists(filename) == 'directory'
+    local stat = uv.fs_stat(filename)
+    return stat and stat.type == 'directory' or false
   end
 
   --- @param filename string
   --- @return boolean
   local function is_file(filename)
-    return exists(filename) == 'file'
+    local stat = uv.fs_stat(filename)
+    return stat and stat.type == 'file' or false
   end
 
   --- @param path string
@@ -151,26 +136,6 @@ M.path = (function()
     end
   end
 
-  --- @generic T: string?
-  --- @param path T
-  --- @return T
-  local function dirname(path)
-    local strip_dir_pat = '/([^/]+)$'
-    local strip_sep_pat = '/$'
-    if not path or #path == 0 then
-      return path
-    end
-    local result = path:gsub(strip_sep_pat, ''):gsub(strip_dir_pat, '')
-    if #result == 0 then
-      if iswin then
-        return path:sub(1, 2):upper()
-      else
-        return '/'
-      end
-    end
-    return result
-  end
-
   local function path_join(...)
     return table.concat(M.tbl_flatten { ... }, '/')
   end
@@ -181,7 +146,7 @@ M.path = (function()
     local dir = path
     -- Just in case our algo is buggy, don't infinite loop.
     for _ = 1, 100 do
-      dir = dirname(dir)
+      dir = vim.fs.dirname(dir)
       if not dir then
         return
       end
@@ -199,7 +164,7 @@ M.path = (function()
   local function iterate_parents(path)
     local function it(_, v)
       if v and not is_fs_root(v) then
-        v = dirname(v)
+        v = vim.fs.dirname(v)
       else
         return
       end
@@ -233,10 +198,7 @@ M.path = (function()
     is_dir = is_dir,
     is_file = is_file,
     is_absolute = is_absolute,
-    exists = exists,
-    dirname = dirname,
     join = path_join,
-    sanitize = sanitize,
     traverse_parents = traverse_parents,
     iterate_parents = iterate_parents,
     is_descendant = is_descendant,
@@ -278,7 +240,7 @@ function M.root_pattern(...)
     for _, pattern in ipairs(patterns) do
       local match = M.search_ancestors(startpath, function(path)
         for _, p in ipairs(vim.fn.glob(M.path.join(M.path.escape_wildcards(path), pattern), true, true)) do
-          if M.path.exists(p) then
+          if uv.fs_stat(p) then
             return path
           end
         end
@@ -425,6 +387,22 @@ function M.strip_archive_subpath(path)
   path = vim.fn.substitute(path, 'zipfile://\\(.\\{-}\\)::[^\\\\].*$', '\\1', '')
   path = vim.fn.substitute(path, 'tarfile:\\(.\\{-}\\)::.*$', '\\1', '')
   return path
+end
+
+--- Deprecated functions
+
+--- @deprecated use `vim.fs.dirname` instead
+M.path.dirname = vim.fs.dirname
+
+--- @deprecated use `vim.fs.normalize` instead
+M.path.sanitize = vim.fs.normalize
+
+--- @deprecated use `vim.loop.fs_stat` instead
+--- @param filename string
+--- @return string|false
+function M.path.exists(filename)
+  local stat = uv.fs_stat(filename)
+  return stat and stat.type or false
 end
 
 return M

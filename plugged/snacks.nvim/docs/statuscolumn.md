@@ -36,10 +36,3 @@ Snacks.statuscolumn()
 ```lua
 Snacks.statuscolumn.get()
 ```
-
-### `Snacks.statuscolumn.get()`
-
-```lua
----@return string
-Snacks.statuscolumn.get()
-```

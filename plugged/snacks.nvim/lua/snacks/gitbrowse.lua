@@ -19,7 +19,7 @@ local defaults = {
     end
     vim.ui.open(url)
   end,
-  ---@type "repo" | "branch" | "file"
+  ---@type "repo" | "branch" | "file" | "commit"
   what = "file", -- what to open. not all remotes support all types
   -- patterns to transform remotes to an actual URL
   -- stylua: ignore
@@ -41,10 +41,12 @@ local defaults = {
     ["github%.com"] = {
       branch = "/tree/{branch}",
       file = "/blob/{branch}/{file}#L{line}",
+      commit = "/commit/{commit}",
     },
     ["gitlab%.com"] = {
       branch = "/-/tree/{branch}",
       file = "/-/blob/{branch}/{file}#L{line}",
+      commit = "/-/commit/{commit}",
     },
     ["bitbucket%.org"] = {
       branch = "/src/{branch}",
@@ -89,6 +91,17 @@ local function system(cmd, err)
   return vim.split(vim.trim(proc), "\n")
 end
 
+---@param hash string
+---@param cwd string
+---@return boolean
+local function is_valid_commit_hash(hash, cwd)
+  if not (hash:match("^[a-fA-F0-9]+$") and #hash >= 7) then
+    return false
+  end
+  system({ "git", "-C", cwd, "rev-parse", "--verify", hash }, "Invalid commit hash")
+  return true
+end
+
 ---@param opts? snacks.gitbrowse.Config
 function M.open(opts)
   pcall(M._open, opts) -- errors are handled with notifications
@@ -100,10 +113,13 @@ function M._open(opts)
   local file = vim.api.nvim_buf_get_name(0) ---@type string?
   file = file and (uv.fs_stat(file) or {}).type == "file" and vim.fs.normalize(file) or nil
   local cwd = file and vim.fn.fnamemodify(file, ":h") or vim.fn.getcwd()
+  local word = vim.fn.expand("<cword>")
+  local is_commit = is_valid_commit_hash(word, cwd)
   local fields = {
     branch = system({ "git", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD" }, "Failed to get current branch")[1],
     file = file and system({ "git", "-C", cwd, "ls-files", "--full-name", file }, "Failed to get git file path")[1],
     line = nil,
+    commit = is_commit and word,
   }
 
   -- Get visual selection range if in visual mode
@@ -119,8 +135,9 @@ function M._open(opts)
     fields.line = file and vim.fn.line(".")
   end
 
-  opts.what = opts.what == "file" and not fields.file and "branch" or opts.what
-  opts.what = opts.what == "branch" and not fields.branch and "repo" or opts.what
+  opts.what = is_commit and "commit" or opts.what == "commit" and not fields.commit and "file" or opts.what
+  opts.what = not is_commit and opts.what == "file" and not fields.file and "branch" or opts.what
+  opts.what = not is_commit and opts.what == "branch" and not fields.branch and "repo" or opts.what
 
   local remotes = {} ---@type {name:string, url:string}[]
 

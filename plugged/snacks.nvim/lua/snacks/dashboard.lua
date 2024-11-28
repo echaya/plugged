@@ -873,24 +873,30 @@ function M.sections.terminal(opts)
     local buf = vim.api.nvim_create_buf(false, true)
     local chan = vim.api.nvim_open_term(buf, {})
 
-    local function send(data)
+    local function send(data, refresh)
       vim.api.nvim_chan_send(chan, data)
-      -- HACK: this forces a refresh of the terminal buffer and prevents flickering
-      vim.bo[buf].scrollback = 9999
-      vim.bo[buf].scrollback = 9998
+      if refresh then
+        -- HACK: this forces a refresh of the terminal buffer and prevents flickering
+        vim.bo[buf].scrollback = 9999
+        vim.bo[buf].scrollback = 9998
+      end
     end
 
     local jid, stopped ---@type number?, boolean?
-    if stat and stat.type == "file" and stat.size > 0 and os.time() - stat.mtime.sec < ttl then
+    local has_cache = stat and stat.type == "file" and stat.size > 0
+    local is_expired = has_cache and stat and os.time() - stat.mtime.sec >= ttl
+    if has_cache and stat then
       local fin = assert(uv.fs_open(cache_file, "r", 438))
-      send(uv.fs_read(fin, stat.size, 0) or "")
+      send(uv.fs_read(fin, stat.size, 0) or "", true)
       uv.fs_close(fin)
-    else
-      local output, recording = {}, uv.new_timer()
-      -- record output for max 3 seconds. otherwise assume its streaming
-      recording:start(3000, 0, function()
+    end
+    if not has_cache or is_expired then
+      local output, recording = {}, assert(uv.new_timer())
+      -- record output for max 5 seconds. otherwise assume its streaming
+      recording:start(5000, 0, function()
         output = {}
       end)
+      local first = true
       jid = vim.fn.jobstart(cmd, {
         height = height,
         width = width,
@@ -899,6 +905,10 @@ function M.sections.terminal(opts)
           data = table.concat(data, "\n")
           if recording:is_active() then
             table.insert(output, data)
+          end
+          if first and has_cache then -- clear the screen if cache was expired
+            first = false
+            data = "\27[2J\27[H" .. data -- clear screen
           end
           pcall(send, data)
         end,

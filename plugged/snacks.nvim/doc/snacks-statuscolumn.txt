@@ -45,7 +45,6 @@ Table of Contents                      *snacks-statuscolumn-table-of-contents*
 `Snacks.statuscolumn.get()`                         *Snacks.statuscolumn.get()*
 
 >lua
-    ---@return string
     Snacks.statuscolumn.get()
 <
 

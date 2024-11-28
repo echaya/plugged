@@ -190,7 +190,9 @@ A more advanced example using multiple panes
       icon = " ",
       title = "Git Status",
       section = "terminal",
-      enabled = Snacks.git.get_root() ~= nil,
+      enabled = function()
+        return Snacks.git.get_root() ~= nil
+      end,
       cmd = "hub status --short --branch --renames",
       height = 5,
       padding = 1,
@@ -269,6 +271,68 @@ A simple example with a header, keys, recent files, and projects
     { section = "keys", gap = 1 },
     { icon = " ", title = "Recent Files", section = "recent_files", indent = 2, padding = { 2, 2 } },
     { icon = " ", title = "Projects", section = "projects", indent = 2, padding = 2 },
+    { section = "startup" },
+  },
+}
+```
+
+### `github`
+
+Advanced example using the GitHub CLI.
+![image](https://github.com/user-attachments/assets/965e1d9e-6833-409c-900a-a12e98d764d9)
+
+```lua
+{
+  sections = {
+    { section = "header" },
+    {
+      pane = 2,
+      section = "terminal",
+      cmd = "colorscript -e square",
+      height = 5,
+      padding = 1,
+    },
+    { section = "keys", gap = 1, padding = 1 },
+    function()
+      local in_git = Snacks.git.get_root() ~= nil
+      local cmds = {
+        {
+          title = "Notifications",
+          cmd = "gh notify -s -a -n5",
+          icon = " ",
+          height = 5,
+          enabled = true,
+        },
+        {
+          title = "Open Issues",
+          cmd = "gh issue list -L 3",
+          icon = " ",
+          height = 7,
+        },
+        {
+          icon = " ",
+          title = "Open PRs",
+          cmd = "gh pr list -L 3",
+          height = 7,
+        },
+        {
+          icon = " ",
+          title = "Git Status",
+          cmd = "hub --no-pager diff --stat -B -M -C",
+          height = 10,
+        },
+      }
+      return vim.tbl_map(function(cmd)
+        return vim.tbl_extend("force", {
+          pane = 2,
+          section = "terminal",
+          enabled = in_git,
+          padding = 1,
+          ttl = 5 * 60,
+          indent = 3,
+        }, cmd)
+      end, cmds)
+    end,
     { section = "startup" },
   },
 }
