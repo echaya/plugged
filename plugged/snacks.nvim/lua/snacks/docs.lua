@@ -352,7 +352,8 @@ function M._build()
   local skip = { "docs", "health" }
   for file, t in vim.fs.dir("lua/snacks", { depth = 1 }) do
     local name = vim.fn.fnamemodify(file, ":t:r")
-    if t == "file" and not vim.tbl_contains(skip, name) then
+    if not vim.tbl_contains(skip, name) then
+      file = t == "directory" and ("%s/init.lua"):format(file) or file
       print(name .. ".md")
       local path = ("lua/snacks/%s"):format(file)
       local lines = vim.fn.readfile(path)

@@ -387,12 +387,27 @@ function M:show()
     end
   end
 
+  -- Go back to the previous window when closing,
+  -- and it's the current window
+  vim.api.nvim_create_autocmd("WinClosed", {
+    group = self.augroup,
+    buffer = self.buf,
+    callback = function(ev)
+      if ev.buf == self.buf and vim.api.nvim_get_current_win() == self.win then
+        pcall(vim.cmd.wincmd, "p")
+      end
+    end,
+  })
+
+  -- update window size when resizing
   vim.api.nvim_create_autocmd("VimResized", {
     group = self.augroup,
     callback = function()
       self:update()
     end,
   })
+
+  -- swap buffers when opening a new buffer in the same window
   vim.api.nvim_create_autocmd("BufWinEnter", {
     group = self.augroup,
     callback = function()

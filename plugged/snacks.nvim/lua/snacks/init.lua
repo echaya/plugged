@@ -25,7 +25,7 @@ setmetatable(M, {
   __index = function(t, k)
     ---@diagnostic disable-next-line: no-unknown
     t[k] = require("snacks." .. k)
-    return t[k]
+    return rawget(t, k)
   end,
 })
 
