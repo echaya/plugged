@@ -5,6 +5,7 @@
 ---@field opts snacks.win.Config
 ---@field augroup? number
 ---@field backdrop? snacks.win
+---@field keys snacks.win.Keys[]
 ---@overload fun(opts? :snacks.win.Config): snacks.win
 local M = setmetatable({}, {
   __call = function(t, ...)
@@ -183,6 +184,19 @@ function M.new(opts)
     opts.wo.winfixheight = not vertical
     opts.wo.winfixwidth = vertical
   end
+
+  self.keys = {}
+  for key, spec in pairs(opts.keys) do
+    if spec then
+      if type(spec) == "string" then
+        spec = { key, self[spec] and self[spec] or spec, desc = spec }
+      elseif type(spec) == "function" then
+        spec = { key, spec }
+      end
+      table.insert(self.keys, spec)
+    end
+  end
+
   ---@cast opts snacks.win.Config
   self.opts = opts
   if opts.show ~= false then
@@ -204,6 +218,14 @@ function M:close(opts)
 
   local win = self.win
   local buf = wipe and self.buf
+
+  -- never close modified buffers
+  if buf and vim.bo[buf].modified then
+    if not pcall(vim.api.nvim_buf_delete, buf, { force = false }) then
+      return
+    end
+  end
+
   self.win = nil
   if buf then
     self.buf = nil
@@ -434,28 +456,21 @@ function M:show()
     end,
   })
 
-  for key, spec in pairs(self.opts.keys) do
-    if spec then
-      if type(spec) == "string" then
-        spec = { key, self[spec] and self[spec] or spec, desc = spec }
-      elseif type(spec) == "function" then
-        spec = { key, spec }
+  for _, spec in pairs(self.keys) do
+    local opts = vim.deepcopy(spec)
+    opts[1] = nil
+    opts[2] = nil
+    opts.mode = nil
+    opts.buffer = self.buf
+    opts.nowait = true
+    local rhs = spec[2]
+    if type(rhs) == "function" then
+      rhs = function()
+        return spec[2](self)
       end
-      local opts = vim.deepcopy(spec)
-      opts[1] = nil
-      opts[2] = nil
-      opts.mode = nil
-      opts.buffer = self.buf
-      opts.nowait = true
-      local rhs = spec[2]
-      if type(rhs) == "function" then
-        rhs = function()
-          return spec[2](self)
-        end
-      end
-      ---@cast spec snacks.win.Keys
-      vim.keymap.set(spec.mode or "n", spec[1], rhs, opts)
     end
+    ---@cast spec snacks.win.Keys
+    vim.keymap.set(spec.mode or "n", spec[1], rhs, opts)
   end
 
   self:drop()

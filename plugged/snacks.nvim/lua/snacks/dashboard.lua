@@ -962,8 +962,8 @@ function M.sections.terminal(opts)
           pcall(vim.fn.jobstop, jid)
           return true
         end)
-        self.on("UpdatePre", close)
-        self.on("Closed", close)
+        self.on("UpdatePre", close, self.augroup)
+        self.on("Closed", close, self.augroup)
         self:trace()
       end,
       text = ("\n"):rep(height - 1),
@@ -1049,13 +1049,14 @@ function M.setup()
 
   local options = { showtabline = vim.o.showtabline, laststatus = vim.o.laststatus }
   vim.o.showtabline, vim.o.laststatus = 0, 0
-  M.open({ buf = buf, win = wins[1] }).on("Closed", function()
+  local dashboard = M.open({ buf = buf, win = wins[1] })
+  D.on("Closed", function()
     for k, v in pairs(options) do
       if vim.o[k] == 0 and v ~= 0 then
         vim.o[k] = v
       end
     end
-  end)
+  end, dashboard.augroup)
 
   if Snacks.config.dashboard.debug then
     Snacks.debug.stats({ min = 0.2 })
