@@ -5,17 +5,18 @@ Table of Contents                          *snacks-terminal-table-of-contents*
 
 1. Usage                                               |snacks-terminal-usage|
   - Edgy Integration                  |snacks-terminal-usage-edgy-integration|
-2. Config                                             |snacks-terminal-config|
-3. Styles                                             |snacks-terminal-styles|
+2. Setup                                               |snacks-terminal-setup|
+3. Config                                             |snacks-terminal-config|
+4. Styles                                             |snacks-terminal-styles|
   - terminal                                 |snacks-terminal-styles-terminal|
-4. Types                                               |snacks-terminal-types|
-5. Module                                             |snacks-terminal-module|
+5. Types                                               |snacks-terminal-types|
+6. Module                                             |snacks-terminal-module|
   - Snacks.terminal()               |snacks-terminal-module-snacks.terminal()|
   - Snacks.terminal.colorize()|snacks-terminal-module-snacks.terminal.colorize()|
   - Snacks.terminal.get()       |snacks-terminal-module-snacks.terminal.get()|
   - Snacks.terminal.open()     |snacks-terminal-module-snacks.terminal.open()|
   - Snacks.terminal.toggle() |snacks-terminal-module-snacks.terminal.toggle()|
-6. Links                                               |snacks-terminal-links|
+7. Links                                               |snacks-terminal-links|
 Create and toggle terminal windows.
 
 Based on the provided options, some defaults will be set:
@@ -57,7 +58,25 @@ EDGY INTEGRATION                      *snacks-terminal-usage-edgy-integration*
 
 
 ==============================================================================
-2. Config                                             *snacks-terminal-config*
+2. Setup                                               *snacks-terminal-setup*
+
+>lua
+    -- lazy.nvim
+    {
+      "folke/snacks.nvim",
+      opts = {
+        terminal = {
+          -- your terminal configuration comes here
+          -- or leave it empty to use the default settings
+          -- refer to the configuration section below
+        }
+      }
+    }
+<
+
+
+==============================================================================
+3. Config                                             *snacks-terminal-config*
 
 >lua
     ---@class snacks.terminal.Config
@@ -70,7 +89,7 @@ EDGY INTEGRATION                      *snacks-terminal-usage-edgy-integration*
 
 
 ==============================================================================
-3. Styles                                             *snacks-terminal-styles*
+4. Styles                                             *snacks-terminal-styles*
 
 
 TERMINAL                                     *snacks-terminal-styles-terminal*
@@ -116,7 +135,7 @@ TERMINAL                                     *snacks-terminal-styles-terminal*
 
 
 ==============================================================================
-4. Types                                               *snacks-terminal-types*
+5. Types                                               *snacks-terminal-types*
 
 >lua
     ---@class snacks.terminal.Opts: snacks.terminal.Config
@@ -127,7 +146,7 @@ TERMINAL                                     *snacks-terminal-styles-terminal*
 
 
 ==============================================================================
-5. Module                                             *snacks-terminal-module*
+6. Module                                             *snacks-terminal-module*
 
 >lua
     ---@class snacks.terminal: snacks.win
@@ -196,7 +215,7 @@ and `vim.v.count1` options.
 <
 
 ==============================================================================
-6. Links                                               *snacks-terminal-links*
+7. Links                                               *snacks-terminal-links*
 
 1. *image*: https://github.com/user-attachments/assets/afcc9989-57d7-4518-a390-cc7d6f0cec13
 

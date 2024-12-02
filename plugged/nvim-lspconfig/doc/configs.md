@@ -3521,6 +3521,7 @@ Default config:
   ```lua
   {}
   ```
+- `single_file_support` : `true`
 
 
 ## fish_lsp
@@ -5660,7 +5661,7 @@ require'lspconfig'.lua_ls.setup {
   on_init = function(client)
     if client.workspace_folders then
       local path = client.workspace_folders[1].name
-      if vim.uv.fs_stat(path..'/.luarc.json') or vim.uv.fs_stat(path..'/.luarc.jsonc') then
+      if vim.loop.fs_stat(path..'/.luarc.json') or vim.loop.fs_stat(path..'/.luarc.jsonc') then
         return
       end
     end
@@ -9733,7 +9734,7 @@ require'lspconfig'.statix.setup{}
 Default config:
 - `cmd` :
   ```lua
-  { "statix" }
+  { "statix", "check", "--stdin" }
   ```
 - `filetypes` :
   ```lua

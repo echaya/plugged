@@ -3,16 +3,35 @@
 ==============================================================================
 Table of Contents                              *snacks-init-table-of-contents*
 
-1. Config                                                 |snacks-init-config|
-2. Types                                                   |snacks-init-types|
-3. Module                                                 |snacks-init-module|
+1. Setup                                                   |snacks-init-setup|
+2. Config                                                 |snacks-init-config|
+3. Types                                                   |snacks-init-types|
+4. Module                                                 |snacks-init-module|
   - Snacks.config.example()       |snacks-init-module-snacks.config.example()|
   - Snacks.config.get()               |snacks-init-module-snacks.config.get()|
   - Snacks.config.style()           |snacks-init-module-snacks.config.style()|
   - Snacks.setup()                         |snacks-init-module-snacks.setup()|
 
 ==============================================================================
-1. Config                                                 *snacks-init-config*
+1. Setup                                                   *snacks-init-setup*
+
+>lua
+    -- lazy.nvim
+    {
+      "folke/snacks.nvim",
+      opts = {
+        init = {
+          -- your init configuration comes here
+          -- or leave it empty to use the default settings
+          -- refer to the configuration section below
+        }
+      }
+    }
+<
+
+
+==============================================================================
+2. Config                                                 *snacks-init-config*
 
 >lua
     ---@class snacks.Config
@@ -41,7 +60,7 @@ Table of Contents                              *snacks-init-table-of-contents*
 
 
 ==============================================================================
-2. Types                                                   *snacks-init-types*
+3. Types                                                   *snacks-init-types*
 
 >lua
     ---@class snacks.Config.base
@@ -51,7 +70,7 @@ Table of Contents                              *snacks-init-table-of-contents*
 
 
 ==============================================================================
-3. Module                                                 *snacks-init-module*
+4. Module                                                 *snacks-init-module*
 
 >lua
     ---@class Snacks

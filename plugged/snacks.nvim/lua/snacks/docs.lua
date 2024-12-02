@@ -235,6 +235,23 @@ function M.render(name, info)
   end
 
   if info.config then
+    add("## 📦 Setup\n")
+    add(([[
+```lua
+-- lazy.nvim
+{
+  "folke/snacks.nvim",
+  opts = {
+    %s = {
+      -- your %s configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    }
+  }
+}
+```
+]]):format(name, name))
+
     add("## ⚙️ Config\n")
     add(M.md(info.config))
   end

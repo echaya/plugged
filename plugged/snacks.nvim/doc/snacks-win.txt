@@ -4,13 +4,14 @@
 Table of Contents                               *snacks-win-table-of-contents*
 
 1. Usage                                                    |snacks-win-usage|
-2. Config                                                  |snacks-win-config|
-3. Styles                                                  |snacks-win-styles|
+2. Setup                                                    |snacks-win-setup|
+3. Config                                                  |snacks-win-config|
+4. Styles                                                  |snacks-win-styles|
   - float                                            |snacks-win-styles-float|
   - minimal                                        |snacks-win-styles-minimal|
   - split                                            |snacks-win-styles-split|
-4. Types                                                    |snacks-win-types|
-5. Module                                                  |snacks-win-module|
+5. Types                                                    |snacks-win-types|
+6. Module                                                  |snacks-win-module|
   - Snacks.win()                              |snacks-win-module-snacks.win()|
   - Snacks.win.new()                      |snacks-win-module-snacks.win.new()|
   - win:add_padding()                    |snacks-win-module-win:add_padding()|
@@ -30,7 +31,7 @@ Table of Contents                               *snacks-win-table-of-contents*
   - win:update()                              |snacks-win-module-win:update()|
   - win:valid()                                |snacks-win-module-win:valid()|
   - win:win_valid()                        |snacks-win-module-win:win_valid()|
-6. Links                                                    |snacks-win-links|
+7. Links                                                    |snacks-win-links|
 Easily create and manage floating windows or splits
 
 
@@ -54,7 +55,25 @@ Easily create and manage floating windows or splits
 
 
 ==============================================================================
-2. Config                                                  *snacks-win-config*
+2. Setup                                                    *snacks-win-setup*
+
+>lua
+    -- lazy.nvim
+    {
+      "folke/snacks.nvim",
+      opts = {
+        win = {
+          -- your win configuration comes here
+          -- or leave it empty to use the default settings
+          -- refer to the configuration section below
+        }
+      }
+    }
+<
+
+
+==============================================================================
+3. Config                                                  *snacks-win-config*
 
 >lua
     ---@class snacks.win.Config: vim.api.keyset.win_config
@@ -91,7 +110,7 @@ Easily create and manage floating windows or splits
 
 
 ==============================================================================
-3. Styles                                                  *snacks-win-styles*
+4. Styles                                                  *snacks-win-styles*
 
 
 FLOAT                                                *snacks-win-styles-float*
@@ -143,7 +162,7 @@ SPLIT                                                *snacks-win-styles-split*
 
 
 ==============================================================================
-4. Types                                                    *snacks-win-types*
+5. Types                                                    *snacks-win-types*
 
 >lua
     ---@class snacks.win.Keys: vim.api.keyset.keymap
@@ -154,7 +173,7 @@ SPLIT                                                *snacks-win-styles-split*
 
 
 ==============================================================================
-5. Module                                                  *snacks-win-module*
+6. Module                                                  *snacks-win-module*
 
 >lua
     ---@class snacks.win
@@ -311,7 +330,7 @@ WIN:WIN_VALID()                            *snacks-win-module-win:win_valid()*
 <
 
 ==============================================================================
-6. Links                                                    *snacks-win-links*
+7. Links                                                    *snacks-win-links*
 
 1. *image*: https://github.com/user-attachments/assets/250acfbd-a624-4f42-a36b-9aab316ebf64
 

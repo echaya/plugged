@@ -2,7 +2,6 @@ require 'lspconfig'
 local configs = require 'lspconfig.configs'
 local util = require 'lspconfig.util'
 local inspect = vim.inspect
-local uv = vim.uv
 local fn = vim.fn
 
 local function template(s, params)
@@ -63,7 +62,7 @@ local function make_section(indentlvl, sep, parts)
 end
 
 local function readfile(path)
-  assert((uv.fs_stat(path) or {}).type == 'file')
+  assert(vim.fn.getftype(path) == 'file')
   return io.open(path):read '*a'
 end
 
@@ -171,7 +170,7 @@ local function make_lsp_sections()
       })
 
       if docs then
-        local tempdir = os.getenv 'DOCGEN_TEMPDIR' or uv.fs_mkdtemp '/tmp/nvim-lspconfig.XXXXXX'
+        local tempdir = os.getenv 'DOCGEN_TEMPDIR' or vim.loop.fs_mkdtemp '/tmp/nvim-lspconfig.XXXXXX'
         local preamble_parts = make_parts {
           function()
             if docs.description and #docs.description > 0 then
@@ -181,10 +180,10 @@ local function make_lsp_sections()
           function()
             local package_json_name = util.path.join(tempdir, config_name .. '.package.json')
             if docs.package_json then
-              if not ((uv.fs_stat(package_json_name) or {}).type == 'file') then
+              if vim.fn.getftype(package_json_name) ~= 'file' then
                 os.execute(string.format('curl -v -L -o %q %q', package_json_name, docs.package_json))
               end
-              if not ((uv.fs_stat(package_json_name) or {}).type == 'file') then
+              if vim.fn.getftype(package_json_name) ~= 'file' then
                 print(string.format('Failed to download package.json for %q at %q', config_name, docs.package_json))
                 os.exit(1)
                 return
@@ -289,7 +288,7 @@ local function generate_readme(template_file, params)
   local writer = assert(io.open('doc/configs.md', 'w'))
   writer:write(readme_data)
   writer:close()
-  uv.fs_copyfile('doc/configs.md', 'doc/configs.txt')
+  vim.loop.fs_copyfile('doc/configs.md', 'doc/configs.txt')
 end
 
 require_all_configs()

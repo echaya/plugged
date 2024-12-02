@@ -29,6 +29,22 @@ Suggested config:
 
 <!-- docgen -->
 
+## 📦 Setup
+
+```lua
+-- lazy.nvim
+{
+  "folke/snacks.nvim",
+  opts = {
+    scratch = {
+      -- your scratch configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    }
+  }
+}
+```
+
 ## ⚙️ Config
 
 ```lua
@@ -38,7 +54,7 @@ Suggested config:
 ---@field file? string scratch file path. You probably don't need to set this.
 {
   name = "Scratch",
-  ft = "lua",
+  ft = "lua", -- the filetype of the scratch buffer
   ---@type string|string[]?
   icon = nil, -- `icon|{icon, icon_hl}`. defaults to the filetype icon
   root = vim.fn.stdpath("data") .. "/scratch",

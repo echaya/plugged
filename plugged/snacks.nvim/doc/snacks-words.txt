@@ -3,8 +3,9 @@
 ==============================================================================
 Table of Contents                             *snacks-words-table-of-contents*
 
-1. Config                                                |snacks-words-config|
-2. Module                                                |snacks-words-module|
+1. Setup                                                  |snacks-words-setup|
+2. Config                                                |snacks-words-config|
+3. Module                                                |snacks-words-module|
   - Snacks.words.clear()            |snacks-words-module-snacks.words.clear()|
   - Snacks.words.is_enabled()  |snacks-words-module-snacks.words.is_enabled()|
   - Snacks.words.jump()              |snacks-words-module-snacks.words.jump()|
@@ -12,7 +13,25 @@ Auto-show LSP references and quickly navigate between them
 
 
 ==============================================================================
-1. Config                                                *snacks-words-config*
+1. Setup                                                  *snacks-words-setup*
+
+>lua
+    -- lazy.nvim
+    {
+      "folke/snacks.nvim",
+      opts = {
+        words = {
+          -- your words configuration comes here
+          -- or leave it empty to use the default settings
+          -- refer to the configuration section below
+        }
+      }
+    }
+<
+
+
+==============================================================================
+2. Config                                                *snacks-words-config*
 
 >lua
     ---@class snacks.words.Config
@@ -29,7 +48,7 @@ Auto-show LSP references and quickly navigate between them
 
 
 ==============================================================================
-2. Module                                                *snacks-words-module*
+3. Module                                                *snacks-words-module*
 
 
 `Snacks.words.clear()`                                  *Snacks.words.clear()*

@@ -7,6 +7,22 @@ and integrate edit with the current neovim instance.
 
 <!-- docgen -->
 
+## 📦 Setup
+
+```lua
+-- lazy.nvim
+{
+  "folke/snacks.nvim",
+  opts = {
+    lazygit = {
+      -- your lazygit configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    }
+  }
+}
+```
+
 ## ⚙️ Config
 
 ```lua

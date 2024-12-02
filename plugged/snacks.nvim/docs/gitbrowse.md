@@ -4,11 +4,29 @@ Open the repo of the active file in the browser (e.g., GitHub)
 
 <!-- docgen -->
 
+## 📦 Setup
+
+```lua
+-- lazy.nvim
+{
+  "folke/snacks.nvim",
+  opts = {
+    gitbrowse = {
+      -- your gitbrowse configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    }
+  }
+}
+```
+
 ## ⚙️ Config
 
 ```lua
 ---@class snacks.gitbrowse.Config
+---@field url_patterns? table<string, table<string, string|fun(fields:snacks.gitbrowse.Fields):string>>
 {
+  notify = true, -- show notification on open
   -- Handler to open the url in a browser
   ---@param url string
   open = function(url)
@@ -20,6 +38,9 @@ Open the repo of the active file in the browser (e.g., GitHub)
   end,
   ---@type "repo" | "branch" | "file" | "commit"
   what = "file", -- what to open. not all remotes support all types
+  branch = nil, ---@type string?
+  line_start = nil, ---@type number?
+  line_end = nil, ---@type number?
   -- patterns to transform remotes to an actual URL
   remote_patterns = {
     { "^(https?://.*)%.git$"              , "%1" },
@@ -38,21 +59,33 @@ Open the repo of the active file in the browser (e.g., GitHub)
   url_patterns = {
     ["github%.com"] = {
       branch = "/tree/{branch}",
-      file = "/blob/{branch}/{file}#L{line}",
+      file = "/blob/{branch}/{file}#L{line_start}-L{line_end}",
       commit = "/commit/{commit}",
     },
     ["gitlab%.com"] = {
       branch = "/-/tree/{branch}",
-      file = "/-/blob/{branch}/{file}#L{line}",
+      file = "/-/blob/{branch}/{file}#L{line_start}-L{line_end}",
       commit = "/-/commit/{commit}",
     },
     ["bitbucket%.org"] = {
       branch = "/src/{branch}",
-      file = "/src/{branch}/{file}#lines-{line}",
+      file = "/src/{branch}/{file}#lines-{line_start}-L{line_end}",
       commit = "/commits/{commit}",
     },
   },
 }
+```
+
+## 📚 Types
+
+```lua
+---@class snacks.gitbrowse.Fields
+---@field branch? string
+---@field file? string
+---@field line_start? number
+---@field line_end? number
+---@field commit? string
+---@field line_count? number
 ```
 
 ## 📦 Module
@@ -68,8 +101,9 @@ Snacks.gitbrowse()
 
 ```lua
 ---@param repo string
+---@param fields snacks.gitbrowse.Fields
 ---@param opts? snacks.gitbrowse.Config
-Snacks.gitbrowse.get_url(repo, opts)
+Snacks.gitbrowse.get_url(repo, fields, opts)
 ```
 
 ### `Snacks.gitbrowse.open()`

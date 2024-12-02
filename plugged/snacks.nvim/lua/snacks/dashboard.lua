@@ -23,6 +23,7 @@ math.randomseed(os.time())
 ---@field section? string the name of a section to include. See `Snacks.dashboard.sections`
 ---@field [string] any section options
 ---@field key? string shortcut key
+---@field hidden? boolean when `true`, the item will not be shown, but the key will still be assigned
 ---@field autokey? boolean automatically assign a numerical key
 ---@field label? string
 ---@field desc? string
@@ -115,6 +116,14 @@ local defaults = {
     file = function(item, ctx)
       local fname = vim.fn.fnamemodify(item.file, ":~")
       fname = ctx.width and #fname > ctx.width and vim.fn.pathshorten(fname) or fname
+      if #fname > ctx.width then
+        local dir = vim.fn.fnamemodify(fname, ":h")
+        local file = vim.fn.fnamemodify(fname, ":t")
+        if dir and file then
+          file = file:sub(-(ctx.width - #dir - 2))
+          fname = dir .. "/…" .. file
+        end
+      end
       local dir, file = fname:match("^(.*)/(.+)$")
       return dir and { { dir .. "/", hl = "dir" }, { file, hl = "file" } } or { { fname, hl = "file" } }
     end,
@@ -442,6 +451,9 @@ function D:resolve(item, results, parent)
   if not item then
     return results
   end
+  if type(item) == "table" and vim.tbl_isempty(item) then
+    return results
+  end
   if type(item) == "table" and parent then -- inherit parent properties
     for _, prop in ipairs({ "indent", "align", "pane" }) do
       item[prop] = item[prop] or parent[prop]
@@ -456,9 +468,6 @@ function D:resolve(item, results, parent)
       return results
     end
     local first_child = #results + 1
-    if item.title then -- always add the title
-      table.insert(results, { title = item.title, icon = item.icon, pane = item.pane })
-    end
     if item.section then -- add section items
       self:trace("resolve." .. item.section)
       local items = M.sections[item.section](item) ---@type snacks.dashboard.Section?
@@ -470,6 +479,12 @@ function D:resolve(item, results, parent)
         self:resolve(child, results, item)
       end
     end
+
+    -- add the title if there are child items
+    if #results >= first_child and item.title then
+      table.insert(results, first_child, { title = item.title, icon = item.icon, pane = item.pane })
+    end
+
     if item.gap then -- add padding between child items
       for i = first_child, #results - 1 do
         results[i].padding = item.gap
@@ -526,7 +541,7 @@ function D:find(pos, from)
 
   local ret ---@type snacks.dashboard.Item?
   for _, item in ipairs(self.items) do
-    if item._.pane == pane and item.action then
+    if item._ and item._.pane == pane and item.action then
       if ret and pos[1] < from[1] and item._.row > pos[1] then
         break
       end
@@ -545,10 +560,12 @@ function D:layout()
     math.max(1, math.floor((self._size.width + self.opts.pane_gap) / (self.opts.width + self.opts.pane_gap)))
   self.panes = {} ---@type snacks.dashboard.Item[][]
   for _, item in ipairs(self.items) do
-    local pane = item.pane or 1
-    pane = math.fmod(pane - 1, max_panes) + 1 -- distribute panes evenly
-    self.panes[pane] = self.panes[pane] or {}
-    table.insert(self.panes[pane], item)
+    if not item.hidden then
+      local pane = item.pane or 1
+      pane = math.fmod(pane - 1, max_panes) + 1 -- distribute panes evenly
+      self.panes[pane] = self.panes[pane] or {}
+      table.insert(self.panes[pane], item)
+    end
   end
   for p = 1, math.max(unpack(vim.tbl_keys(self.panes))) or 1 do
     self.panes[p] = self.panes[p] or {}
@@ -732,6 +749,45 @@ function M.have_plugin(name)
   return package.loaded.lazy and require("lazy.core.config").spec.plugins[name] ~= nil
 end
 
+---@param opts? {filter?: table<string, boolean>}
+---@return fun():string?
+function M.oldfiles(opts)
+  opts = vim.tbl_deep_extend("force", {
+    filter = {
+      [vim.fn.stdpath("data")] = false,
+      [vim.fn.stdpath("cache")] = false,
+      [vim.fn.stdpath("state")] = false,
+    },
+  }, opts or {})
+  ---@cast opts {filter:table<string, boolean>}
+
+  local filter = {} ---@type {path:string, want:boolean}[]
+  for path, want in pairs(opts.filter or {}) do
+    table.insert(filter, { path = vim.fs.normalize(path), want = want })
+  end
+  local done = {} ---@type table<string, boolean>
+  local i = 1
+  return function()
+    while vim.v.oldfiles[i] do
+      local file = vim.fs.normalize(vim.v.oldfiles[i], { _fast = true, expand_env = false })
+      local want = not done[file]
+      if want then
+        done[file] = true
+        for _, f in ipairs(filter) do
+          if (file:sub(1, #f.path) == f.path) ~= f.want then
+            want = false
+            break
+          end
+        end
+      end
+      i = i + 1
+      if want and uv.fs_stat(file) then
+        return file
+      end
+    end
+  end
+end
+
 M.sections = {}
 
 -- Adds a section to restore the session if any of the supported plugins are installed.
@@ -766,18 +822,15 @@ function M.sections.recent_files(opts)
     local limit = opts.limit or 5
     local root = opts.cwd and vim.fs.normalize(opts.cwd == true and vim.fn.getcwd() or opts.cwd) or ""
     local ret = {} ---@type snacks.dashboard.Section
-    for _, file in ipairs(vim.v.oldfiles) do
-      file = vim.fs.normalize(file, { _fast = true, expand_env = false })
-      if file:sub(1, #root) == root and uv.fs_stat(file) then
-        ret[#ret + 1] = {
-          file = file,
-          icon = "file",
-          action = ":e " .. file,
-          autokey = true,
-        }
-        if #ret >= limit then
-          break
-        end
+    for file in M.oldfiles({ filter = { [root] = true } }) do
+      ret[#ret + 1] = {
+        file = file,
+        icon = "file",
+        action = ":e " .. file,
+        autokey = true,
+      }
+      if #ret >= limit then
+        break
       end
     end
     return ret
@@ -798,9 +851,8 @@ function M.sections.projects(opts)
   dirs = vim.list_slice(dirs, 1, limit)
 
   if not opts.dirs then
-    for _, file in ipairs(vim.v.oldfiles) do
-      file = vim.fs.normalize(file, { _fast = true, expand_env = false })
-      local dir = uv.fs_stat(file) and Snacks.git.get_root(file)
+    for file in M.oldfiles() do
+      local dir = Snacks.git.get_root(file)
       if dir and not vim.tbl_contains(dirs, dir) then
         table.insert(dirs, dir)
         if #dirs >= limit then
@@ -938,6 +990,7 @@ function M.sections.terminal(opts)
       end
     end
     return {
+      action = opts.action,
       render = function(_, pos)
         self:trace("terminal.render")
         local win = vim.api.nvim_open_win(buf, false, {
@@ -966,7 +1019,7 @@ function M.sections.terminal(opts)
         self.on("Closed", close, self.augroup)
         self:trace()
       end,
-      text = ("\n"):rep(height - 1),
+      text = ("terminal\n"):rep(height - 1),
     }
   end
 end

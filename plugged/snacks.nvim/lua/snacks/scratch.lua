@@ -24,7 +24,7 @@ local M = setmetatable({}, {
 ---@field file? string scratch file path. You probably don't need to set this.
 local defaults = {
   name = "Scratch",
-  ft = "lua",
+  ft = "lua", -- the filetype of the scratch buffer
   ---@type string|string[]?
   icon = nil, -- `icon|{icon, icon_hl}`. defaults to the filetype icon
   root = vim.fn.stdpath("data") .. "/scratch",
@@ -146,6 +146,8 @@ end
 function M.open(opts)
   opts = Snacks.config.get("scratch", defaults, opts)
   opts.win = Snacks.win.resolve("scratch", opts.win_by_ft[opts.ft], opts.win, { show = false })
+  opts.win.bo = opts.win.bo or {}
+  opts.win.bo.filetype = opts.ft
 
   local file = opts.file
   if not file then

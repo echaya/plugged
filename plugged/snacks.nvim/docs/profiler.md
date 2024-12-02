@@ -1,5 +1,13 @@
 # 🍿 profiler
 
+A low overhead Lua profiler for Neovim.
+
+![image](https://github.com/user-attachments/assets/cebb1308-077b-4f20-bee3-28644fb121b8)
+
+![image](https://github.com/user-attachments/assets/4ee557c4-a290-4a52-b5c9-64e325bf1094)
+
+![image](https://github.com/user-attachments/assets/ec03e440-6719-4463-a649-a8626dcfe2ec)
+
 ## ✨ Features
 
 - low overhead **instrumentation**
@@ -48,7 +56,7 @@ scratch buffer.
 - the profiler is not perfect and might not capture all calls
 - the profiler might not work well with some plugins
 - it can only profile `autocmds` created when the profiler is running.
-- only `autocms` with a lua function callback can be profiled
+- only `autocmds` with a lua function callback can be profiled
 - functions that `resume` or `yield` won't be captured correctly
 - functions that do blocking calls like `vim.fn.getchar` will work,
   but the time will include the time spent waiting for the blocking call
@@ -124,6 +132,22 @@ in the current file.
 All other fields equal to `true` will match if the trace has a value for that field.
 
 <!-- docgen -->
+
+## 📦 Setup
+
+```lua
+-- lazy.nvim
+{
+  "folke/snacks.nvim",
+  opts = {
+    profiler = {
+      -- your profiler configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    }
+  }
+}
+```
 
 ## ⚙️ Config
 

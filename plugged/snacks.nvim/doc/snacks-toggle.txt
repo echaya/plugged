@@ -3,9 +3,10 @@
 ==============================================================================
 Table of Contents                            *snacks-toggle-table-of-contents*
 
-1. Config                                               |snacks-toggle-config|
-2. Types                                                 |snacks-toggle-types|
-3. Module                                               |snacks-toggle-module|
+1. Setup                                                 |snacks-toggle-setup|
+2. Config                                               |snacks-toggle-config|
+3. Types                                                 |snacks-toggle-types|
+4. Module                                               |snacks-toggle-module|
   - Snacks.toggle()                     |snacks-toggle-module-snacks.toggle()|
   - Snacks.toggle.diagnostics()|snacks-toggle-module-snacks.toggle.diagnostics()|
   - Snacks.toggle.inlay_hints()|snacks-toggle-module-snacks.toggle.inlay_hints()|
@@ -19,12 +20,30 @@ Table of Contents                            *snacks-toggle-table-of-contents*
   - toggle:map()                           |snacks-toggle-module-toggle:map()|
   - toggle:set()                           |snacks-toggle-module-toggle:set()|
   - toggle:toggle()                     |snacks-toggle-module-toggle:toggle()|
-4. Links                                                 |snacks-toggle-links|
+5. Links                                                 |snacks-toggle-links|
 Toggle keymaps integrated with which-key icons / colors
 
 
 ==============================================================================
-1. Config                                               *snacks-toggle-config*
+1. Setup                                                 *snacks-toggle-setup*
+
+>lua
+    -- lazy.nvim
+    {
+      "folke/snacks.nvim",
+      opts = {
+        toggle = {
+          -- your toggle configuration comes here
+          -- or leave it empty to use the default settings
+          -- refer to the configuration section below
+        }
+      }
+    }
+<
+
+
+==============================================================================
+2. Config                                               *snacks-toggle-config*
 
 >lua
     ---@class snacks.toggle.Config
@@ -49,7 +68,7 @@ Toggle keymaps integrated with which-key icons / colors
 
 
 ==============================================================================
-2. Types                                                 *snacks-toggle-types*
+3. Types                                                 *snacks-toggle-types*
 
 >lua
     ---@class snacks.toggle.Opts: snacks.toggle.Config
@@ -60,7 +79,7 @@ Toggle keymaps integrated with which-key icons / colors
 
 
 ==============================================================================
-3. Module                                               *snacks-toggle-module*
+4. Module                                               *snacks-toggle-module*
 
 >lua
     ---@class snacks.toggle
@@ -172,7 +191,7 @@ TOGGLE:TOGGLE()                         *snacks-toggle-module-toggle:toggle()*
 <
 
 ==============================================================================
-4. Links                                                 *snacks-toggle-links*
+5. Links                                                 *snacks-toggle-links*
 
 1. *image*: https://github.com/user-attachments/assets/6d843acd-1ac1-44fd-b318-58b4c17de2d5
 

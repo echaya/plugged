@@ -143,20 +143,26 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 local id = 0
 
 ---@private
----@param ... snacks.win.Config|string
+---@param ...? snacks.win.Config|string
 ---@return snacks.win.Config
 function M.resolve(...)
-  local done = {} ---@type string[]
+  local done = {} ---@type table<string, boolean>
   local merge = {} ---@type snacks.win.Config[]
-  local stack = { ... }
+  local stack = {}
+  for i = 1, select("#", ...) do
+    local next = select(i, ...) ---@type snacks.win.Config|string?
+    if next then
+      table.insert(stack, next)
+    end
+  end
   while #stack > 0 do
     local next = table.remove(stack)
-    next = type(next) == "table" and next or vim.deepcopy(Snacks.config.styles[next])
+    next = type(next) == "string" and Snacks.config.styles[next] or next
     ---@cast next snacks.win.Config?
-    if next then
+    if next and type(next) == "table" then
       table.insert(merge, 1, next)
-      if next.style and not vim.tbl_contains(done, next.style) then
-        table.insert(done, next.style)
+      if next.style and not done[next.style] then
+        done[next.style] = true
         table.insert(stack, next.style)
       end
     end

@@ -3,8 +3,9 @@
 ==============================================================================
 Table of Contents                         *snacks-gitbrowse-table-of-contents*
 
-1. Config                                            |snacks-gitbrowse-config|
-2. Module                                            |snacks-gitbrowse-module|
+1. Setup                                              |snacks-gitbrowse-setup|
+2. Config                                            |snacks-gitbrowse-config|
+3. Module                                            |snacks-gitbrowse-module|
   - Snacks.gitbrowse()            |snacks-gitbrowse-module-snacks.gitbrowse()|
   - Snacks.gitbrowse.get_url()|snacks-gitbrowse-module-snacks.gitbrowse.get_url()|
   - Snacks.gitbrowse.open()  |snacks-gitbrowse-module-snacks.gitbrowse.open()|
@@ -12,7 +13,25 @@ Open the repo of the active file in the browser (e.g., GitHub)
 
 
 ==============================================================================
-1. Config                                            *snacks-gitbrowse-config*
+1. Setup                                              *snacks-gitbrowse-setup*
+
+>lua
+    -- lazy.nvim
+    {
+      "folke/snacks.nvim",
+      opts = {
+        gitbrowse = {
+          -- your gitbrowse configuration comes here
+          -- or leave it empty to use the default settings
+          -- refer to the configuration section below
+        }
+      }
+    }
+<
+
+
+==============================================================================
+2. Config                                            *snacks-gitbrowse-config*
 
 >lua
     ---@class snacks.gitbrowse.Config
@@ -28,6 +47,12 @@ Open the repo of the active file in the browser (e.g., GitHub)
       end,
       ---@type "repo" | "branch" | "file" | "commit"
       what = "file", -- what to open. not all remotes support all types
+      ---@type string?
+      branch = nil,
+      ---@type string?
+      line_start = nil,
+      ---@type string?
+      line_end = nil,
       -- patterns to transform remotes to an actual URL
       remote_patterns = {
         { "^(https?://.*)%.git$"              , "%1" },
@@ -65,7 +90,7 @@ Open the repo of the active file in the browser (e.g., GitHub)
 
 
 ==============================================================================
-2. Module                                            *snacks-gitbrowse-module*
+3. Module                                            *snacks-gitbrowse-module*
 
 
 `Snacks.gitbrowse()`                                      *Snacks.gitbrowse()*

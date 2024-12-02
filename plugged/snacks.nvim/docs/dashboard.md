@@ -99,6 +99,22 @@ In the example below, both sections are equivalent.
 
 <!-- docgen -->
 
+## 📦 Setup
+
+```lua
+-- lazy.nvim
+{
+  "folke/snacks.nvim",
+  opts = {
+    dashboard = {
+      -- your dashboard configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    }
+  }
+}
+```
+
 ## ⚙️ Config
 
 ```lua
@@ -152,6 +168,14 @@ In the example below, both sections are equivalent.
     file = function(item, ctx)
       local fname = vim.fn.fnamemodify(item.file, ":~")
       fname = ctx.width and #fname > ctx.width and vim.fn.pathshorten(fname) or fname
+      if #fname > ctx.width then
+        local dir = vim.fn.fnamemodify(fname, ":h")
+        local file = vim.fn.fnamemodify(fname, ":t")
+        if dir and file then
+          file = file:sub(-(ctx.width - #dir - 2))
+          fname = dir .. "/…" .. file
+        end
+      end
       local dir, file = fname:match("^(.*)/(.+)$")
       return dir and { { dir .. "/", hl = "dir" }, { file, hl = "file" } } or { { fname, hl = "file" } }
     end,
@@ -443,6 +467,7 @@ The other options are used with `:lua Snacks.dashboard()`
 ---@field section? string the name of a section to include. See `Snacks.dashboard.sections`
 ---@field [string] any section options
 ---@field key? string shortcut key
+---@field hidden? boolean when `true`, the item will not be shown, but the key will still be assigned
 ---@field autokey? boolean automatically assign a numerical key
 ---@field label? string
 ---@field desc? string
@@ -509,6 +534,14 @@ Get an icon
 ---@param cat? string
 ---@return snacks.dashboard.Text
 Snacks.dashboard.icon(name, cat)
+```
+
+### `Snacks.dashboard.oldfiles()`
+
+```lua
+---@param opts? {filter?: table<string, boolean>}
+---@return fun():string?
+Snacks.dashboard.oldfiles(opts)
 ```
 
 ### `Snacks.dashboard.open()`

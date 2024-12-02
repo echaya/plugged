@@ -5,21 +5,22 @@ Table of Contents                          *snacks-notifier-table-of-contents*
 
 1. Notification History                 |snacks-notifier-notification-history|
 2. Examples                                         |snacks-notifier-examples|
-3. Config                                             |snacks-notifier-config|
-4. Styles                                             |snacks-notifier-styles|
+3. Setup                                               |snacks-notifier-setup|
+4. Config                                             |snacks-notifier-config|
+5. Styles                                             |snacks-notifier-styles|
   - notification                         |snacks-notifier-styles-notification|
   - notification.history         |snacks-notifier-styles-notification.history|
-5. Types                                               |snacks-notifier-types|
+6. Types                                               |snacks-notifier-types|
   - Notifications                        |snacks-notifier-types-notifications|
   - Rendering                                |snacks-notifier-types-rendering|
   - History                                    |snacks-notifier-types-history|
-6. Module                                             |snacks-notifier-module|
+7. Module                                             |snacks-notifier-module|
   - Snacks.notifier()               |snacks-notifier-module-snacks.notifier()|
   - Snacks.notifier.get_history()|snacks-notifier-module-snacks.notifier.get_history()|
   - Snacks.notifier.hide()     |snacks-notifier-module-snacks.notifier.hide()|
   - Snacks.notifier.notify() |snacks-notifier-module-snacks.notifier.notify()|
   - Snacks.notifier.show_history()|snacks-notifier-module-snacks.notifier.show_history()|
-7. Links                                               |snacks-notifier-links|
+8. Links                                               |snacks-notifier-links|
 
 ==============================================================================
 1. Notification History                 *snacks-notifier-notification-history*
@@ -109,7 +110,25 @@ Advanced LSP Progress ~
 
 
 ==============================================================================
-3. Config                                             *snacks-notifier-config*
+3. Setup                                               *snacks-notifier-setup*
+
+>lua
+    -- lazy.nvim
+    {
+      "folke/snacks.nvim",
+      opts = {
+        notifier = {
+          -- your notifier configuration comes here
+          -- or leave it empty to use the default settings
+          -- refer to the configuration section below
+        }
+      }
+    }
+<
+
+
+==============================================================================
+4. Config                                             *snacks-notifier-config*
 
 >lua
     ---@class snacks.notifier.Config
@@ -150,7 +169,7 @@ Advanced LSP Progress ~
 
 
 ==============================================================================
-4. Styles                                             *snacks-notifier-styles*
+5. Styles                                             *snacks-notifier-styles*
 
 
 NOTIFICATION                             *snacks-notifier-styles-notification*
@@ -191,7 +210,7 @@ NOTIFICATION.HISTORY             *snacks-notifier-styles-notification.history*
 
 
 ==============================================================================
-5. Types                                               *snacks-notifier-types*
+6. Types                                               *snacks-notifier-types*
 
 Render styles: compact: use border for icon and title minimal: no border, only
 icon and message fancy: similar to the default nvim-notify style
@@ -278,7 +297,7 @@ HISTORY                                        *snacks-notifier-types-history*
 
 
 ==============================================================================
-6. Module                                             *snacks-notifier-module*
+7. Module                                             *snacks-notifier-module*
 
 
 `Snacks.notifier()`                                        *Snacks.notifier()*
@@ -323,7 +342,7 @@ HISTORY                                        *snacks-notifier-types-history*
 <
 
 ==============================================================================
-7. Links                                               *snacks-notifier-links*
+8. Links                                               *snacks-notifier-links*
 
 1. *image*: https://github.com/user-attachments/assets/b89eb279-08fb-40b2-9330-9a77014b9389
 2. *image*: https://github.com/user-attachments/assets/0dc449f4-b275-49e4-a25f-f58efcba3079

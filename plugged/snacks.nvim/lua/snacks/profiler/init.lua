@@ -347,6 +347,7 @@ end
 -- Start the profiler on startup, and stop it after the event has been triggered.
 ---@param opts snacks.profiler.Config
 function M.startup(opts)
+  M.config = Snacks.config.get("profiler", defaults, opts)
   local event, pattern = M.config.startup.event or "VimEnter", M.config.startup.pattern
   if event == "VeryLazy" then
     event, pattern = "User", event

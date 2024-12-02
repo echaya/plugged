@@ -1,4 +1,4 @@
-*snacks.nvim.txt*           For Neovim           Last change: 2024 December 01
+*snacks.nvim.txt*           For Neovim           Last change: 2024 December 02
 
 ==============================================================================
 Table of Contents                              *snacks.nvim-table-of-contents*
@@ -43,7 +43,7 @@ FEATURES                                    *snacks.nvim-snacks.nvim-features*
 
   notifier              Better and prettier vim.notify                  
 
-  profiler              Luaprofiler                                     
+  profiler              NeovimLua profiler                              
 
   quickfile             When doing nvim somefile.txt, it will render    
                         the file as quickly as possible, before loading 

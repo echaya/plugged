@@ -4,16 +4,17 @@
 Table of Contents                           *snacks-scratch-table-of-contents*
 
 1. Usage                                                |snacks-scratch-usage|
-2. Config                                              |snacks-scratch-config|
-3. Styles                                              |snacks-scratch-styles|
+2. Setup                                                |snacks-scratch-setup|
+3. Config                                              |snacks-scratch-config|
+4. Styles                                              |snacks-scratch-styles|
   - scratch                                    |snacks-scratch-styles-scratch|
-4. Types                                                |snacks-scratch-types|
-5. Module                                              |snacks-scratch-module|
+5. Types                                                |snacks-scratch-types|
+6. Module                                              |snacks-scratch-module|
   - Snacks.scratch()                  |snacks-scratch-module-snacks.scratch()|
   - Snacks.scratch.list()        |snacks-scratch-module-snacks.scratch.list()|
   - Snacks.scratch.open()        |snacks-scratch-module-snacks.scratch.open()|
   - Snacks.scratch.select()    |snacks-scratch-module-snacks.scratch.select()|
-6. Links                                                |snacks-scratch-links|
+7. Links                                                |snacks-scratch-links|
 Quickly open scratch buffers for testing code, creating notes or just messing
 around. Scratch buffers are organized by using context like your working
 directory, Git branch and `vim.v.count1`.
@@ -42,7 +43,25 @@ Suggested config:
 
 
 ==============================================================================
-2. Config                                              *snacks-scratch-config*
+2. Setup                                                *snacks-scratch-setup*
+
+>lua
+    -- lazy.nvim
+    {
+      "folke/snacks.nvim",
+      opts = {
+        scratch = {
+          -- your scratch configuration comes here
+          -- or leave it empty to use the default settings
+          -- refer to the configuration section below
+        }
+      }
+    }
+<
+
+
+==============================================================================
+3. Config                                              *snacks-scratch-config*
 
 >lua
     ---@class snacks.scratch.Config
@@ -51,7 +70,7 @@ Suggested config:
     ---@field file? string scratch file path. You probably don't need to set this.
     {
       name = "Scratch",
-      ft = "lua",
+      ft = "lua", -- the filetype of the scratch buffer
       ---@type string|string[]?
       icon = nil, -- `icon|{icon, icon_hl}`. defaults to the filetype icon
       root = vim.fn.stdpath("data") .. "/scratch",
@@ -89,7 +108,7 @@ Suggested config:
 
 
 ==============================================================================
-3. Styles                                              *snacks-scratch-styles*
+4. Styles                                              *snacks-scratch-styles*
 
 
 SCRATCH                                        *snacks-scratch-styles-scratch*
@@ -112,7 +131,7 @@ SCRATCH                                        *snacks-scratch-styles-scratch*
 
 
 ==============================================================================
-4. Types                                                *snacks-scratch-types*
+5. Types                                                *snacks-scratch-types*
 
 >lua
     ---@class snacks.scratch.File
@@ -128,7 +147,7 @@ SCRATCH                                        *snacks-scratch-styles-scratch*
 
 
 ==============================================================================
-5. Module                                              *snacks-scratch-module*
+6. Module                                              *snacks-scratch-module*
 
 
 `Snacks.scratch()`                                          *Snacks.scratch()*
@@ -169,7 +188,7 @@ Select a scratch buffer from a list of scratch buffers.
 <
 
 ==============================================================================
-6. Links                                                *snacks-scratch-links*
+7. Links                                                *snacks-scratch-links*
 
 1. *image*: https://github.com/user-attachments/assets/52ac7c1a-908f-4d1d-97a2-ad4642f8dc36
 2. *image*: https://github.com/user-attachments/assets/d3e766e9-e64a-4c22-85b4-3d965f645b59

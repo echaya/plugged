@@ -3,22 +3,41 @@
 ==============================================================================
 Table of Contents                           *snacks-lazygit-table-of-contents*
 
-1. Config                                              |snacks-lazygit-config|
-2. Styles                                              |snacks-lazygit-styles|
+1. Setup                                                |snacks-lazygit-setup|
+2. Config                                              |snacks-lazygit-config|
+3. Styles                                              |snacks-lazygit-styles|
   - lazygit                                    |snacks-lazygit-styles-lazygit|
-3. Types                                                |snacks-lazygit-types|
-4. Module                                              |snacks-lazygit-module|
+4. Types                                                |snacks-lazygit-types|
+5. Module                                              |snacks-lazygit-module|
   - Snacks.lazygit()                  |snacks-lazygit-module-snacks.lazygit()|
   - Snacks.lazygit.log()          |snacks-lazygit-module-snacks.lazygit.log()|
   - Snacks.lazygit.log_file()|snacks-lazygit-module-snacks.lazygit.log_file()|
   - Snacks.lazygit.open()        |snacks-lazygit-module-snacks.lazygit.open()|
-5. Links                                                |snacks-lazygit-links|
+6. Links                                                |snacks-lazygit-links|
 Automatically configures lazygit with a theme generated based on your Neovim
 colorscheme and integrate edit with the current neovim instance.
 
 
 ==============================================================================
-1. Config                                              *snacks-lazygit-config*
+1. Setup                                                *snacks-lazygit-setup*
+
+>lua
+    -- lazy.nvim
+    {
+      "folke/snacks.nvim",
+      opts = {
+        lazygit = {
+          -- your lazygit configuration comes here
+          -- or leave it empty to use the default settings
+          -- refer to the configuration section below
+        }
+      }
+    }
+<
+
+
+==============================================================================
+2. Config                                              *snacks-lazygit-config*
 
 >lua
     ---@class snacks.lazygit.Config: snacks.terminal.Opts
@@ -57,7 +76,7 @@ colorscheme and integrate edit with the current neovim instance.
 
 
 ==============================================================================
-2. Styles                                              *snacks-lazygit-styles*
+3. Styles                                              *snacks-lazygit-styles*
 
 
 LAZYGIT                                        *snacks-lazygit-styles-lazygit*
@@ -68,7 +87,7 @@ LAZYGIT                                        *snacks-lazygit-styles-lazygit*
 
 
 ==============================================================================
-3. Types                                                *snacks-lazygit-types*
+4. Types                                                *snacks-lazygit-types*
 
 >lua
     ---@alias snacks.lazygit.Color {fg?:string, bg?:string, bold?:boolean}
@@ -89,7 +108,7 @@ LAZYGIT                                        *snacks-lazygit-styles-lazygit*
 
 
 ==============================================================================
-4. Module                                              *snacks-lazygit-module*
+5. Module                                              *snacks-lazygit-module*
 
 
 `Snacks.lazygit()`                                          *Snacks.lazygit()*
@@ -131,7 +150,7 @@ with the current neovim instance
 <
 
 ==============================================================================
-5. Links                                                *snacks-lazygit-links*
+6. Links                                                *snacks-lazygit-links*
 
 1. *image*: https://github.com/user-attachments/assets/5e5ca232-af65-4ebc-b0ca-02bc9c33d23d
 
