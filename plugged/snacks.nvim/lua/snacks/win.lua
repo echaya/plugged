@@ -18,25 +18,32 @@ local M = setmetatable({}, {
 ---@field [2]? string|fun(self: snacks.win): any
 ---@field mode? string|string[]
 
+---@class snacks.win.Backdrop
+---@field bg? string
+---@field blend? number
+---@field transparent? boolean defaults to true
+
 ---@class snacks.win.Config: vim.api.keyset.win_config
 ---@field style? string merges with config from `Snacks.config.styles[style]`
 ---@field show? boolean Show the window immediately (default: true)
----@field height? number Height of the window. Use <1 for relative height. 0 means full height. (default: 0.9)
----@field width? number Width of the window. Use <1 for relative width. 0 means full width. (default: 0.9)
+---@field height? number|fun():number Height of the window. Use <1 for relative height. 0 means full height. (default: 0.9)
+---@field width? number|fun():number Width of the window. Use <1 for relative width. 0 means full width. (default: 0.9)
 ---@field minimal? boolean Disable a bunch of options to make the window minimal (default: true)
 ---@field position? "float"|"bottom"|"top"|"left"|"right"
 ---@field buf? number If set, use this buffer instead of creating a new one
 ---@field file? string If set, use this file instead of creating a new buffer
 ---@field enter? boolean Enter the window after opening (default: false)
----@field backdrop? number|false Opacity of the backdrop (default: 60)
+---@field backdrop? number|false|snacks.win.Backdrop Opacity of the backdrop (default: 60)
 ---@field wo? vim.wo window options
 ---@field bo? vim.bo buffer options
 ---@field ft? string filetype to use for treesitter/syntax highlighting. Won't override existing filetype
 ---@field keys? table<string, false|string|fun(self: snacks.win)|snacks.win.Keys> Key mappings
 ---@field on_buf? fun(self: snacks.win) Callback after opening the buffer
 ---@field on_win? fun(self: snacks.win) Callback after opening the window
+---@field fixbuf? boolean don't allow other buffers to be opened in this window
 local defaults = {
   show = true,
+  fixbuf = true,
   relative = "editor",
   position = "float",
   minimal = true,
@@ -128,21 +135,9 @@ Snacks.util.set_hl({
   WinBarNC = "SnacksWinBar",
 }, { prefix = "Snacks", default = true })
 
-M.transparent = false
-
-local function check_bg()
-  local normal = vim.api.nvim_get_hl(0, { name = "Normal" })
-  M.transparent = not (normal and normal.bg ~= nil)
-end
-check_bg()
-vim.api.nvim_create_autocmd("ColorScheme", {
-  group = vim.api.nvim_create_augroup("snacks_win_transparent", { clear = true }),
-  callback = check_bg,
-})
-
 local id = 0
 
----@private
+--@private
 ---@param ...? snacks.win.Config|string
 ---@return snacks.win.Config
 function M.resolve(...)
@@ -398,7 +393,7 @@ function M:show()
   end
 
   self:open_win()
-  if M.transparent then
+  if Snacks.util.is_transparent() then
     self.opts.wo.winblend = 0
   end
   Snacks.util.wo(self.win, self.opts.wo)
@@ -419,7 +414,6 @@ function M:show()
   -- and it's the current window
   vim.api.nvim_create_autocmd("WinClosed", {
     group = self.augroup,
-    buffer = self.buf,
     callback = function(ev)
       if ev.buf == self.buf and vim.api.nvim_get_current_win() == self.win then
         pcall(vim.cmd.wincmd, "p")
@@ -439,13 +433,26 @@ function M:show()
   vim.api.nvim_create_autocmd("BufWinEnter", {
     group = self.augroup,
     callback = function()
+      -- window closes, so delete the autocmd
       if not self:win_valid() then
         return true
       end
+
       local buf = vim.api.nvim_win_get_buf(self.win)
+
+      -- same buffer
       if buf == self.buf then
         return
       end
+
+      -- don't swap if fixbuf is disabled
+      if self.opts.fixbuf == false then
+        self.buf = buf
+        -- update window options
+        Snacks.util.wo(self.win, self.opts.wo)
+        return
+      end
+
       -- another buffer was opened in this window
       -- find another window to swap with
       for _, win in ipairs(vim.api.nvim_list_wins()) do
@@ -485,9 +492,14 @@ function M:show()
 end
 
 function M:add_padding()
-  self.opts.wo.statuscolumn = " "
+  local listchars = vim.split(self.opts.wo.listchars or "", ",")
+  listchars = vim.tbl_filter(function(s)
+    return not s:find("eol:")
+  end, listchars)
+  table.insert(listchars, "eol: ")
+  self.opts.wo.listchars = table.concat(listchars, ",")
   self.opts.wo.list = true
-  self.opts.wo.listchars = ("eol: ," .. (self.opts.wo.listchars or "")):gsub(",$", "")
+  self.opts.wo.statuscolumn = " "
 end
 
 function M:is_floating()
@@ -496,13 +508,32 @@ end
 
 ---@private
 function M:drop()
-  -- don't show a backdrop for non-floating windows
+  local backdrop = self.opts.backdrop
+  if not backdrop then
+    return
+  end
+  backdrop = type(backdrop) == "number" and { blend = backdrop } or backdrop
+  backdrop = backdrop == true and {} or backdrop
+  backdrop = vim.tbl_extend("force", { bg = "#000000", blend = 60, transparent = true }, backdrop)
+  ---@cast backdrop snacks.win.Backdrop
+
   if
-    M.transparent
-    or not (self:is_floating() and self.opts.backdrop and self.opts.backdrop < 100 and vim.o.termguicolors)
+    (Snacks.util.is_transparent() and backdrop.transparent)
+    or not vim.o.termguicolors
+    or backdrop.blend == 100
+    or not self:is_floating()
   then
     return
   end
+
+  local bg, winblend = backdrop.bg, backdrop.blend
+  if not backdrop.transparent then
+    bg = Snacks.util.blend(Snacks.util.color("Normal", "bg"), bg, winblend / 100)
+    winblend = 0
+  end
+
+  local group = ("SnacksBackdrop_%s"):format(bg:sub(2))
+  vim.api.nvim_set_hl(0, group, { bg = bg })
 
   self.backdrop = M.new({
     enter = false,
@@ -515,8 +546,8 @@ function M:drop()
     focusable = false,
     zindex = self.opts.zindex - 1,
     wo = {
-      winhighlight = "Normal:SnacksBackdrop",
-      winblend = self.opts.backdrop,
+      winhighlight = "Normal:" .. group,
+      winblend = winblend,
     },
     bo = {
       buftype = "nofile",
@@ -561,6 +592,8 @@ function M:win_opts()
     opts[k] = self.opts[k]
   end
   local parent = self:parent_size()
+  opts.height = type(opts.height) == "function" and opts.height() or opts.height
+  opts.width = type(opts.width) == "function" and opts.width() or opts.width
   -- Special case for 0, which means 100%
   opts.height = opts.height == 0 and parent.height or opts.height
   opts.width = opts.width == 0 and parent.width or opts.width

@@ -180,7 +180,7 @@ vim.api.nvim_create_autocmd("LspProgress", {
   width = 0.6,
   height = 0.6,
   minimal = false,
-  title = "Notification History",
+  title = " Notification History ",
   title_pos = "center",
   ft = "markdown",
   bo = { filetype = "snacks_notif_history" },

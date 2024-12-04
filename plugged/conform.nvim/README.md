@@ -188,7 +188,6 @@ You can view this list in vim with `:help conform-formatters`
 - [autocorrect](https://github.com/huacnlee/autocorrect) - A linter and formatter to help you to improve copywriting, correct spaces, words, and punctuations between CJK.
 - [autoflake](https://github.com/PyCQA/autoflake) - Removes unused imports and unused variables as reported by pyflakes.
 - [autopep8](https://github.com/hhatto/autopep8) - A tool that automatically formats Python code to conform to the PEP 8 style guide.
-- [awk](https://www.gnu.org/software/gawk/manual/gawk.html) - Format awk programs with awk
 - [bean-format](https://beancount.github.io/docs/running_beancount_and_generating_reports.html#bean-format) - Reformat Beancount files to right-align all the numbers at the same, minimal column.
 - [beautysh](https://github.com/lovesegfault/beautysh) - A Bash beautifier for the masses.
 - [bibtex-tidy](https://github.com/FlamingTempura/bibtex-tidy) - Cleaner and Formatter for BibTeX files.
@@ -242,6 +241,7 @@ You can view this list in vim with `:help conform-formatters`
 - [format-queries](https://github.com/nvim-treesitter/nvim-treesitter/blob/main/CONTRIBUTING.md#formatting) - Tree-sitter query formatter.
 - [fourmolu](https://hackage.haskell.org/package/fourmolu) - A fork of ormolu that uses four space indentation and allows arbitrary configuration.
 - [fprettify](https://github.com/fortran-lang/fprettify) - Auto-formatter for modern fortran source code.
+- [gawk](https://www.gnu.org/software/gawk/manual/gawk.html) - Format awk programs with gawk.
 - [gci](https://github.com/daixiang0/gci) - GCI, a tool that controls Go package import order and makes it always deterministic.
 - [gdformat](https://github.com/Scony/godot-gdscript-toolkit) - A formatter for Godot's gdscript.
 - [gersemi](https://github.com/BlankSpruce/gersemi) - A formatter to make your CMake code the real treasure.
@@ -352,6 +352,7 @@ You can view this list in vim with `:help conform-formatters`
 - [templ](https://templ.guide/commands-and-tools/cli/#formatting-templ-files) - Formats templ template files.
 - [terraform_fmt](https://www.terraform.io/docs/cli/commands/fmt.html) - The terraform-fmt command rewrites `terraform` configuration files to a canonical format and style.
 - [terragrunt_hclfmt](https://terragrunt.gruntwork.io/docs/reference/cli-options/#hclfmt) - Format hcl files into a canonical format.
+- [tex-fmt](https://github.com/WGUNDERWOOD/tex-fmt) - An extremely fast LaTeX formatter written in Rust.
 - [tlint](https://github.com/tighten/tlint) - Tighten linter for Laravel conventions with support for auto-formatting.
 - [tofu_fmt](https://opentofu.org/docs/cli/commands/fmt/) - The tofu-fmt command rewrites OpenTofu configuration files to a canonical format and style.
 - [trim_newlines](https://github.com/stevearc/conform.nvim/blob/master/lua/conform/formatters/trim_whitespace.lua) - Trim empty lines at the end of the file.

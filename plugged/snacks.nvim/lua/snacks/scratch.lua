@@ -22,9 +22,15 @@ local M = setmetatable({}, {
 ---@field win? snacks.win.Config scratch window
 ---@field template? string template for new buffers
 ---@field file? string scratch file path. You probably don't need to set this.
+---@field ft? string|fun():string the filetype of the scratch buffer
 local defaults = {
   name = "Scratch",
-  ft = "lua", -- the filetype of the scratch buffer
+  ft = function()
+    if vim.bo.buftype == "" and vim.bo.filetype ~= "" then
+      return vim.bo.filetype
+    end
+    return "markdown"
+  end,
   ---@type string|string[]?
   icon = nil, -- `icon|{icon, icon_hl}`. defaults to the filetype icon
   root = vim.fn.stdpath("data") .. "/scratch",
@@ -60,6 +66,8 @@ local defaults = {
 }
 
 Snacks.util.set_hl({
+  Title = "FloatTitle",
+  Footer = "FloatFooter",
   Key = "DiagnosticVirtualTextInfo",
   Desc = "DiagnosticInfo",
 }, { prefix = "SnacksScratch" })
@@ -145,9 +153,16 @@ end
 ---@param opts? snacks.scratch.Config
 function M.open(opts)
   opts = Snacks.config.get("scratch", defaults, opts)
-  opts.win = Snacks.win.resolve("scratch", opts.win_by_ft[opts.ft], opts.win, { show = false })
+  local ft = "markdown"
+  if type(opts.ft) == "function" then
+    ft = opts.ft()
+  elseif type(opts.ft) == "string" then
+    ft = opts.ft --[[@as string]]
+  end
+
+  opts.win = Snacks.win.resolve("scratch", opts.win_by_ft[ft], opts.win, { show = false })
   opts.win.bo = opts.win.bo or {}
-  opts.win.bo.filetype = opts.ft
+  opts.win.bo.filetype = ft
 
   local file = opts.file
   if not file then
@@ -168,14 +183,14 @@ function M.open(opts)
     }
 
     vim.fn.mkdir(opts.root, "p")
-    local fname = Snacks.util.file_encode(table.concat(filekey, "|") .. "." .. opts.ft)
+    local fname = Snacks.util.file_encode(table.concat(filekey, "|") .. "." .. ft)
     file = vim.fs.normalize(opts.root .. "/" .. fname)
   end
 
   local icon, icon_hl = unpack(type(opts.icon) == "table" and opts.icon or { opts.icon, nil })
   ---@cast icon string
   if not icon then
-    icon, icon_hl = Snacks.util.icon(opts.ft, "filetype")
+    icon, icon_hl = Snacks.util.icon(ft, "filetype")
   end
   opts.win.title = {
     { " " },
@@ -184,6 +199,9 @@ function M.open(opts)
     { opts.name .. (vim.v.count1 > 1 and " " .. vim.v.count1 or "") },
     { " " },
   }
+  for _, t in ipairs(opts.win.title) do
+    t[2] = t[2] or "SnacksScratchTitle"
+  end
 
   local is_new = not uv.fs_stat(file)
   local buf = vim.fn.bufadd(file)
@@ -214,6 +232,7 @@ function M.open(opts)
     local function reset()
       vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(opts.template, "\n"))
     end
+    opts.win.keys = opts.win.keys or {}
     opts.win.keys.reset = { "R", reset, desc = "Reset buffer" }
     if is_new then
       reset()
@@ -223,6 +242,9 @@ function M.open(opts)
   opts.win.buf = buf
   local ret = Snacks.win(opts.win)
   ret.opts.footer = {}
+  table.sort(ret.keys, function(a, b)
+    return a[1] < b[1]
+  end)
   for _, key in ipairs(ret.keys) do
     local keymap = vim.fn.keytrans(vim.keycode(key[1]))
     table.insert(ret.opts.footer, { " " })
@@ -230,6 +252,9 @@ function M.open(opts)
     table.insert(ret.opts.footer, { " " .. (key.desc or keymap) .. " ", "SnacksScratchDesc" })
   end
   table.insert(ret.opts.footer, { " " })
+  for _, t in ipairs(ret.opts.footer) do
+    t[2] = t[2] or "SnacksScratchFooter"
+  end
   if opts.autowrite then
     vim.api.nvim_create_autocmd("BufHidden", {
       group = vim.api.nvim_create_augroup("snacks_scratch_autowrite_" .. buf, { clear = true }),

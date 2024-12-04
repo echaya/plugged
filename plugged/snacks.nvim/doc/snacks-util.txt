@@ -5,11 +5,13 @@ Table of Contents                              *snacks-util-table-of-contents*
 
 1. Types                                                   |snacks-util-types|
 2. Module                                                 |snacks-util-module|
+  - Snacks.util.blend()               |snacks-util-module-snacks.util.blend()|
   - Snacks.util.bo()                     |snacks-util-module-snacks.util.bo()|
   - Snacks.util.color()               |snacks-util-module-snacks.util.color()|
   - Snacks.util.file_decode()   |snacks-util-module-snacks.util.file_decode()|
   - Snacks.util.file_encode()   |snacks-util-module-snacks.util.file_encode()|
   - Snacks.util.icon()                 |snacks-util-module-snacks.util.icon()|
+  - Snacks.util.is_transparent()|snacks-util-module-snacks.util.is_transparent()|
   - Snacks.util.set_hl()             |snacks-util-module-snacks.util.set_hl()|
   - Snacks.util.wo()                     |snacks-util-module-snacks.util.wo()|
 
@@ -23,6 +25,16 @@ Table of Contents                              *snacks-util-table-of-contents*
 
 ==============================================================================
 2. Module                                                 *snacks-util-module*
+
+
+`Snacks.util.blend()`                                    *Snacks.util.blend()*
+
+>lua
+    ---@param fg string foreground color
+    ---@param bg string background color
+    ---@param alpha number number between 0 and 1. 0 results in bg, 1 results in fg
+    Snacks.util.blend(fg, bg, alpha)
+<
 
 
 `Snacks.util.bo()`                                          *Snacks.util.bo()*
@@ -70,6 +82,13 @@ Encodes a string to be used as a file name.
     ---@param cat? string
     ---@return string, string?
     Snacks.util.icon(name, cat)
+<
+
+
+`Snacks.util.is_transparent()`                  *Snacks.util.is_transparent()*
+
+>lua
+    Snacks.util.is_transparent()
 <
 
 

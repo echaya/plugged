@@ -10,6 +10,15 @@
 
 ## 📦 Module
 
+### `Snacks.util.blend()`
+
+```lua
+---@param fg string foreground color
+---@param bg string background color
+---@param alpha number number between 0 and 1. 0 results in bg, 1 results in fg
+Snacks.util.blend(fg, bg, alpha)
+```
+
 ### `Snacks.util.bo()`
 
 ```lua
@@ -51,6 +60,12 @@ Snacks.util.file_encode(str)
 ---@param cat? string
 ---@return string, string?
 Snacks.util.icon(name, cat)
+```
+
+### `Snacks.util.is_transparent()`
+
+```lua
+Snacks.util.is_transparent()
 ```
 
 ### `Snacks.util.set_hl()`

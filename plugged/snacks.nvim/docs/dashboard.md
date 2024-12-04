@@ -303,7 +303,7 @@ A simple example with a header, keys, recent files, and projects
 ### `github`
 
 Advanced example using the GitHub CLI.
-![image](https://github.com/user-attachments/assets/965e1d9e-6833-409c-900a-a12e98d764d9)
+![image](https://github.com/user-attachments/assets/747d7386-ef05-487f-9550-3e5ef94869fc)
 
 ```lua
 {
@@ -317,12 +317,26 @@ Advanced example using the GitHub CLI.
       padding = 1,
     },
     { section = "keys", gap = 1, padding = 1 },
+    {
+      pane = 2,
+      icon = " ",
+      desc = "Browse Repo",
+      padding = 1,
+      key = "b",
+      action = function()
+        Snacks.gitbrowse()
+      end,
+    },
     function()
       local in_git = Snacks.git.get_root() ~= nil
       local cmds = {
         {
           title = "Notifications",
           cmd = "gh notify -s -a -n5",
+          action = function()
+            vim.ui.open("https://github.com/notifications")
+          end,
+          key = "n",
           icon = " ",
           height = 5,
           enabled = true,
@@ -330,6 +344,10 @@ Advanced example using the GitHub CLI.
         {
           title = "Open Issues",
           cmd = "gh issue list -L 3",
+          key = "i",
+          action = function()
+            vim.fn.jobstart("gh issue list --web", { detach = true })
+          end,
           icon = " ",
           height = 7,
         },
@@ -337,6 +355,10 @@ Advanced example using the GitHub CLI.
           icon = " ",
           title = "Open PRs",
           cmd = "gh pr list -L 3",
+          key = "p",
+          action = function()
+            vim.fn.jobstart("gh pr list --web", { detach = true })
+          end,
           height = 7,
         },
         {
@@ -427,6 +449,7 @@ The other options are used with `:lua Snacks.dashboard()`
   bo = {
     bufhidden = "wipe",
     buftype = "nofile",
+    buflisted = false,
     filetype = "snacks_dashboard",
     swapfile = false,
     undofile = false,

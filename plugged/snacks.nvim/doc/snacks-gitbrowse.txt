@@ -5,7 +5,8 @@ Table of Contents                         *snacks-gitbrowse-table-of-contents*
 
 1. Setup                                              |snacks-gitbrowse-setup|
 2. Config                                            |snacks-gitbrowse-config|
-3. Module                                            |snacks-gitbrowse-module|
+3. Types                                              |snacks-gitbrowse-types|
+4. Module                                            |snacks-gitbrowse-module|
   - Snacks.gitbrowse()            |snacks-gitbrowse-module-snacks.gitbrowse()|
   - Snacks.gitbrowse.get_url()|snacks-gitbrowse-module-snacks.gitbrowse.get_url()|
   - Snacks.gitbrowse.open()  |snacks-gitbrowse-module-snacks.gitbrowse.open()|
@@ -35,7 +36,9 @@ Open the repo of the active file in the browser (e.g., GitHub)
 
 >lua
     ---@class snacks.gitbrowse.Config
+    ---@field url_patterns? table<string, table<string, string|fun(fields:snacks.gitbrowse.Fields):string>>
     {
+      notify = true, -- show notification on open
       -- Handler to open the url in a browser
       ---@param url string
       open = function(url)
@@ -47,12 +50,9 @@ Open the repo of the active file in the browser (e.g., GitHub)
       end,
       ---@type "repo" | "branch" | "file" | "commit"
       what = "file", -- what to open. not all remotes support all types
-      ---@type string?
-      branch = nil,
-      ---@type string?
-      line_start = nil,
-      ---@type string?
-      line_end = nil,
+      branch = nil, ---@type string?
+      line_start = nil, ---@type number?
+      line_end = nil, ---@type number?
       -- patterns to transform remotes to an actual URL
       remote_patterns = {
         { "^(https?://.*)%.git$"              , "%1" },
@@ -71,17 +71,17 @@ Open the repo of the active file in the browser (e.g., GitHub)
       url_patterns = {
         ["github%.com"] = {
           branch = "/tree/{branch}",
-          file = "/blob/{branch}/{file}#L{line}",
+          file = "/blob/{branch}/{file}#L{line_start}-L{line_end}",
           commit = "/commit/{commit}",
         },
         ["gitlab%.com"] = {
           branch = "/-/tree/{branch}",
-          file = "/-/blob/{branch}/{file}#L{line}",
+          file = "/-/blob/{branch}/{file}#L{line_start}-L{line_end}",
           commit = "/-/commit/{commit}",
         },
         ["bitbucket%.org"] = {
           branch = "/src/{branch}",
-          file = "/src/{branch}/{file}#lines-{line}",
+          file = "/src/{branch}/{file}#lines-{line_start}-L{line_end}",
           commit = "/commits/{commit}",
         },
       },
@@ -90,7 +90,21 @@ Open the repo of the active file in the browser (e.g., GitHub)
 
 
 ==============================================================================
-3. Module                                            *snacks-gitbrowse-module*
+3. Types                                              *snacks-gitbrowse-types*
+
+>lua
+    ---@class snacks.gitbrowse.Fields
+    ---@field branch? string
+    ---@field file? string
+    ---@field line_start? number
+    ---@field line_end? number
+    ---@field commit? string
+    ---@field line_count? number
+<
+
+
+==============================================================================
+4. Module                                            *snacks-gitbrowse-module*
 
 
 `Snacks.gitbrowse()`                                      *Snacks.gitbrowse()*
@@ -105,8 +119,9 @@ Open the repo of the active file in the browser (e.g., GitHub)
 
 >lua
     ---@param repo string
+    ---@param fields snacks.gitbrowse.Fields
     ---@param opts? snacks.gitbrowse.Config
-    Snacks.gitbrowse.get_url(repo, opts)
+    Snacks.gitbrowse.get_url(repo, fields, opts)
 <
 
 

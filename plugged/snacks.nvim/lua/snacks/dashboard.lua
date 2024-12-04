@@ -146,6 +146,7 @@ Snacks.config.style("dashboard", {
   bo = {
     bufhidden = "wipe",
     buftype = "nofile",
+    buflisted = false,
     filetype = "snacks_dashboard",
     swapfile = false,
     undofile = false,
@@ -482,21 +483,39 @@ function D:resolve(item, results, parent)
 
     -- add the title if there are child items
     if #results >= first_child and item.title then
-      table.insert(results, first_child, { title = item.title, icon = item.icon, pane = item.pane })
+      table.insert(results, first_child, {
+        title = item.title,
+        icon = item.icon,
+        pane = item.pane,
+        action = item.action,
+        key = item.key,
+        label = item.label,
+      })
+      item.action = nil
+      item.label = nil
+      item.key = nil
+      first_child = first_child + 1
+    end
+
+    -- correct first/last taking hidden items into account
+    local first, last = first_child, #results
+    for c = first_child, #results do
+      first = first or not results[c].hidden and c or nil
+      last = not results[c].hidden and c or last
     end
 
     if item.gap then -- add padding between child items
-      for i = first_child, #results - 1 do
+      for i = first, last - 1 do
         results[i].padding = item.gap
       end
     end
     if item.padding then -- add padding to the first and last child items
       local padding = self:padding(item)
-      if padding[2] > 0 and results[first_child] then
-        results[first_child].padding = { 0, padding[2] }
+      if padding[2] > 0 and results[first] then
+        results[first].padding = { 0, padding[2] }
       end
-      if padding[1] > 0 and results[#results] then
-        results[#results].padding = { padding[1], 0 }
+      if padding[1] > 0 and results[last] then
+        results[last].padding = { padding[1], 0 }
       end
     end
   elseif type(item) ~= "table" then
@@ -695,7 +714,9 @@ function D:update()
         end
       end
       if item then
-        last = { item._.row, (self.lines[item._.row]:find("[%w%d%p]", item._.col + 1) or item._.col + 1) - 1 }
+        local col = self.lines[item._.row]:find("[%w%d%p]", item._.col + 1)
+        col = col or (item._.col + 1 + (item.indent and (item.indent + 1) or 0))
+        last = { item._.row, (col or item._.col + 1) - 1 }
       end
       vim.api.nvim_win_set_cursor(self.win, last)
     end,
@@ -911,7 +932,11 @@ function M.sections.terminal(opts)
   return function(self)
     local cmd = opts.cmd or 'echo "No `cmd` provided"'
     local ttl = opts.ttl or 3600
-    local width, height = opts.width or self.opts.width, opts.height or 10
+    local height = opts.height or 10
+    local width = opts.width
+    if not width then
+      width = self.opts.width - (opts.indent or 0)
+    end
 
     local cache_parts = {
       table.concat(type(cmd) == "table" and cmd or { cmd }, " "),
@@ -990,7 +1015,9 @@ function M.sections.terminal(opts)
       end
     end
     return {
-      action = opts.action,
+      action = not opts.title and opts.action or nil,
+      key = not opts.title and opts.key or nil,
+      label = not opts.title and opts.label or nil,
       render = function(_, pos)
         self:trace("terminal.render")
         local win = vim.api.nvim_open_win(buf, false, {
@@ -1019,7 +1046,7 @@ function M.sections.terminal(opts)
         self.on("Closed", close, self.augroup)
         self:trace()
       end,
-      text = ("terminal\n"):rep(height - 1),
+      text = ("\n"):rep(height - 1),
     }
   end
 end

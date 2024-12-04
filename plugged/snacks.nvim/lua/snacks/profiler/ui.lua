@@ -220,19 +220,6 @@ function M.highlight(buf, opts)
   end
 end
 
----@param fg string foreground color
----@param bg string background color
----@param alpha number number between 0 and 1. 0 results in bg, 1 results in fg
-function M.blend(fg, bg, alpha)
-  local bg_rgb = { tonumber(bg:sub(2, 3), 16), tonumber(bg:sub(4, 5), 16), tonumber(bg:sub(6, 7), 16) }
-  local fg_rgb = { tonumber(fg:sub(2, 3), 16), tonumber(fg:sub(4, 5), 16), tonumber(fg:sub(6, 7), 16) }
-  local blend = function(i)
-    local ret = (alpha * fg_rgb[i] + ((1 - alpha) * bg_rgb[i]))
-    return math.floor(math.min(math.max(0, ret), 255) + 0.5)
-  end
-  return string.format("#%02x%02x%02x", blend(1), blend(2), blend(3))
-end
-
 function M.colors()
   ---@type snacks.util.hl
   local hl_groups = {
@@ -246,11 +233,11 @@ function M.colors()
   local red = Snacks.util.color("DiagnosticError") or fallbacks.Error
   for _, s in ipairs({ "Info", "Warn", "Error" }) do
     local color = Snacks.util.color("Diagnostic" .. s) or fallbacks[s]
-    hl_groups["Icon" .. s] = { fg = color, bg = M.blend(color, bg, 0.3) }
-    hl_groups["Badge" .. s] = { fg = color, bg = M.blend(color, bg, 0.1) }
+    hl_groups["Icon" .. s] = { fg = color, bg = Snacks.util.blend(color, bg, 0.3) }
+    hl_groups["Badge" .. s] = { fg = color, bg = Snacks.util.blend(color, bg, 0.1) }
   end
   for i = 1, M.shades do
-    hl_groups[("Hot%02d"):format(i)] = { bg = M.blend(red, bg, i / (M.shades + 1)) }
+    hl_groups[("Hot%02d"):format(i)] = { bg = Snacks.util.blend(red, bg, i / (M.shades + 1)) }
   end
   Snacks.util.set_hl(hl_groups, { prefix = "SnacksProfiler", managed = false })
   vim.api.nvim_create_autocmd("ColorScheme", {

@@ -365,12 +365,26 @@ Advanced example using the GitHub CLI.
           padding = 1,
         },
         { section = "keys", gap = 1, padding = 1 },
+        {
+          pane = 2,
+          icon = " ",
+          desc = "Browse Repo",
+          padding = 1,
+          key = "b",
+          action = function()
+            Snacks.gitbrowse()
+          end,
+        },
         function()
           local in_git = Snacks.git.get_root() ~= nil
           local cmds = {
             {
               title = "Notifications",
               cmd = "gh notify -s -a -n5",
+              action = function()
+                vim.ui.open("https://github.com/notifications")
+              end,
+              key = "n",
               icon = " ",
               height = 5,
               enabled = true,
@@ -378,6 +392,10 @@ Advanced example using the GitHub CLI.
             {
               title = "Open Issues",
               cmd = "gh issue list -L 3",
+              key = "i",
+              action = function()
+                vim.fn.jobstart("gh issue list --web", { detach = true })
+              end,
               icon = " ",
               height = 7,
             },
@@ -385,6 +403,10 @@ Advanced example using the GitHub CLI.
               icon = " ",
               title = "Open PRs",
               cmd = "gh pr list -L 3",
+              key = "p",
+              action = function()
+                vim.fn.jobstart("gh pr list --web", { detach = true })
+              end,
               height = 7,
             },
             {
@@ -478,6 +500,7 @@ Snacks.dashboard()`
       bo = {
         bufhidden = "wipe",
         buftype = "nofile",
+        buflisted = false,
         filetype = "snacks_dashboard",
         swapfile = false,
         undofile = false,
@@ -722,7 +745,7 @@ Update the dashboard
 3. *image*: https://github.com/user-attachments/assets/772e84fe-b220-4841-bbe9-6e28780dc30a
 4. *image*: https://github.com/user-attachments/assets/823f702d-e5d0-449a-afd2-684e1fb97622
 5. *image*: https://github.com/user-attachments/assets/e98997b6-07d3-4162-bc06-2768b78fe353
-6. *image*: https://github.com/user-attachments/assets/965e1d9e-6833-409c-900a-a12e98d764d9
+6. *image*: https://github.com/user-attachments/assets/747d7386-ef05-487f-9550-3e5ef94869fc
 7. *image*: https://github.com/user-attachments/assets/2fb17ecc-8bc0-48d3-a023-aa8dfc70247e
 8. *image*: https://github.com/user-attachments/assets/561eff8c-ddf0-4de9-8485-e6be18a19c0b
 

@@ -99,15 +99,9 @@ function Render:wiki_link()
     end
 
     local parts = Str.split(self.node.text:sub(2, -2), '|')
-    local link_component = self:link_component(parts[1])
-    local icon, highlight = self.link.wiki.icon, nil
-    if link_component ~= nil then
-        icon, highlight = link_component.icon, link_component.highlight
-    end
-    highlight = highlight or self.link.wiki.highlight
-    local link_text = icon .. parts[#parts]
+    local icon, highlight = self:from_destination(self.link.wiki.icon, self.link.wiki.highlight, parts[1])
     self.marks:add_over('link', self.node, {
-        virt_text = { { link_text, highlight } },
+        virt_text = { { icon .. parts[#parts], highlight } },
         virt_text_pos = 'inline',
         conceal = '',
     }, { 0, -1, 0, 1 })
