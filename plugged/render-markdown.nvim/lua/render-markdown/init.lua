@@ -13,6 +13,7 @@ local M = {}
 
 ---@class (exact) render.md.UserCallback
 ---@field public attach? fun(buf: integer)
+---@field public render? fun(buf: integer)
 
 ---@class (exact) render.md.UserLatex
 ---@field public enabled? boolean
@@ -30,6 +31,15 @@ local M = {}
 ---@class (exact) render.md.UserWindowOption
 ---@field public default? render.md.option.Value
 ---@field public rendered? render.md.option.Value
+
+---@class (exact) render.md.UserHtmlComment
+---@field public conceal? boolean
+---@field public text? string
+---@field public highlight? string
+
+---@class (exact) render.md.UserHtml
+---@field public enabled? boolean
+---@field public comment? render.md.UserHtmlComment
 
 ---@class (exact) render.md.UserIndent
 ---@field public enabled? boolean
@@ -118,10 +128,12 @@ local M = {}
 ---@field public checked? render.md.UserCheckboxComponent
 ---@field public custom? table<string, render.md.UserCustomCheckbox>
 
+---@alias render.md.bullet.Icons string[]|string[][]|fun(level: integer, index: integer): string?
+
 ---@class (exact) render.md.UserBullet
 ---@field public enabled? boolean
----@field public icons? (string|string[])[]
----@field public ordered_icons? (string|string[])[]
+---@field public icons? render.md.bullet.Icons
+---@field public ordered_icons? render.md.bullet.Icons
 ---@field public left_pad? integer
 ---@field public right_pad? integer
 ---@field public highlight? string
@@ -236,6 +248,7 @@ local M = {}
 ---@field public sign? render.md.UserSign
 ---@field public inline_highlight? render.md.UserInlineHighlight
 ---@field public indent? render.md.UserIndent
+---@field public html? render.md.UserHtml
 ---@field public win_options? table<string, render.md.UserWindowOption>
 
 ---@alias render.md.config.Preset 'none'|'lazy'|'obsidian'
@@ -329,6 +342,8 @@ M.default_config = {
     on = {
         -- Called when plugin initially attaches to a buffer
         attach = function() end,
+        -- Called after plugin renders a buffer
+        render = function() end,
     },
     heading = {
         -- Turn on / off heading icon & background rendering
@@ -484,14 +499,20 @@ M.default_config = {
         -- Turn on / off list bullet rendering
         enabled = true,
         -- Replaces '-'|'+'|'*' of 'list_item'
-        -- How deeply nested the list is determines the 'level' which is used to index into the list using a cycle
-        -- The item number in the list is used to index into the value using a clamp if the value is also a list
+        -- How deeply nested the list is determines the 'level', how far down at that level determines the 'index'
+        -- If a function is provided both of these values are passed in using 1 based indexing
+        -- If a list is provided we index into it using a cycle based on the level
+        -- If the value at that level is also a list we further index into it using a clamp based on the index
         -- If the item is a 'checkbox' a conceal is used to hide the bullet instead
         icons = { '●', '○', '◆', '◇' },
         -- Replaces 'n.'|'n)' of 'list_item'
-        -- How deeply nested the list is determines the 'level' which is used to index into the list using a cycle
-        -- The item number in the list is used to index into the value using a clamp if the value is also a list
-        ordered_icons = {},
+        -- How deeply nested the list is determines the 'level', how far down at that level determines the 'index'
+        -- If a function is provided both of these values are passed in using 1 based indexing
+        -- If a list is provided we index into it using a cycle based on the level
+        -- If the value at that level is also a list we further index into it using a clamp based on the index
+        ordered_icons = function(level, index)
+            return string.format('%d.', index)
+        end,
         -- Padding to add to the left of bullet point
         left_pad = 0,
         -- Padding to add to the right of bullet point
@@ -696,6 +717,18 @@ M.default_config = {
         -- Do not indent heading titles, only the body
         skip_heading = false,
     },
+    html = {
+        -- Turn on / off all HTML rendering
+        enabled = true,
+        comment = {
+            -- Turn on / off HTML comment concealing
+            conceal = true,
+            -- Optional text to inline before the concealed comment
+            text = nil,
+            -- Highlight for the inlined text
+            highlight = 'RenderMarkdownHtmlComment',
+        },
+    },
     -- Window options to use that change between rendered and raw view
     win_options = {
         -- See :h 'conceallevel'
@@ -718,7 +751,7 @@ M.default_config = {
     -- if no override is provided. Supports the following fields:
     --   enabled, max_file_size, debounce, render_modes, anti_conceal, padding,
     --   heading, paragraph, code, dash, bullet, checkbox, quote, pipe_table,
-    --   callout, link, sign, indent, win_options
+    --   callout, link, sign, indent, html, win_options
     overrides = {
         -- Overrides for different buftypes, see :h 'buftype'
         buftype = {

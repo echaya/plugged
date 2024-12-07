@@ -54,7 +54,7 @@
     "revision": "e8841a6a9431b7365ac9055688429e1deb8db90f"
   },
   "c_sharp": {
-    "revision": "285c993f01d9955932b45a6192055003aa70a570"
+    "revision": "4bf615f8d688f50d69fc5677187dc35f22e03ad6"
   },
   "cairo": {
     "revision": "6238f609bea233040fe927858156dee5515a0745"
@@ -64,6 +64,9 @@
   },
   "chatito": {
     "revision": "b4cbe9ab7672d5106e9550d8413835395a1be362"
+  },
+  "circom": {
+    "revision": "02150524228b1e6afef96949f2d6b7cc0aaf999e"
   },
   "clojure": {
     "revision": "f4236d4da8aa92bc105d9c118746474c608e6af7"
@@ -501,7 +504,7 @@
     "revision": "14e6da1627aaef21d2b2aa0c37d04269766dcc1d"
   },
   "nu": {
-    "revision": "41a1c570b57987386ed9a928fc214928f8ddc669"
+    "revision": "a94fdf1df5deba1aa1a3fff23e1276333b5ab666"
   },
   "objc": {
     "revision": "62e61b6f5c0289c376d61a8c91faf6435cde9012"
@@ -561,7 +564,7 @@
     "revision": "73ff874ae4c9e9b45462673cbc0a1e350e2522a7"
   },
   "powershell": {
-    "revision": "efbefa2fcf61ddbecb0af48df4a8bde1d2cab446"
+    "revision": "7e6ccf19774a098bb3c996690c65cc1a6f439dc0"
   },
   "printf": {
     "revision": "60d50a2247b0c1fb72b967562c64711d65c6a060"
@@ -603,7 +606,7 @@
     "revision": "be062582956165019d3253794b4d712f66dfeaaa"
   },
   "python": {
-    "revision": "6d14e44ea217bc5bb1c1804180e9818d7d1b8d91"
+    "revision": "1ee3e775477f913ae3a46cde7a6a512deb06052c"
   },
   "ql": {
     "revision": "1fd627a4e8bff8c24c11987474bd33112bead857"
@@ -732,7 +735,7 @@
     "revision": "dd32616275c6e9d7800c58f40c16a09ad1c7c238"
   },
   "starlark": {
-    "revision": "018d0e09d9d0f0dd6740a37682b8ee4512e8b2ac"
+    "revision": "a453dbf3ba433db0e5ec621a38a7e59d72e4dc69"
   },
   "strace": {
     "revision": "d819cdd5dbe455bd3c859193633c8d91c0df7c36"
@@ -765,7 +768,7 @@
     "revision": "f2b378a9af0b7e1192cff67a5fb45508c927205d"
   },
   "t32": {
-    "revision": "7c8579685e34116c61971240780b316c54be698b"
+    "revision": "e9e334539a07ca044128592c41946daa68d626dd"
   },
   "tablegen": {
     "revision": "b1170880c61355aaf38fc06f4af7d3c55abdabc4"
@@ -777,7 +780,7 @@
     "revision": "98015ebe182d94e5a4439e32ffd91beaac32fcb9"
   },
   "teal": {
-    "revision": "635e61625949a0711f63b52cfaaac1c75769885c"
+    "revision": "3db655924b2ff1c54fdf6371b5425ea6b5dccefe"
   },
   "templ": {
     "revision": "dc41c080783c6305d66471672a9c9147561126e4"
@@ -822,7 +825,7 @@
     "revision": "45af49560396d67a710b21a3ce315fcaa09006ff"
   },
   "typespec": {
-    "revision": "53d892fd975da3f81374f7732af3cd3abb6b85d9"
+    "revision": "8455e6601de80c9641b6e6f54c7320573eec0300"
   },
   "typoscript": {
     "revision": "43b221c0b76e77244efdaa9963e402a17c930fbc"

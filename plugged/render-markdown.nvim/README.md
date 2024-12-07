@@ -53,6 +53,8 @@ Plugin to improve viewing Markdown files in Neovim
     Used to parse `markdown` files
   - [latex](https://github.com/latex-lsp/tree-sitter-latex) (Optional):
     Used to get `LaTeX` blocks from `markdown` files
+  - [html](https://github.com/tree-sitter/tree-sitter-html) (Optional):
+    Used to conceal `HTML` comments
 - Icon provider plugin (Optional): Used for icon above code blocks
   - [mini.icons](https://github.com/echasnovski/mini.nvim/blob/main/readmes/mini-icons.md)
   - [nvim-web-devicons](https://github.com/nvim-tree/nvim-web-devicons)
@@ -205,6 +207,8 @@ require('render-markdown').setup({
     on = {
         -- Called when plugin initially attaches to a buffer
         attach = function() end,
+        -- Called after plugin renders a buffer
+        render = function() end,
     },
     heading = {
         -- Turn on / off heading icon & background rendering
@@ -360,14 +364,20 @@ require('render-markdown').setup({
         -- Turn on / off list bullet rendering
         enabled = true,
         -- Replaces '-'|'+'|'*' of 'list_item'
-        -- How deeply nested the list is determines the 'level' which is used to index into the list using a cycle
-        -- The item number in the list is used to index into the value using a clamp if the value is also a list
+        -- How deeply nested the list is determines the 'level', how far down at that level determines the 'index'
+        -- If a function is provided both of these values are passed in using 1 based indexing
+        -- If a list is provided we index into it using a cycle based on the level
+        -- If the value at that level is also a list we further index into it using a clamp based on the index
         -- If the item is a 'checkbox' a conceal is used to hide the bullet instead
         icons = { '●', '○', '◆', '◇' },
         -- Replaces 'n.'|'n)' of 'list_item'
-        -- How deeply nested the list is determines the 'level' which is used to index into the list using a cycle
-        -- The item number in the list is used to index into the value using a clamp if the value is also a list
-        ordered_icons = {},
+        -- How deeply nested the list is determines the 'level', how far down at that level determines the 'index'
+        -- If a function is provided both of these values are passed in using 1 based indexing
+        -- If a list is provided we index into it using a cycle based on the level
+        -- If the value at that level is also a list we further index into it using a clamp based on the index
+        ordered_icons = function(level, index)
+            return string.format('%d.', index)
+        end,
         -- Padding to add to the left of bullet point
         left_pad = 0,
         -- Padding to add to the right of bullet point
@@ -572,6 +582,18 @@ require('render-markdown').setup({
         -- Do not indent heading titles, only the body
         skip_heading = false,
     },
+    html = {
+        -- Turn on / off all HTML rendering
+        enabled = true,
+        comment = {
+            -- Turn on / off HTML comment concealing
+            conceal = true,
+            -- Optional text to inline before the concealed comment
+            text = nil,
+            -- Highlight for the inlined text
+            highlight = 'RenderMarkdownHtmlComment',
+        },
+    },
     -- Window options to use that change between rendered and raw view
     win_options = {
         -- See :h 'conceallevel'
@@ -594,7 +616,7 @@ require('render-markdown').setup({
     -- if no override is provided. Supports the following fields:
     --   enabled, max_file_size, debounce, render_modes, anti_conceal, padding,
     --   heading, paragraph, code, dash, bullet, checkbox, quote, pipe_table,
-    --   callout, link, sign, indent, win_options
+    --   callout, link, sign, indent, html, win_options
     overrides = {
         -- Overrides for different buftypes, see :h 'buftype'
         buftype = {
@@ -845,14 +867,20 @@ require('render-markdown').setup({
         -- Turn on / off list bullet rendering
         enabled = true,
         -- Replaces '-'|'+'|'*' of 'list_item'
-        -- How deeply nested the list is determines the 'level' which is used to index into the list using a cycle
-        -- The item number in the list is used to index into the value using a clamp if the value is also a list
+        -- How deeply nested the list is determines the 'level', how far down at that level determines the 'index'
+        -- If a function is provided both of these values are passed in using 1 based indexing
+        -- If a list is provided we index into it using a cycle based on the level
+        -- If the value at that level is also a list we further index into it using a clamp based on the index
         -- If the item is a 'checkbox' a conceal is used to hide the bullet instead
         icons = { '●', '○', '◆', '◇' },
         -- Replaces 'n.'|'n)' of 'list_item'
-        -- How deeply nested the list is determines the 'level' which is used to index into the list using a cycle
-        -- The item number in the list is used to index into the value using a clamp if the value is also a list
-        ordered_icons = {},
+        -- How deeply nested the list is determines the 'level', how far down at that level determines the 'index'
+        -- If a function is provided both of these values are passed in using 1 based indexing
+        -- If a list is provided we index into it using a cycle based on the level
+        -- If the value at that level is also a list we further index into it using a clamp based on the index
+        ordered_icons = function(level, index)
+            return string.format('%d.', index)
+        end,
         -- Padding to add to the left of bullet point
         left_pad = 0,
         -- Padding to add to the right of bullet point
@@ -1185,6 +1213,7 @@ The table below shows all the highlight groups with their default link
 | RenderMarkdownDash            | LineNr                             | Thematic break line        |
 | RenderMarkdownSign            | SignColumn                         | Sign column background     |
 | RenderMarkdownMath            | @markup.math                       | LaTeX lines                |
+| RenderMarkdownHtmlComment     | @comment                           | HTML comment inline text   |
 | RenderMarkdownLink            | @markup.link.label.markdown_inline | Image & hyperlink icons    |
 | RenderMarkdownWikiLink        | RenderMarkdownLink                 | WikiLink icon & text       |
 | RenderMarkdownUnchecked       | @markup.list.unchecked             | Unchecked checkbox         |

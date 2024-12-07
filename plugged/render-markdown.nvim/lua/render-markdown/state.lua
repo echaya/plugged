@@ -119,6 +119,7 @@ function M.default_buffer_config()
         sign = config.sign,
         inline_highlight = config.inline_highlight,
         indent = config.indent,
+        html = config.html,
         win_options = config.win_options,
     }
     return vim.deepcopy(buffer_config)
@@ -188,7 +189,7 @@ function M.validate()
                     :type('enabled', 'boolean')
                     :type({ 'left_pad', 'right_pad' }, 'number')
                     :type('highlight', 'string')
-                    :list_or_list_of_list({ 'icons', 'ordered_icons' }, 'string')
+                    :list_or_list_of_list({ 'icons', 'ordered_icons' }, 'string', 'function')
                     :check()
             end)
             :nested('checkbox', function(checkbox)
@@ -264,6 +265,17 @@ function M.validate()
                     :type({ 'per_level', 'skip_level' }, 'number')
                     :check()
             end)
+            :nested('html', function(html)
+                html:type('enabled', 'boolean')
+                    :nested('comment', function(comment)
+                        comment
+                            :type('conceal', 'boolean')
+                            :type('highlight', 'string')
+                            :type('text', { 'string', 'nil' })
+                            :check()
+                    end)
+                    :check()
+            end)
             :nested('win_options', function(win_options)
                 win_options
                     :nested('ALL', function(win_option)
@@ -295,7 +307,7 @@ function M.validate()
                 :check()
         end)
         :nested('on', function(on)
-            on:type('attach', 'function'):check()
+            on:type({ 'attach', 'render' }, 'function'):check()
         end)
         :nested('overrides', function(overrides)
             overrides

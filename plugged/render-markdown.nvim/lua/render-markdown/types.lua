@@ -2,6 +2,7 @@
 
 ---@class (exact) render.md.Callback
 ---@field public attach fun(buf: integer)
+---@field public render fun(buf: integer)
 
 ---@class (exact) render.md.Latex
 ---@field public enabled boolean
@@ -17,6 +18,15 @@
 ---@class (exact) render.md.WindowOption
 ---@field public default render.md.option.Value
 ---@field public rendered render.md.option.Value
+
+---@class (exact) render.md.HtmlComment
+---@field public conceal boolean
+---@field public text? string
+---@field public highlight string
+
+---@class (exact) render.md.Html
+---@field public enabled boolean
+---@field public comment render.md.HtmlComment
 
 ---@class (exact) render.md.Indent
 ---@field public enabled boolean
@@ -101,8 +111,8 @@
 
 ---@class (exact) render.md.Bullet
 ---@field public enabled boolean
----@field public icons (string|string[])[]
----@field public ordered_icons (string|string[])[]
+---@field public icons render.md.bullet.Icons
+---@field public ordered_icons render.md.bullet.Icons
 ---@field public left_pad integer
 ---@field public right_pad integer
 ---@field public highlight string
@@ -190,6 +200,7 @@
 ---@field public sign render.md.Sign
 ---@field public inline_highlight render.md.InlineHighlight
 ---@field public indent render.md.Indent
+---@field public html render.md.Html
 ---@field public win_options table<string, render.md.WindowOption>
 
 ---@class (exact) render.md.Config: render.md.BufferConfig

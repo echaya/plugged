@@ -167,7 +167,7 @@ function M._get()
   local win = vim.g.statusline_winid
   local buf = vim.api.nvim_win_get_buf(win)
   local is_file = vim.bo[buf].buftype == ""
-  local show_signs = vim.wo[win].signcolumn ~= "no"
+  local show_signs = vim.wo[win].signcolumn ~= "no" and vim.v.virtnum == 0
 
   local components = { "", "", "" } -- left, middle, right
 
@@ -229,7 +229,7 @@ end
 function M.get()
   local win = vim.g.statusline_winid
   local buf = vim.api.nvim_win_get_buf(win)
-  local key = ("%d:%d:%d"):format(win, buf, vim.v.lnum)
+  local key = ("%d:%d:%d:%d:%d"):format(win, buf, vim.v.lnum, vim.v.virtnum, vim.v.relnum)
   if cache[key] then
     return cache[key]
   end
