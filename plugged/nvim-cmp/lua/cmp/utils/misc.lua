@@ -94,6 +94,24 @@ misc.merge = function(tbl1, tbl2)
   local is_dict2 = type(tbl2) == 'table' and (not islist(tbl2) or vim.tbl_isempty(tbl2))
   if is_dict1 and is_dict2 then
     local new_tbl = {}
+
+    -- Merge metatables
+    local mt1 = getmetatable(tbl1)
+    local mt2 = getmetatable(tbl2)
+    local new_mt = {}
+    if mt1 then
+      for k, v in pairs(mt1) do
+        new_mt[k] = v
+      end
+    end
+    if mt2 then
+      for k, v in pairs(mt2) do
+        new_mt[k] = v
+      end
+    end
+    setmetatable(new_tbl, new_mt)
+
+    -- Merge keys and values
     for k, v in pairs(tbl2) do
       if tbl1[k] ~= misc.none then
         new_tbl[k] = misc.merge(tbl1[k], v)
@@ -156,28 +174,39 @@ misc.set = function(t, keys, v)
   c[keys[#keys]] = v
 end
 
----Copy table
----@generic T
----@param tbl T
----@return T
-misc.copy = function(tbl)
-  if type(tbl) ~= 'table' then
-    return tbl
-  end
+do
+  local function do_copy(tbl, seen)
+    if type(tbl) ~= 'table' then
+      return tbl
+    end
+    if seen[tbl] then
+      return seen[tbl]
+    end
 
-  if islist(tbl) then
+    if islist(tbl) then
+      local copy = {}
+      seen[tbl] = copy
+      for i, value in ipairs(tbl) do
+        copy[i] = do_copy(value, seen)
+      end
+      return copy
+    end
+
     local copy = {}
-    for i, value in ipairs(tbl) do
-      copy[i] = misc.copy(value)
+    seen[tbl] = copy
+    for key, value in pairs(tbl) do
+      copy[key] = do_copy(value, seen)
     end
     return copy
   end
 
-  local copy = {}
-  for key, value in pairs(tbl) do
-    copy[key] = misc.copy(value)
+  ---Copy table
+  ---@generic T
+  ---@param tbl T
+  ---@return T
+  misc.copy = function(tbl)
+    return do_copy(tbl, {})
   end
-  return copy
 end
 
 ---Safe version of vim.str_utfindex
@@ -186,7 +215,11 @@ end
 ---@return integer
 misc.to_utfindex = function(text, vimindex)
   vimindex = vimindex or #text + 1
-  return vim.str_utfindex(text, math.max(0, math.min(vimindex - 1, #text)))
+  if vim.fn.has('nvim-0.11') == 1 then
+    return vim.str_utfindex(text, 'utf-32', math.max(0, math.min(vimindex - 1, #text)))
+  else
+    return vim.str_utfindex(text, math.max(0, math.min(vimindex - 1, #text)))
+  end
 end
 
 ---Safe version of vim.str_byteindex
@@ -227,7 +260,9 @@ misc.redraw = setmetatable({
 }, {
   __call = function(self, force)
     local termcode = vim.api.nvim_replace_termcodes(self.incsearch_redraw_keys, true, true, true)
-    if vim.tbl_contains({ '/', '?' }, vim.fn.getcmdtype()) then
+    if vim.iter({ '/', '?' }):any(function(...)
+      return ... == vim.fn.getcmdtype()
+    end) then
       if vim.o.incsearch then
         return vim.api.nvim_feedkeys(termcode, 'ni', true)
       end

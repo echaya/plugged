@@ -19,6 +19,7 @@ local config = require('cmp.config')
 ---@field public thumb_win integer|nil
 ---@field public sbar_win integer|nil
 ---@field public style cmp.WindowStyle
+---@field public is_doc boolean|nil
 ---@field public opt table<string, any>
 ---@field public buffer_opt table<string, any>
 local window = {}
@@ -134,6 +135,8 @@ end
 window.update = function(self)
   local info = self:info()
   if info.scrollable and self.style.height > 0 then
+    local scrollbar_winhighlight = self.is_doc and config.get().window.documentation.scrollbar_winhighlight or config.get().window.completion.scrollbar_winhighlight
+    local scrollbar_thumb_winhighlight = self.is_doc and config.get().window.documentation.scrollbar_thumb_winhighlight or config.get().window.completion.scrollbar_thumb_winhighlight
     -- Draw the background of the scrollbar
 
     if not info.border_info.visible then
@@ -151,19 +154,28 @@ window.update = function(self)
       else
         style.noautocmd = true
         self.sbar_win = vim.api.nvim_open_win(buffer.ensure(self.name .. 'sbar_buf'), false, style)
-        opt.win_set_option(self.sbar_win, 'winhighlight', 'EndOfBuffer:PmenuSbar,NormalFloat:PmenuSbar')
+        opt.win_set_option(self.sbar_win, 'winhighlight', scrollbar_winhighlight)
       end
     end
 
     -- Draw the scrollbar thumb
-    local thumb_height = math.floor(info.inner_height * (info.inner_height / self:get_content_height()) + 0.5)
-    local thumb_offset = math.floor(info.inner_height * (vim.fn.getwininfo(self.win)[1].topline / self:get_content_height()))
+    local thumb_height = math.floor(info.inner_height * (info.inner_height / self:get_content_height()))
+    thumb_height = math.max(1, thumb_height)
+    local topline = vim.fn.getwininfo(self.win)[1].topline
+    local scroll_ratio = topline / (self:get_content_height() - info.inner_height + 1)
+    -- row grid start from 0 on nvim-0.10
+    local thumb_offset_raw = (info.inner_height - thumb_height) * scroll_ratio
+    -- round half if topline > 1
+    local thumb_offset = math.floor(thumb_offset_raw)
+    if topline > 1 and thumb_offset_raw + 0.5 >= thumb_offset + 1 then
+      thumb_offset = thumb_offset + 1
+    end
 
     local style = {
       relative = 'editor',
       style = 'minimal',
       width = 1,
-      height = math.max(1, thumb_height),
+      height = thumb_height,
       row = info.row + thumb_offset + (info.border_info.visible and info.border_info.top or 0),
       col = info.col + info.width - 1, -- info.col was already added scrollbar offset.
       zindex = (self.style.zindex and (self.style.zindex + 2) or 2),
@@ -173,7 +185,7 @@ window.update = function(self)
     else
       style.noautocmd = true
       self.thumb_win = vim.api.nvim_open_win(buffer.ensure(self.name .. 'thumb_buf'), false, style)
-      opt.win_set_option(self.thumb_win, 'winhighlight', 'EndOfBuffer:PmenuThumb,NormalFloat:PmenuThumb')
+      opt.win_set_option(self.thumb_win, 'winhighlight', scrollbar_thumb_winhighlight)
     end
   else
     if self.sbar_win and vim.api.nvim_win_is_valid(self.sbar_win) then
@@ -295,7 +307,12 @@ window.get_border_info = function(self)
   info.left = new_border[8] == '' and 0 or 1
   info.vert = info.top + info.bottom
   info.horiz = info.left + info.right
-  info.visible = not (vim.tbl_contains({ '', ' ' }, new_border[2]) and vim.tbl_contains({ '', ' ' }, new_border[4]) and vim.tbl_contains({ '', ' ' }, new_border[6]) and vim.tbl_contains({ '', ' ' }, new_border[8]))
+  local function contains(list, element)
+    vim.iter(list):any(function(...)
+      return ... == element
+    end)
+  end
+  info.visible = not (contains({ '', ' ' }, new_border[2]) and contains({ '', ' ' }, new_border[4]) and contains({ '', ' ' }, new_border[6]) and contains({ '', ' ' }, new_border[8]))
   return info
 end
 
@@ -309,6 +326,9 @@ window.get_content_height = function(self)
   local height = 0
   vim.api.nvim_buf_call(self:get_buffer(), function()
     for _, text in ipairs(vim.api.nvim_buf_get_lines(self:get_buffer(), 0, -1, false)) do
+      if vim.fn.type(text) == vim.v.t_blob then
+        text = vim.fn.string(text)
+      end
       height = height + math.max(1, math.ceil(vim.fn.strdisplaywidth(text) / self.style.width))
     end
   end)

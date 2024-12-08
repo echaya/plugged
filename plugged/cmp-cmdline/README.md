@@ -1,4 +1,4 @@
-# cmp-cmdline
+# cmp-cmdline (fork)
 
 nvim-cmp source for vim's cmdline.
 

@@ -456,6 +456,12 @@ performance.fetching_timeout~
     Sets the timeout of candidate fetching process.
     The nvim-cmp will wait to display the most prioritized source.
 
+                                *cmp-config.performance.filtering_context_budget*
+performance.filtering_context_budget~
+    `number`
+    Sets the filtering context budget in ms.
+    If filtering takes longer than this, it will be deferred.
+
                                         *cmp-config.performance.confirm_resolve_timeout*
 performance.confirm_resolve_timeout~
     `number`
@@ -588,6 +594,11 @@ sources~
   List of the sources and their configurations to use.
   The order of the sources determines their order in the completion results.
 
+                                          *cmp-config.sources[n].enabled*
+sources[n].enabled~
+  `boolean | fun(ctx: cmp.Source.context): boolean`
+  Whether this source should be enabled.
+
                                                     *cmp-config.sources[n].name*
 sources[n].name~
   `string`
@@ -715,6 +726,18 @@ window.{completion,documentation}.winhighlight~
   Specify the window's winhighlight option.
   See |nvim_open_win|.
 
+                     *cmp-config.window.{completion,documentation}.scrollbar_winhighlight*
+window.{completion,documentation}.scrollbar_winhighlight~
+  `string | nil`
+  Specify the winhighlight option for the scrollbar background.
+  See |nvim_open_win|.
+
+                     *cmp-config.window.{completion,documentation}.scrollbar_thumb_winhighlight*
+window.{completion,documentation}.scrollbar_thumb_winhighlight~
+  `string | nil`
+  Specify the winhighlight option for the scrollbar thumb.
+  See |nvim_open_win|.
+
                      *cmp-config.window.{completion,documentation}.winblend*
 window.{completion,documentation}.winblend~
   `string | cmp.WinhighlightConfig`
@@ -733,10 +756,11 @@ window.completion.scrolloff~
   Specify the window's scrolloff option.
   See |'scrolloff'|.
 
-                                       *cmp-config.window.completion.col_offset*
+                                       *cmp-config.window.{completion,documentation}.col_offset*
 window.completion.col_offset~
   `number`
   Offsets the completion window relative to the cursor.
+  Offsets the documentation window relative to the completion window.
 
                                      *cmp-config.window.completion.side_padding*
 window.completion.side_padding~

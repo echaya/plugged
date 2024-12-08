@@ -20,7 +20,7 @@ local timer = {}
 
 function timer.new()
   local self = setmetatable({}, { __index = timer })
-  self.handle = vim.loop.new_timer()
+  self.handle = (vim.uv or vim.loop).new_timer()
   self.callback_wrapper_instance = nil
   return self
 end

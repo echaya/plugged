@@ -1,4 +1,4 @@
-# cmp-buffer
+# cmp-buffer (fork)
 
 nvim-cmp source for buffer words.
 
@@ -37,9 +37,16 @@ _Default:_ `3`
 The number of characters that need to be typed to trigger auto-completion.
 
 
+### show_source (type: bool)
+
+_Default:_ false
+
+shows in a popup window the file the file this completion is from
+
+
 ### keyword_pattern (type: string)
 
-_Default:_ `[[\%(-\?\d\+\%(\.\d\+\)\?\|\h\w*\%([\-.]\w*\)*\)]]`
+__Default:_ `[[\%(-\?\d\+\%(\.\d\+\)\?\|\%(\h\|[\u00C0-\u00D6]\|[\u00D8-\u00F6]\|[\u00F8-\u02AF]\)\%(\w\|[\u00C0-\u00D6]\|[\u00D8-\u00F6]\|[\u00F8-\u02AF]\)*\%(-\%(\w\|[\u00C0-\u00D6]\|[\u00D8-\u00F6]\|[\u00F8-\u02AF]\)*\)*\)]]`
 
 A vim's regular expression for creating a word list from buffer content.
 
@@ -147,6 +154,14 @@ Optimization option. See the section [Indexing](#indexing-and-how-to-optimize-it
 _Default:_ `1024 * 40` (40 Kilobytes)
 
 Optimization option. See the section [Indexing](#indexing-and-how-to-optimize-it).
+
+
+### debounce (type: number)
+
+_Default_: `400`
+
+Optimization option. The time (ms) for debouncing the per-update indexing.
+Use `0` for no debouncing.
 
 
 ## Locality bonus comparator (distance-based sorting)

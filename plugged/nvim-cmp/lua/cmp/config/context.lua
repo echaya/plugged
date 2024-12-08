@@ -16,7 +16,9 @@ context.in_syntax_group = function(group)
     local g = vim.fn.synIDattr(syn_id, 'name')
     if type(group) == 'string' and g == group then
       return true
-    elseif type(group) == 'table' and vim.tbl_contains(group, g) then
+    elseif type(group) == 'table' and vim.iter(group):any(function(...)
+      return ... == g
+    end) then
       return true
     end
   end
@@ -38,17 +40,24 @@ context.in_treesitter_capture = function(capture)
   local get_captures_at_pos = -- See neovim/neovim#20331
     require('vim.treesitter').get_captures_at_pos -- for neovim >= 0.8 or require('vim.treesitter').get_captures_at_position -- for neovim < 0.8
 
-  local captures_at_cursor = vim.tbl_map(function(x)
-    return x.capture
-  end, get_captures_at_pos(buf, row, col))
+  local captures_at_cursor = vim
+    .iter(get_captures_at_pos(buf, row, col))
+    :map(function(x)
+      return x.capture
+    end)
+    :totable()
 
   if vim.tbl_isempty(captures_at_cursor) then
     return false
-  elseif type(capture) == 'string' and vim.tbl_contains(captures_at_cursor, capture) then
+  elseif type(capture) == 'string' and vim.iter(captures_at_cursor):any(function(...)
+    return ... == capture
+  end) then
     return true
   elseif type(capture) == 'table' then
     for _, v in ipairs(capture) do
-      if vim.tbl_contains(captures_at_cursor, v) then
+      if vim.iter(captures_at_cursor):any(function(...)
+        return ... == v
+      end) then
         return true
       end
     end

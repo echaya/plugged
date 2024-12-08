@@ -65,8 +65,7 @@ lsp.Position = {
       return position
     end
 
-    local ok, byteindex = pcall(vim.str_byteindex,
-      text, position.character, from_encoding == lsp.PositionEncodingKind.UTF16)
+    local ok, byteindex = pcall(vim.str_byteindex, text, position.character, from_encoding == lsp.PositionEncodingKind.UTF16)
     if not ok then
       return position
     end
@@ -84,10 +83,16 @@ lsp.Position = {
       return position
     end
 
+    local has_nvim11 = vim.fn.has('nvim-0.11') == 1
+
     local utf8 = lsp.Position.to_utf8(text, position, from_encoding)
     for index = utf8.character, 0, -1 do
       local ok, utf16index = pcall(function()
-        return select(2, vim.str_utfindex(text, index))
+        if has_nvim11 then
+          return vim.str_utfindex(text, lsp.PositionEncodingKind.UTF16, index)
+        else
+          return select(2, vim.str_utfindex(text, index))
+        end
       end)
       if ok then
         return { line = utf8.line, character = utf16index }
@@ -107,10 +112,16 @@ lsp.Position = {
       return position
     end
 
+    local has_nvim11 = vim.fn.has('nvim-0.11') == 1
+
     local utf8 = lsp.Position.to_utf8(text, position, from_encoding)
     for index = utf8.character, 0, -1 do
       local ok, utf32index = pcall(function()
-        return select(1, vim.str_utfindex(text, index))
+        if has_nvim11 then
+          return vim.str_utfindex(text, lsp.PositionEncodingKind.UTF32, index)
+        else
+          return select(1, vim.str_utfindex(text, index))
+        end
       end)
       if ok then
         return { line = utf8.line, character = utf32index }
@@ -201,7 +212,8 @@ lsp.CompletionItemKind = {
   Operator = 24,
   TypeParameter = 25,
 }
-for k, v in pairs(lsp.CompletionItemKind) do
+for _, k in ipairs(vim.tbl_keys(lsp.CompletionItemKind)) do
+  local v = lsp.CompletionItemKind[k]
   lsp.CompletionItemKind[v] = k
 end
 

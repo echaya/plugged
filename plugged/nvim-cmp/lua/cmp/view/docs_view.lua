@@ -19,13 +19,14 @@ docs_view.new = function()
   self.window:option('wrap', true)
   self.window:buffer_option('filetype', 'cmp_docs')
   self.window:buffer_option('buftype', 'nofile')
+  self.window.is_doc = true
   return self
 end
 
 ---Open documentation window
 ---@param e cmp.Entry
 ---@param view cmp.WindowStyle
-docs_view.open = function(self, e, view)
+docs_view.open = function(self, e, view, bottom_up)
   local documentation = config.get().window.documentation
   if not documentation then
     return
@@ -58,6 +59,7 @@ docs_view.open = function(self, e, view)
     local opts = {
       max_width = max_width - border_info.horiz,
     }
+    opts.wrap_at = opts.max_width
     if documentation.max_height > 0 then
       opts.max_height = documentation.max_height
     end
@@ -65,12 +67,17 @@ docs_view.open = function(self, e, view)
   end
 
   -- Set buffer as not modified, so it can be removed without errors
-  vim.api.nvim_buf_set_option(self.window:get_buffer(), 'modified', false)
+  if vim.fn.has('nvim-0.10') == 1 then
+    vim.api.nvim_set_option_value('modified', false, { buf = self.window:get_buffer() })
+  else
+    vim.api.nvim_buf_set_option(self.window:get_buffer(), 'modified', false)
+  end
 
   -- Calculate window size.
   local opts = {
     max_width = max_width - border_info.horiz,
   }
+  opts.wrap_at = opts.max_width
   if documentation.max_height > 0 then
     opts.max_height = documentation.max_height - border_info.vert
   end
@@ -99,6 +106,8 @@ docs_view.open = function(self, e, view)
     return self:close()
   end
 
+  local row = bottom_up and math.max(view.row - (height + border_info.vert - view.height), 1) or view.row
+
   -- Render window.
   self.window:option('winblend', documentation.winblend)
   self.window:option('winhighlight', documentation.winhighlight)
@@ -107,8 +116,8 @@ docs_view.open = function(self, e, view)
     style = 'minimal',
     width = width,
     height = height,
-    row = view.row,
-    col = col,
+    row = row,
+    col = col + documentation.col_offset,
     border = documentation.border,
     zindex = documentation.zindex or 50,
   }
@@ -116,7 +125,7 @@ docs_view.open = function(self, e, view)
 
   -- Correct left-col for scrollbar existence.
   if left then
-    style.col = style.col - self.window:info().scrollbar_offset
+    style.col = style.col - self.window:info().scrollbar_offset - documentation.col_offset
     self.window:open(style)
   end
 end

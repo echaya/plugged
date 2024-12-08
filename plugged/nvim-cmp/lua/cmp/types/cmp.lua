@@ -103,6 +103,7 @@ cmp.ItemField = {
 ---@field public debounce integer
 ---@field public throttle integer
 ---@field public fetching_timeout integer
+---@field public filtering_context_budget integer
 ---@field public confirm_resolve_timeout integer
 ---@field public async_budget integer Maximum time (in ms) an async function is allowed to run during one step of the event loop.
 ---@field public max_view_entries integer
@@ -122,6 +123,8 @@ cmp.ItemField = {
 ---@field public border? string|string[]
 ---@field public winhighlight? string
 ---@field public winblend? number
+---@field public scrollbar_winhighlight? string
+---@field public scrollbar_thumb_winhighlight? string
 ---@field public zindex? integer|nil
 
 ---@class cmp.CompletionWindowOptions: cmp.WindowOptions
@@ -151,9 +154,9 @@ cmp.ItemField = {
 ---@field public comparators cmp.Comparator[]
 
 ---@class cmp.FormattingConfig
----@field public fields cmp.ItemField[]
----@field public expandable_indicator boolean
----@field public format fun(entry: cmp.Entry, vim_item: vim.CompletedItem): vim.CompletedItem
+---@field public fields? cmp.ItemField[]
+---@field public expandable_indicator? boolean
+---@field public format? fun(entry: cmp.Entry, vim_item: vim.CompletedItem): vim.CompletedItem
 
 ---@class cmp.SnippetConfig
 ---@field public expand fun(args: cmp.SnippetExpansionParams)
@@ -166,6 +169,7 @@ cmp.ItemField = {
 
 ---@class cmp.SourceConfig
 ---@field public name string
+---@field public enabled nil|boolean|function(ctx: cmp.Source.context): boolean
 ---@field public option table|nil
 ---@field public priority integer|nil
 ---@field public trigger_characters string[]|nil
@@ -184,6 +188,7 @@ cmp.ItemField = {
 ---@class cmp.CustomEntriesViewConfig
 ---@field name 'custom'
 ---@field selection_order 'top_down'|'near_cursor'
+---@field vertical_positioning 'below'|'above'
 ---@field follow_cursor boolean
 
 ---@class cmp.NativeEntriesViewConfig

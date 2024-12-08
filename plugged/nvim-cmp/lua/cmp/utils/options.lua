@@ -7,7 +7,11 @@ local M = {}
 M.win_set_option = function(window, name, value)
   local eventignore = vim.opt.eventignore:get()
   vim.opt.eventignore:append('OptionSet')
-  vim.api.nvim_win_set_option(window, name, value)
+  if vim.fn.has('nvim-0.10') == 1 then
+    vim.api.nvim_set_option_value(name, value, { win = window })
+  else
+    vim.api.nvim_win_set_option(window, name, value)
+  end
   vim.opt.eventignore = eventignore
 end
 
@@ -18,7 +22,11 @@ end
 M.buf_set_option = function(buffer, name, value)
   local eventignore = vim.opt.eventignore:get()
   vim.opt.eventignore:append('OptionSet')
-  vim.api.nvim_buf_set_option(buffer, name, value)
+  if vim.fn.has('nvim-0.10') == 1 then
+    vim.api.nvim_set_option_value(name, value, { buf = buffer })
+  else
+    vim.api.nvim_buf_set_option(buffer, name, value)
+  end
   vim.opt.eventignore = eventignore
 end
 

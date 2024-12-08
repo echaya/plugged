@@ -12,16 +12,18 @@ local DEFAULT_HEIGHT = 10 -- @see https://github.com/vim/vim/blob/master/src/pop
 
 ---@class cmp.CustomEntriesView
 ---@field private entries_win cmp.Window
+---@field private ghost_text_view cmp.GhostTextView
 ---@field private offset integer
 ---@field private active boolean
 ---@field private entries cmp.Entry[]
 ---@field private column_width any
+---@field private bottom_up boolean
 ---@field public event cmp.Event
 local custom_entries_view = {}
 
 custom_entries_view.ns = vim.api.nvim_create_namespace('cmp.view.custom_entries_view')
 
-custom_entries_view.new = function()
+custom_entries_view.new = function(ghost_text_view)
   local self = setmetatable({}, { __index = custom_entries_view })
 
   self.entries_win = window.new()
@@ -43,6 +45,7 @@ custom_entries_view.new = function()
   self.active = false
   self.entries = {}
   self.bottom_up = false
+  self.ghost_text_view = ghost_text_view
 
   autocmd.subscribe(
     'CompleteChanged',
@@ -59,25 +62,39 @@ custom_entries_view.new = function()
         return
       end
 
-      local formatting = config.get().formatting
       local fields = config.get().formatting.fields
       for i = top, bot do
         local e = self.entries[i + 1]
         if e then
-          local v = e:get_view(self.offset, buf, formatting)
+          local v = e:get_view(self.offset, buf)
           local o = config.get().window.completion.side_padding
           local a = 0
           for _, field in ipairs(fields) do
             if field == types.cmp.ItemField.Abbr then
               a = o
             end
-            vim.api.nvim_buf_set_extmark(buf, custom_entries_view.ns, i, o, {
-              end_line = i,
-              end_col = o + v[field].bytes,
-              hl_group = v[field].hl_group,
-              hl_mode = 'combine',
-              ephemeral = true,
-            })
+
+            if type(v[field].hl_group) == 'table' then
+              for _, extmark in ipairs(v[field].hl_group) do
+                local hl_start, hl_end = unpack(extmark.range)
+                vim.api.nvim_buf_set_extmark(buf, custom_entries_view.ns, i, o + hl_start, {
+                  end_line = i,
+                  end_col = o + hl_end,
+                  hl_group = extmark[1],
+                  hl_eol = false,
+                  ephemeral = true,
+                })
+              end
+            else
+              vim.api.nvim_buf_set_extmark(buf, custom_entries_view.ns, i, o, {
+                end_line = i,
+                end_col = o + v[field].bytes,
+                hl_group = v[field].hl_group,
+                hl_mode = 'combine',
+                ephemeral = true,
+              })
+            end
+
             o = o + v[field].bytes + (self.column_width[field] - v[field].width) + 1
           end
 
@@ -118,7 +135,8 @@ custom_entries_view.is_direction_top_down = function(self)
 end
 
 custom_entries_view.open = function(self, offset, entries)
-  local completion = config.get().window.completion
+  local c = config.get()
+  local completion = c.window.completion
   assert(completion, 'config.get() must resolve window.completion with defaults')
 
   self.offset = offset
@@ -128,10 +146,9 @@ custom_entries_view.open = function(self, offset, entries)
   local entries_buf = self.entries_win:get_buffer()
   local lines = {}
   local dedup = {}
-  local formatting = config.get().formatting
   local preselect_index = 0
   for _, e in ipairs(entries) do
-    local view = e:get_view(offset, entries_buf, formatting)
+    local view = e:get_view(offset, entries_buf)
     if view.dup == 1 or not dedup[e.completion_item.label] then
       dedup[e.completion_item.label] = true
       self.column_width.abbr = math.max(self.column_width.abbr, view.abbr.width)
@@ -151,7 +168,11 @@ custom_entries_view.open = function(self, offset, entries)
   else
     vim.api.nvim_buf_set_lines(entries_buf, 0, -1, false, lines)
   end
-  vim.api.nvim_buf_set_option(entries_buf, 'modified', false)
+  if vim.fn.has('nvim-0.10') == 1 then
+    vim.api.nvim_set_option_value('modified', false, { buf = entries_buf })
+  else
+    vim.api.nvim_buf_set_option(entries_buf, 'modified', false)
+  end
 
   local width = 0
   width = width + 1
@@ -174,12 +195,21 @@ custom_entries_view.open = function(self, offset, entries)
   local border_info = window.get_border_info({ style = completion })
   local border_offset_row = border_info.top + border_info.bottom
   local border_offset_col = border_info.left + border_info.right
-  if math.floor(vim.o.lines * 0.5) <= row + border_offset_row and vim.o.lines - row - border_offset_row <= math.min(DEFAULT_HEIGHT, height) then
+
+  local prefers_above = c.view.entries.vertical_positioning == 'above'
+  local cant_fit_at_bottom = vim.o.lines - row - border_offset_row <= math.min(DEFAULT_HEIGHT, height)
+  local cant_fit_at_top = row - border_offset_row <= math.min(DEFAULT_HEIGHT, height)
+  local should_position_above = cant_fit_at_bottom or (prefers_above and not cant_fit_at_top)
+
+  if should_position_above then
+    self.bottom_up = true
     height = math.min(height, row - 1)
     row = row - height - border_offset_row - 1
     if row < 0 then
       height = height + row
     end
+  else
+    self.bottom_up = false
   end
   if math.floor(vim.o.columns * 0.5) <= col + border_offset_col and vim.o.columns - col - border_offset_col <= width then
     width = math.min(width, vim.o.columns - 1)
@@ -187,12 +217,6 @@ custom_entries_view.open = function(self, offset, entries)
     if col < 0 then
       width = width + col
     end
-  end
-
-  if pos[1] > row then
-    self.bottom_up = true
-  else
-    self.bottom_up = false
   end
 
   if not self:is_direction_top_down() then
@@ -228,9 +252,9 @@ custom_entries_view.open = function(self, offset, entries)
 
   -- Always set cursor when starting. It will be adjusted on the call to _select
   vim.api.nvim_win_set_cursor(self.entries_win.win, { 1, 0 })
-  if preselect_index > 0 and config.get().preselect == types.cmp.PreselectMode.Item then
+  if preselect_index > 0 and c.preselect == types.cmp.PreselectMode.Item then
     self:_select(preselect_index, { behavior = types.cmp.SelectBehavior.Select, active = false })
-  elseif not string.match(config.get().completion.completeopt, 'noselect') then
+  elseif not string.match(c.completion.completeopt, 'noselect') then
     if self:is_direction_top_down() then
       self:_select(1, { behavior = types.cmp.SelectBehavior.Select, active = false })
     else
@@ -268,20 +292,19 @@ custom_entries_view.draw = function(self)
   local topline = info.topline - 1
   local botline = info.topline + info.height - 1
   local texts = {}
-  local cfg =  config.get()
-  local fields = cfg.formatting.fields
+  local fields = config.get().formatting.fields
   local entries_buf = self.entries_win:get_buffer()
   for i = topline, botline - 1 do
     local e = self.entries[i + 1]
     if e then
-      local view = e:get_view(self.offset, entries_buf, cfg.formatting)
+      local view = e:get_view(self.offset, entries_buf)
       local text = {}
-      table.insert(text, string.rep(' ', cfg.window.completion.side_padding))
+      table.insert(text, string.rep(' ', config.get().window.completion.side_padding))
       for _, field in ipairs(fields) do
         table.insert(text, view[field].text)
         table.insert(text, string.rep(' ', 1 + self.column_width[field] - view[field].width))
       end
-      table.insert(text, string.rep(' ', cfg.window.completion.side_padding))
+      table.insert(text, string.rep(' ', config.get().window.completion.side_padding))
       table.insert(texts, table.concat(text, ''))
     end
   end
@@ -292,7 +315,12 @@ custom_entries_view.draw = function(self)
   else
     vim.api.nvim_buf_set_lines(entries_buf, topline, botline, false, texts)
   end
-  vim.api.nvim_buf_set_option(entries_buf, 'modified', false)
+
+  if vim.fn.has('nvim-0.10') == 1 then
+    vim.api.nvim_set_option_value('modified', false, { buf = entries_buf })
+  else
+    vim.api.nvim_buf_set_option(entries_buf, 'modified', false)
+  end
 
   if api.is_cmdline_mode() then
     vim.api.nvim_win_call(self.entries_win.win, function()
@@ -318,7 +346,7 @@ end
 custom_entries_view.select_next_item = function(self, option)
   if self:visible() then
     local cursor = self:get_selected_index()
-    local is_top_down = self:is_direction_top_down()
+    local is_top_down = self:is_direction_top_down() or option.preserve_mapping_verticality
     local last = #self.entries
 
     if not self.entries_win:option('cursorline') then
@@ -355,7 +383,7 @@ end
 custom_entries_view.select_prev_item = function(self, option)
   if self:visible() then
     local cursor = self:get_selected_index()
-    local is_top_down = self:is_direction_top_down()
+    local is_top_down = self:is_direction_top_down() or option.preserve_mapping_verticality
     local last = #self.entries
 
     if not self.entries_win:option('cursorline') then
@@ -434,8 +462,57 @@ custom_entries_view._select = function(self, cursor, option)
     0,
   })
 
+  if not self.bottom_up and config.get().view.entries.vertical_positioning == 'below' then
+    local info = self.entries_win:info()
+    local border_info = info.border_info
+    local border_offset_row = border_info.top + border_info.bottom
+    local row = api.get_screen_cursor()[1]
+
+    -- If user specify 'noselect', select first entry
+    local entry = self:get_selected_entry() or self:get_first_entry()
+    local should_move_up = self.ghost_text_view:has_multi_line(entry) and row > self.entries_win:get_content_height() + border_offset_row
+
+    if should_move_up then
+      self.bottom_up = true
+
+      -- This logic keeps the same as open()
+      local height = vim.api.nvim_get_option_value('pumheight', {})
+      height = height ~= 0 and height or #self.entries
+      height = math.min(height, #self.entries)
+      height = math.min(height, row - 1)
+
+      row = row - height - border_offset_row - 1
+      if row < 0 then
+        height = height + row
+      end
+
+      local completion = config.get().window.completion
+      local new_position = {
+        style = 'minimal',
+        relative = 'editor',
+        row = math.max(0, row),
+        height = height,
+        col = info.col,
+        width = info.width,
+        border = completion.border,
+        zindex = completion.zindex or 1001,
+      }
+      self.entries_win:open(new_position)
+
+      if not self:is_direction_top_down() then
+        local n = #self.entries
+        for i = 1, math.floor(n / 2) do
+          self.entries[i], self.entries[n - i + 1] = self.entries[n - i + 1], self.entries[i]
+        end
+        self:_select(#self.entries - cursor + 1, option)
+      else
+        self:_select(cursor, option)
+      end
+    end
+  end
+
   if is_insert then
-    self:_insert(self.entries[cursor] and self.entries[cursor]:get_vim_item(self.offset, config.get().formatting).word or self.prefix)
+    self:_insert(self.entries[cursor] and self.entries[cursor]:get_vim_item(self.offset).word or self.prefix)
   end
 
   self.entries_win:update()

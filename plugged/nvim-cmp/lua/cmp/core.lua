@@ -85,7 +85,9 @@ end
 core.get_sources = function(self, filter)
   local f = function(s)
     if type(filter) == 'table' then
-      return vim.tbl_contains(filter, s.status)
+      return vim.iter(filter):any(function(...)
+        return s.status == ...
+      end)
     elseif type(filter) == 'function' then
       return filter(s)
     end
@@ -117,7 +119,9 @@ core.on_keymap = function(self, keys, fallback)
   --Commit character. NOTE: This has a lot of cmp specific implementation to make more user-friendly.
   local chars = keymap.t(keys)
   local e = self.view:get_active_entry()
-  if e and vim.tbl_contains(config.get().confirmation.get_commit_characters(e:get_commit_characters()), chars) then
+  if e and vim.iter(config.get().confirmation.get_commit_characters(e:get_commit_characters())):any(function(...)
+    return chars == ...
+  end) then
     local is_printable = char.is_printable(string.byte(chars, 1))
     self:confirm(e, {
       behavior = is_printable and 'insert' or 'replace',
@@ -165,7 +169,9 @@ core.on_change = function(self, trigger_event)
       self.view:on_change()
       debug.log('changed')
 
-      if vim.tbl_contains(config.get().completion.autocomplete or {}, trigger_event) then
+      if vim.iter(config.get().completion.autocomplete or {}):any(function(...)
+        return trigger_event == ...
+      end) then
         self:complete(ctx)
       else
         self.filter.timeout = self.view:visible() and config.get().performance.throttle or 0
@@ -219,7 +225,9 @@ core.autoindent = function(self, trigger_event, callback)
 
   -- Reset current completion if indentkeys matched.
   for _, key in ipairs(vim.split(vim.bo.indentkeys, ',')) do
-    if vim.tbl_contains({ '=' .. prefix, '0=' .. prefix }, key) then
+    if vim.iter({ '=' .. prefix, '0=' .. prefix }):any(function(...)
+      return key == ...
+    end) then
       self:reset()
       self:set_context(context.empty())
       break
@@ -252,9 +260,8 @@ core.complete_common_string = function(self)
   local cursor = api.get_cursor()
   local offset = self.view:get_offset() or cursor[2]
   local common_string
-  local formatting = config.get().formatting
   for _, e in ipairs(self.view:get_entries()) do
-    local vim_item = e:get_vim_item(offset, formatting)
+    local vim_item = e:get_vim_item(offset)
     if not common_string then
       common_string = vim_item.word
     else
@@ -289,9 +296,11 @@ core.complete = function(self, ctx)
         if s_.incomplete and new:changed(s_.context) then
           s_:complete(new, callback)
         else
-          self.filter.stop()
-          self.filter.timeout = config.get().performance.debounce
-          self:filter()
+          if not self.view:get_active_entry() then
+            self.filter.stop()
+            self.filter.timeout = config.get().performance.debounce
+            self:filter()
+          end
         end
       end
     end)(s)
@@ -316,7 +325,18 @@ local async_filter = async.wrap(function(self)
   end
 
   -- Check fetching sources.
-  local sources = self:get_sources({ source.SourceStatus.FETCHING, source.SourceStatus.COMPLETED })
+  local sources = {}
+  for _, s in ipairs(self:get_sources({ source.SourceStatus.FETCHING, source.SourceStatus.COMPLETED })) do
+    -- Reserve filter call for timeout.
+    if not s.incomplete and config.get().performance.fetching_timeout > s:get_fetching_time() then
+      self.filter.timeout = config.get().performance.fetching_timeout - s:get_fetching_time()
+      self:filter()
+      if #sources == 0 then
+        return
+      end
+    end
+    table.insert(sources, s)
+  end
 
   local ctx = self:get_context()
 
@@ -346,7 +366,7 @@ core.confirm = function(self, e, option, callback)
   end
   e.confirmed = true
 
-  debug.log('entry.confirm', e:get_completion_item())
+  debug.log('entry.confirm', e.completion_item)
 
   async.sync(function(done)
     e:resolve(done)
@@ -388,10 +408,10 @@ core.confirm = function(self, e, option, callback)
   feedkeys.call('', 'n', function()
     -- Apply additionalTextEdits.
     local ctx = context.new()
-    if #(e:get_completion_item().additionalTextEdits or {}) == 0 then
+    if #(e.completion_item.additionalTextEdits or {}) == 0 then
       e:resolve(function()
         local new = context.new()
-        local text_edits = e:get_completion_item().additionalTextEdits or {}
+        local text_edits = e.completion_item.additionalTextEdits or {}
         if #text_edits == 0 then
           return
         end
@@ -416,12 +436,12 @@ core.confirm = function(self, e, option, callback)
       end)
     else
       vim.cmd([[silent! undojoin]])
-      vim.lsp.util.apply_text_edits(e:get_completion_item().additionalTextEdits, ctx.bufnr, e.source:get_position_encoding_kind())
+      vim.lsp.util.apply_text_edits(e.completion_item.additionalTextEdits, ctx.bufnr, e.source:get_position_encoding_kind())
     end
   end)
   feedkeys.call('', 'n', function()
     local ctx = context.new()
-    local completion_item = misc.copy(e:get_completion_item())
+    local completion_item = misc.copy(e.completion_item)
     if not completion_item.textEdit then
       completion_item.textEdit = {}
       local insertText = completion_item.insertText
@@ -448,15 +468,15 @@ core.confirm = function(self, e, option, callback)
       if false then
         --To use complex expansion debug.
         vim.print({ -- luacheck: ignore
-          item = e:get_completion_item(),
+          item = e.completion_item,
           diff_before = diff_before,
           diff_after = diff_after,
           new_text = new_text,
           text_edit_new_text = completion_item.textEdit.newText,
           range_start = completion_item.textEdit.range.start.character,
           range_end = completion_item.textEdit.range['end'].character,
-          original_range_start = e:get_completion_item().textEdit.range.start.character,
-          original_range_end = e:get_completion_item().textEdit.range['end'].character,
+          original_range_start = e.completion_item.textEdit.range.start.character,
+          original_range_end = e.completion_item.textEdit.range['end'].character,
           cursor_line = ctx.cursor_line,
           cursor_col0 = ctx.cursor.col - 1,
         })

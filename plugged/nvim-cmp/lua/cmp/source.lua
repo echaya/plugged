@@ -27,7 +27,6 @@ local char = require('cmp.utils.char')
 ---@field public default_replace_range lsp.Range
 ---@field public default_insert_range lsp.Range
 ---@field public position_encoding lsp.PositionEncodingKind
----@field private prev_filtered_entries any
 local source = {}
 
 ---@alias cmp.SourceStatus 1 | 2 | 3
@@ -62,7 +61,6 @@ source.reset = function(self)
   self.request_offset = -1
   self.completion_context = nil
   self.status = source.SourceStatus.WAITING
-  self.prev_filtered_entries = nil
   self.complete_dedup(function() end)
 end
 
@@ -81,9 +79,22 @@ end
 ---Get fetching time
 source.get_fetching_time = function(self)
   if self.status == source.SourceStatus.FETCHING then
-    return vim.loop.now() - self.context.time
+    return (vim.uv or vim.loop).now() - self.context.time
   end
   return 100 * 1000 -- return pseudo time if source isn't fetching.
+end
+
+---Return whether this source is enabled
+---@return boolean
+source.enabled = function(self)
+  local _e = self:get_source_config().enabled
+  if type(_e) == 'boolean' then
+    return _e
+  elseif type(_e) == 'function' then
+    return _e(self.context)
+  else
+    return true
+  end
 end
 
 ---Return filtered entries
@@ -94,18 +105,20 @@ source.get_entries = function(self, ctx)
     return {}
   end
 
+  if not self:enabled() then
+    return {}
+  end
+
   local target_entries = self.entries
 
-  local prev = self.prev_filtered_entries
-  if prev and prev.revision == self.revision and ctx.cursor.row == prev.ctx.cursor.row and self.offset == prev.offset then
-    -- only use prev entries when cursor is moved forward.
-    -- and the pattern offset is the same.
-    if prev.ctx.cursor.col <= ctx.cursor.col then
-      -- directly returns prev filtered entries since input no change
-      if prev.ctx.cursor_before_line == ctx.cursor_before_line then
-        return prev.entries
+  if not self.incomplete then
+    local prev = self.cache:get({ 'get_entries', tostring(self.revision) })
+    if prev and ctx.cursor.row == prev.ctx.cursor.row and self.offset == prev.offset then
+      -- only use prev entries when cursor is moved forward.
+      -- and the pattern offset is the same.
+      if prev.ctx.cursor.col <= ctx.cursor.col then
+        target_entries = prev.entries
       end
-      target_entries = prev.entries
     end
   end
 
@@ -115,6 +128,8 @@ source.get_entries = function(self, ctx)
   ---@type cmp.Entry[]
   local entries = {}
   local matching_config = self:get_matching_config()
+  local filtering_context_budget = config.get().performance.filtering_context_budget / 1000
+  local stime = (vim.uv or vim.loop).hrtime() / 1000000
   for _, e in ipairs(target_entries) do
     local o = e.offset
     if not inputs[o] then
@@ -132,19 +147,26 @@ source.get_entries = function(self, ctx)
         entries[#entries + 1] = e
       end
     end
-    async.yield()
-    if ctx.aborted then
-      async.abort()
+
+    local etime = (vim.uv or vim.loop).hrtime() / 1000000
+    if etime - stime > filtering_context_budget then
+      async.yield()
+      if ctx.aborted then
+        async.abort()
+      end
+      stime = etime
     end
   end
 
-  self.prev_filtered_entries = { entries = entries, ctx = ctx, offset = self.offset, revision = self.revision }
+  if not self.incomplete then
+    self.cache:set({ 'get_entries', tostring(self.revision) }, { entries = entries, ctx = ctx, offset = self.offset })
+  end
 
   return entries
 end
 
 ---Get default insert range (UTF8 byte index).
----@private
+---@package
 ---@return lsp.Range
 source._get_default_insert_range = function(self)
   return {
@@ -160,7 +182,7 @@ source._get_default_insert_range = function(self)
 end
 
 ---Get default replace range (UTF8 byte index).
----@private
+---@package
 ---@return lsp.Range
 source._get_default_replace_range = function(self)
   local _, e = pattern.offset('^' .. '\\%(' .. self:get_keyword_pattern() .. '\\)', string.sub(self.context.cursor_line, self.offset))
@@ -174,6 +196,16 @@ source._get_default_replace_range = function(self)
       character = (e and self.offset + e - 2 or self.context.cursor.col - 1),
     },
   }
+end
+
+---@deprecated use source.default_insert_range instead
+source.get_default_insert_range = function(self)
+  return self.default_insert_range
+end
+
+---@deprecated use source.default_replace_range instead
+source.get_default_replae_range = function(self)
+  return self.default_replace_range
 end
 
 ---Return source name.
@@ -280,7 +312,9 @@ source.complete = function(self, ctx, callback)
     completion_context = {
       triggerKind = types.lsp.CompletionTriggerKind.Invoked,
     }
-  elseif vim.tbl_contains(self:get_trigger_characters(), before_char) then
+  elseif vim.iter(self:get_trigger_characters()):any(function(...)
+    return ... == before_char
+  end) then
     completion_context = {
       triggerKind = types.lsp.CompletionTriggerKind.TriggerCharacter,
       triggerCharacter = before_char,
@@ -291,7 +325,9 @@ source.complete = function(self, ctx, callback)
         completion_context = {
           triggerKind = types.lsp.CompletionTriggerKind.TriggerForIncompleteCompletions,
         }
-      elseif not vim.tbl_contains({ self.request_offset, self.offset }, offset) then
+      elseif not vim.iter({ self.request_offset, self.offset }):any(function(...)
+        return offset == ...
+      end) then
         completion_context = {
           triggerKind = types.lsp.CompletionTriggerKind.Invoked,
         }
@@ -313,6 +349,7 @@ source.complete = function(self, ctx, callback)
   end
 
   debug.log(self:get_debug_name(), 'request', offset, vim.inspect(completion_context))
+  local prev_status = self.status
   self.status = source.SourceStatus.FETCHING
   self.offset = offset
   self.request_offset = offset
@@ -335,7 +372,7 @@ source.complete = function(self, ctx, callback)
       response = response or {}
 
       self.incomplete = response.isIncomplete or false
-      self.status = source.SourceStatus.COMPLETED
+
       if #(response.items or response) > 0 then
         debug.log(self:get_debug_name(), 'retrieve', #(response.items or response))
         local old_offset = self.offset
@@ -364,6 +401,7 @@ source.complete = function(self, ctx, callback)
         if offset == ctx.cursor.col then
           self:reset()
         end
+        self.status = prev_status
       end
       callback()
     end))

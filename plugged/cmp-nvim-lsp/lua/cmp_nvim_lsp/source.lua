@@ -10,7 +10,7 @@ end
 ---Get debug name.
 ---@return string
 source.get_debug_name = function(self)
-  return table.concat({ 'nvim_lsp', self.client.name }, ':')
+  return table.concat({ "nvim_lsp", self.client.name }, ":")
 end
 
 ---Return the source is available.
@@ -32,22 +32,22 @@ source.is_available = function(self)
   end
 
   -- client has no completion capability.
-  if not self:_get(self.client.server_capabilities, { 'completionProvider' }) then
+  if not self:_get(self.client.server_capabilities, { "completionProvider" }) then
     return false
   end
-  return true;
+  return true
 end
 
 ---Get LSP's PositionEncodingKind.
 ---@return lsp.PositionEncodingKind
 source.get_position_encoding_kind = function(self)
-  return self:_get(self.client.server_capabilities, { 'positionEncoding' }) or self.client.offset_encoding or 'utf-16'
+  return self:_get(self.client.server_capabilities, { "positionEncoding" }) or self.client.offset_encoding or "utf-16"
 end
 
 ---Get triggerCharacters.
 ---@return string[]
 source.get_trigger_characters = function(self)
-  return self:_get(self.client.server_capabilities, { 'completionProvider', 'triggerCharacters' }) or {}
+  return self:_get(self.client.server_capabilities, { "completionProvider", "triggerCharacters" }) or {}
 end
 
 ---Get get_keyword_pattern.
@@ -57,7 +57,7 @@ source.get_keyword_pattern = function(self, params)
   local option
   option = params.option or {}
   option = option[self.client.name] or {}
-  return option.keyword_pattern or require('cmp').get_config().completion.keyword_pattern
+  return option.keyword_pattern or require("cmp").get_config().completion.keyword_pattern
 end
 
 ---Resolve LSP CompletionItem.
@@ -68,7 +68,7 @@ source.complete = function(self, params, callback)
   lsp_params.context = {}
   lsp_params.context.triggerKind = params.completion_context.triggerKind
   lsp_params.context.triggerCharacter = params.completion_context.triggerCharacter
-  self:_request('textDocument/completion', lsp_params, function(_, response)
+  self:_request("textDocument/completion", lsp_params, function(_, response)
     callback(response)
   end)
 end
@@ -83,11 +83,11 @@ source.resolve = function(self, completion_item, callback)
   end
 
   -- client has no completion capability.
-  if not self:_get(self.client.server_capabilities, { 'completionProvider', 'resolveProvider' }) then
+  if not self:_get(self.client.server_capabilities, { "completionProvider", "resolveProvider" }) then
     return callback()
   end
 
-  self:_request('completionItem/resolve', completion_item, function(_, response)
+  self:_request("completionItem/resolve", completion_item, function(_, response)
     callback(response or completion_item)
   end)
 end
@@ -102,13 +102,45 @@ source.execute = function(self, completion_item, callback)
   end
 
   -- completion_item has no command.
-  if not completion_item.command then
+  local command = completion_item.command
+  if not command then
     return callback()
   end
 
-  self:_request('workspace/executeCommand', completion_item.command, function(_, _)
+  -- The logic below is taken from the following and is slightly modified.
+  -- https://github.com/neovim/neovim/blob/f72dc2b4c805f309f23aff62b3e7ba7b71a554d2/runtime/lua/vim/lsp/client.lua#L864-L905
+  local bufnr = vim.api.nvim_get_current_buf()
+  local f = self.client.commands[command.command] or vim.lsp.commands[command.command]
+  if f then
+    f(command, { bufnr = bufnr, client_id = self.client.id })
     callback()
-  end)
+    return
+  end
+
+  local command_provider = self.client.server_capabilities.executeCommandProvider
+  local commands = type(command_provider) == "table" and command_provider.commands or {}
+  if not vim.list_contains(commands, command.command) then
+    vim.notify_once(
+      string.format(
+        "cmp_nvim_lsp: Language server `%s` does not support command `%s`. This command may require a client extension.",
+        self.client.name,
+        command.command
+      ),
+      vim.log.levels.WARN
+    )
+    callback()
+    return
+  end
+
+  -- Not using command directly to exclude extra properties,
+  -- see https://github.com/python-lsp/python-lsp-server/issues/146
+  local params = {
+    command = command.command,
+    arguments = command.arguments,
+  }
+  self.client.request(vim.lsp.protocol.Methods.workspace_executeCommand, params, function()
+    callback()
+  end, bufnr)
 end
 
 ---Get object path.

@@ -25,11 +25,11 @@ view.new = function()
   local self = setmetatable({}, { __index = view })
   self.resolve_dedup = async.dedup()
   self.is_docs_view_pinned = false
-  self.custom_entries_view = custom_entries_view.new()
+  self.ghost_text_view = ghost_text_view.new()
+  self.custom_entries_view = custom_entries_view.new(ghost_text_view)
   self.native_entries_view = native_entries_view.new()
   self.wildmenu_entries_view = wildmenu_entries_view.new()
   self.docs_view = docs_view.new()
-  self.ghost_text_view = ghost_text_view.new()
   self.event = event.new()
 
   return self
@@ -72,22 +72,21 @@ view.open = function(self, ctx, sources)
     -- check the source triggered by character
     local has_triggered_by_symbol_source = false
     for _, s in ipairs(source_group) do
-      if s.is_triggered_by_symbol and #s:get_entries(ctx) > 0 then
-        has_triggered_by_symbol_source = true
-        break
+      if #s:get_entries(ctx) > 0 then
+        if s.is_triggered_by_symbol then
+          has_triggered_by_symbol_source = true
+          break
+        end
       end
     end
 
-    local has_fetching = false
-    local fetching_timeout = config.get().performance.fetching_timeout
     -- create filtered entries.
+    local max_view_entries = config.get().performance.max_view_entries or 200
     local offset = ctx.cursor.col
     local group_entries = {}
     local max_item_counts = {}
     for i, s in ipairs(source_group) do
-      local is_fetching = fetching_timeout > s:get_fetching_time()
-      has_fetching = has_fetching or is_fetching
-      if (not is_fetching or s.incomplete) and s.offset <= ctx.cursor.col then
+      if s.offset <= ctx.cursor.col then
         if not has_triggered_by_symbol_source or s.is_triggered_by_symbol then
           -- prepare max_item_counts map for filtering after sort.
           local max_item_count = s:get_source_config().max_item_count
@@ -98,8 +97,9 @@ view.open = function(self, ctx, sources)
           -- source order priority bonus.
           local priority = s:get_source_config().priority or ((#source_group - (i - 1)) * config.get().sorting.priority_weight)
 
-          for _, e in ipairs(s:get_entries(ctx)) do
-            e.score = e.score + priority
+          local es = s:get_entries(ctx)
+          for index, e in ipairs(es) do
+            e.score = (e.score + priority) * max_view_entries + #es - index
             table.insert(group_entries, e)
             offset = math.min(offset, e.offset)
           end
@@ -130,7 +130,6 @@ view.open = function(self, ctx, sources)
       end
     end
 
-    local max_view_entries = config.get().performance.max_view_entries or 200
     entries = vim.list_slice(entries, 1, max_view_entries)
 
     -- open
@@ -140,10 +139,6 @@ view.open = function(self, ctx, sources)
         window = self:_get_entries_view(),
       })
       break
-    elseif has_fetching then
-      -- if group has sources in fetching and no entries is available,
-      -- do not close or update menu
-      return false
     end
   end
 
@@ -198,7 +193,8 @@ view.open_docs = function(self)
       if not self:visible() then
         return
       end
-      self.docs_view:open(e, self:_get_entries_view():info())
+      local bottom_up = self.custom_entries_view.bottom_up
+      self.docs_view:open(e, self:_get_entries_view():info(), bottom_up)
     end)))
   end
 end
@@ -302,7 +298,8 @@ view.on_entry_change = async.throttle(function(self)
         return
       end
       if self.is_docs_view_pinned or config.get().view.docs.auto_open then
-        self.docs_view:open(e, self:_get_entries_view():info())
+        local bottom_up = self.custom_entries_view.bottom_up
+        self.docs_view:open(e, self:_get_entries_view():info(), bottom_up)
       end
     end)))
   else

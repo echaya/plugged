@@ -3,6 +3,7 @@ local char = require('cmp.utils.char')
 local misc = require('cmp.utils.misc')
 local str = require('cmp.utils.str')
 local snippet = require('cmp.utils.snippet')
+local config = require('cmp.config')
 local types = require('cmp.types')
 local matcher = require('cmp.matcher')
 
@@ -31,6 +32,7 @@ local matcher = require('cmp.matcher')
 ---@field public filter_text string
 ---@field private match_view_args_ret {input:string, word:string, option:cmp.MatchingConfig, matches:table[]}
 local entry = {}
+entry.__index = entry
 
 ---Create new entry
 ---@param ctx cmp.Context
@@ -39,37 +41,45 @@ local entry = {}
 ---@param item_defaults? lsp.internal.CompletionItemDefaults
 ---@return cmp.Entry
 entry.new = function(ctx, source, completion_item, item_defaults)
-  local self = setmetatable({
-    id = misc.id('entry.new'),
-    cache = cache.new(),
-    match_cache = cache.new(),
-    score = 0,
-    exact = false,
-    matches = {},
-    context = ctx,
-    source = source,
-    source_offset = source.request_offset,
-    offset = source.request_offset,
-    source_insert_range = source.default_insert_range,
-    source_replace_range = source.default_replace_range,
-    completion_item = entry.fill_defaults(nil, completion_item, item_defaults),
-    item_defaults = item_defaults,
-    resolved_completion_item = nil,
-    resolved_callbacks = {},
-    resolving = false,
-    confirmed = false,
-  }, { __index = entry })
+  local self = setmetatable({}, entry)
+  self.id = misc.id('entry.new')
+  self.cache = cache.new()
+  self.match_cache = cache.new()
+  self.score = 0
+  self.exact = false
+  self.matches = {}
+  self.context = ctx
+  self.source = source
+  self.offset = source.request_offset
+  self.source_offset = source.request_offset
+  self.source_insert_range = source.default_insert_range
+  self.source_replace_range = source.default_replace_range
+  self.item_defaults = item_defaults
+  self.resolved_completion_item = nil
+  self.resolved_callbacks = {}
+  self.resolving = false
+  self.confirmed = false
   self:_set_completion_item(completion_item)
   return self
 end
 
----@private
+---@package
 entry._set_completion_item = function(self, completion_item)
-  local item = self:fill_defaults(completion_item, self.item_defaults)
-  self.completion_item = item
+  if not self.completion_item then
+    self.completion_item = self:fill_defaults(completion_item, self.item_defaults)
+  else
+    -- @see https://github.com/microsoft/vscode/blob/85eea4a9b2ccc99615e970bf2181edbc1781d0f9/src/vs/workbench/api/browser/mainThreadLanguageFeatures.ts#L588
+    -- @see https://github.com/microsoft/vscode/blob/85eea4a9b2ccc99615e970bf2181edbc1781d0f9/src/vs/base/common/objects.ts#L89
+    -- @see https://github.com/microsoft/vscode/blob/a00f2e64f4fa9a1f774875562e1e9697d7138ed3/src/vs/editor/contrib/suggest/browser/suggest.ts#L147
+    for k, v in pairs(completion_item) do
+      self.completion_item[k] = v or self.completion_item[k]
+    end
+  end
+  local item = self.completion_item
   ---Create filter text
   self.filter_text = item.filterText or str.trim(item.label)
-  -- TODO: the order below is important 
+
+  -- TODO: the order below is important
   if item.textEdit then
     self.insert_range = self:convert_range_encoding(item.textEdit.insert or item.textEdit.range)
     self.replace_range = self:convert_range_encoding(item.textEdit.replace or item.textEdit.range)
@@ -99,8 +109,13 @@ entry._set_completion_item = function(self, completion_item)
   end
 end
 
+---@deprecated use entry.offset instead
+entry.get_offset = function(self)
+  return self.offset
+end
+
 ---Make offset value
----@private
+---@package
 ---@return integer
 entry._get_offset = function(self)
   local offset = self.source_offset
@@ -145,9 +160,14 @@ entry._get_offset = function(self)
   return offset
 end
 
+---@deprecated use entry.word instead
+entry.get_word = function(self)
+  return self.word
+end
+
 ---Create word for vim.CompletedItem
 ---NOTE: This method doesn't clear the cache after completionItem/resolve.
----@private
+---@package
 ---@return string
 entry._get_word = function(self)
   --NOTE: This is nvim-cmp specific implementation.
@@ -183,7 +203,7 @@ entry.get_overwrite = function(self)
   return self.cache:ensure('get_overwrite', entry._get_overwrite, self)
 end
 
----@private
+---@package
 entry._get_overwrite = function(self)
   if self.completion_item.textEdit then
     local range = self.insert_range
@@ -198,13 +218,18 @@ entry._get_overwrite = function(self)
   return { 0, 0 }
 end
 
+---@package
+entry.get_filter_text = function(self)
+  return self.filter_text
+end
+
 ---Get LSP's insert text
 ---@return string
 entry.get_insert_text = function(self)
   return self.cache:ensure('get_insert_text', entry._get_insert_text, self)
 end
 
----@private
+---@package
 entry._get_insert_text = function(self)
   local completion_item = self.completion_item
   local word
@@ -227,20 +252,21 @@ end
 ---Return the item is deprecated or not.
 ---@return boolean
 entry.is_deprecated = function(self)
-  return self.completion_item.deprecated or vim.tbl_contains(self.completion_item.tags or {}, types.lsp.CompletionItemTag.Deprecated)
+  return self.completion_item.deprecated or vim.iter(self.completion_item.tags or {}):any(function(...)
+    return types.lsp.CompletionItemTag.Deprecated == ...
+  end)
 end
 
 ---Return view information.
 ---@param suggest_offset integer
 ---@param entries_buf integer The buffer this entry will be rendered into.
----@param formatting cmp.FormattingConfig
----@return { abbr: { text: string, bytes: integer, width: integer, hl_group: string }, kind: { text: string, bytes: integer, width: integer, hl_group: string }, menu: { text: string, bytes: integer, width: integer, hl_group: string } }
-entry.get_view = function(self, suggest_offset, entries_buf, formatting)
-  local item = self:get_vim_item(suggest_offset, formatting)
+---@return { abbr: { text: string, bytes: integer, width: integer, hl_group: string|table }, kind: { text: string, bytes: integer, width: integer, hl_group: string|table }, menu: { text: string, bytes: integer, width: integer, hl_group: string|table } }
+entry.get_view = function(self, suggest_offset, entries_buf)
+  local item = self:get_vim_item(suggest_offset)
   return self.cache:ensure('get_view:' .. tostring(entries_buf), entry._get_view, self, item, entries_buf)
 end
 
----@private
+---@package
 entry._get_view = function(self, item, entries_buf)
   local view = {}
   -- The result of vim.fn.strdisplaywidth depends on which buffer it was
@@ -269,21 +295,20 @@ end
 
 ---Make vim.CompletedItem
 ---@param suggest_offset integer
----@param formatting cmp.FormattingConfig
 ---@return vim.CompletedItem
-entry.get_vim_item = function(self, suggest_offset, formatting)
-  return self.cache:ensure('get_vim_item:' .. tostring(suggest_offset), entry._get_vim_item, self, suggest_offset, formatting)
+entry.get_vim_item = function(self, suggest_offset)
+  return self.cache:ensure('get_vim_item:' .. tostring(suggest_offset), entry._get_vim_item, self, suggest_offset)
 end
 
----@private
-entry._get_vim_item = function(self, suggest_offset, formatting)
+---@package
+entry._get_vim_item = function(self, suggest_offset)
   local completion_item = self.completion_item
   local word = self.word
   local abbr = str.oneline(completion_item.label)
 
   -- ~ indicator
   local is_expandable = false
-  local expandable_indicator = formatting.expandable_indicator
+  local expandable_indicator = config.get().formatting.expandable_indicator
   if #(completion_item.additionalTextEdits or {}) > 0 then
     is_expandable = true
   elseif completion_item.insertTextFormat == types.lsp.InsertTextFormat.Snippet then
@@ -332,8 +357,8 @@ entry._get_vim_item = function(self, suggest_offset, formatting)
     menu = menu,
     dup = completion_item.dup or 1,
   }
-  if formatting.format then
-    vim_item = formatting.format(self, vim_item)
+  if config.get().formatting.format then
+    vim_item = config.get().formatting.format(self, vim_item)
   end
   vim_item.word = str.oneline(vim_item.word or '')
   vim_item.abbr = str.oneline(vim_item.abbr or '')
@@ -349,6 +374,16 @@ end
 ---@return string[]
 entry.get_commit_characters = function(self)
   return self.completion_item.commitCharacters or {}
+end
+
+---@deprecated use entry.insert_range instead
+entry.get_insert_range = function(self)
+  return self.insert_range
+end
+
+---@deprecated use entry.replace_range instead
+entry.get_replace_range = function(self)
+  return self.replace_range
 end
 
 ---Match line.
@@ -373,6 +408,7 @@ entry.match = function(self, input, matching_config)
   return matched
 end
 
+---@package
 entry._match = function(self, input, matching_config)
   local completion_item = self.completion_item
   local option = {
@@ -383,14 +419,16 @@ entry._match = function(self, input, matching_config)
     disallow_symbol_nonprefix_matching = matching_config.disallow_symbol_nonprefix_matching,
     synonyms = {
       self.word,
-      completion_item.label,
+      self.completion_item.label,
     },
   }
 
-  local score, matches
-  local filter_text = self.filter_text
+  local score, matches, filter_text
+  local checked = {} ---@type table<string, boolean>
 
-  score, matches = matcher.match(input, self.filter_text, option)
+  filter_text = self.filter_text
+  checked[filter_text] = true
+  score, matches = matcher.match(input, filter_text, option)
 
   -- Support the language server that doesn't respect VSCode's behaviors.
   if score == 0 then
@@ -403,7 +441,10 @@ entry._match = function(self, input, matching_config)
         accept = accept or string.find(completion_item.textEdit.newText, prefix, 1, true)
         if accept then
           filter_text = prefix .. filter_text
-          score, matches = matcher.match(input, filter_text, option)
+          if not checked[filter_text] then
+            checked[filter_text] = true
+            score, matches = matcher.match(input, filter_text, option)
+          end
         end
       end
     end
@@ -440,24 +481,8 @@ entry.get_view_matches = function(self, view)
   end
 end
 
----Get resolved completion item if possible.
----@return lsp.CompletionItem
+---@deprecated use entry.completion_item instead
 entry.get_completion_item = function(self)
-  return self.completion_item
-end
-
----@private
-entry._get_completion_item = function(self)
-  if self.resolved_completion_item then
-    -- @see https://github.com/microsoft/vscode/blob/85eea4a9b2ccc99615e970bf2181edbc1781d0f9/src/vs/workbench/api/browser/mainThreadLanguageFeatures.ts#L588
-    -- @see https://github.com/microsoft/vscode/blob/85eea4a9b2ccc99615e970bf2181edbc1781d0f9/src/vs/base/common/objects.ts#L89
-    -- @see https://github.com/microsoft/vscode/blob/a00f2e64f4fa9a1f774875562e1e9697d7138ed3/src/vs/editor/contrib/suggest/browser/suggest.ts#L147
-    local completion_item = misc.copy(self.completion_item)
-    for k, v in pairs(self.resolved_completion_item) do
-      completion_item[k] = v or completion_item[k]
-    end
-    return completion_item
-  end
   return self.completion_item
 end
 
@@ -465,8 +490,11 @@ end
 ---@return string[]
 entry.get_documentation = function(self)
   local item = self.completion_item
-
   local documents = {}
+
+  if type(item.detail) == 'table' then
+    item.detail = item.detail[1]
+  end
 
   -- detail
   if item.detail and item.detail ~= '' then
@@ -585,7 +613,7 @@ end
 ---Convert the oneline range encoding.
 entry.convert_range_encoding = function(self, range)
   local from_encoding = self.source.position_encoding
-  local cache_key = 'entry.convert_range_encoding:' .. range.start.character .. ':' .. range['end'].character .. ':' .. from_encoding
+  local cache_key = string.format('entry.convert_range_encoding:%d:%d:%s', range.start.character, range['end'].character, from_encoding)
   local res = self.context.cache:get(cache_key)
   if res then
     return res

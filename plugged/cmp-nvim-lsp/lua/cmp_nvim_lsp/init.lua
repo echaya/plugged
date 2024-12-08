@@ -1,4 +1,4 @@
-local source = require('cmp_nvim_lsp.source')
+local source = require("cmp_nvim_lsp.source")
 
 local M = {}
 
@@ -7,30 +7,28 @@ M.client_source_map = {}
 
 ---Setup cmp-nvim-lsp source.
 M.setup = function()
-  vim.api.nvim_create_autocmd('InsertEnter', {
-    group = vim.api.nvim_create_augroup('cmp_nvim_lsp', { clear = true }),
-    pattern = '*',
-    callback = M._on_insert_enter
+  vim.api.nvim_create_autocmd("InsertEnter", {
+    group = vim.api.nvim_create_augroup("cmp_nvim_lsp", { clear = true }),
+    pattern = "*",
+    callback = M._on_insert_enter,
   })
 end
 
 local if_nil = function(val, default)
-  if val == nil then return default end
+  if val == nil then
+    return default
+  end
   return val
 end
 
 -- Backported from vim.deprecate (0.9.0+)
 local function deprecate(name, alternative, version, plugin, backtrace)
-  local message = name .. ' is deprecated'
-  plugin = plugin or 'Nvim'
-  message = alternative and (message .. ', use ' .. alternative .. ' instead.') or message
-  message = message
-    .. ' See :h deprecated\nThis function will be removed in '
-    .. plugin
-    .. ' version '
-    .. version
+  local message = name .. " is deprecated"
+  plugin = plugin or "Nvim"
+  message = alternative and (message .. ", use " .. alternative .. " instead.") or message
+  message = message .. " See :h deprecated\nThis function will be removed in " .. plugin .. " version " .. version
   if vim.notify_once(message, vim.log.levels.WARN) and backtrace ~= false then
-    vim.notify(debug.traceback('', 2):sub(2), vim.log.levels.WARN)
+    vim.notify(debug.traceback("", 2):sub(2), vim.log.levels.WARN)
   end
 end
 
@@ -49,27 +47,27 @@ M.default_capabilities = function(override)
           tagSupport = if_nil(override.tagSupport, {
             valueSet = {
               1, -- Deprecated
-            }
+            },
           }),
           insertReplaceSupport = if_nil(override.insertReplaceSupport, true),
           resolveSupport = if_nil(override.resolveSupport, {
-              properties = {
-                  "documentation",
-                  "detail",
-                  "additionalTextEdits",
-                  "sortText",
-                  "filterText",
-                  "insertText",
-                  "textEdit",
-                  "insertTextFormat",
-                  "insertTextMode",
-              },
+            properties = {
+              "documentation",
+              "detail",
+              "additionalTextEdits",
+              "sortText",
+              "filterText",
+              "insertText",
+              "textEdit",
+              "insertTextFormat",
+              "insertTextMode",
+            },
           }),
           insertTextModeSupport = if_nil(override.insertTextModeSupport, {
             valueSet = {
               1, -- asIs
               2, -- adjustIndentation
-            }
+            },
           }),
           labelDetailsSupport = if_nil(override.labelDetailsSupport, true),
         },
@@ -77,13 +75,13 @@ M.default_capabilities = function(override)
         insertTextMode = if_nil(override.insertTextMode, 1),
         completionList = if_nil(override.completionList, {
           itemDefaults = {
-            'commitCharacters',
-            'editRange',
-            'insertTextFormat',
-            'insertTextMode',
-            'data',
-          }
-        })
+            "commitCharacters",
+            "editRange",
+            "insertTextFormat",
+            "insertTextMode",
+            "data",
+          },
+        }),
       },
     },
   }
@@ -92,14 +90,13 @@ end
 ---Backwards compatibility
 M.update_capabilities = function(_, override)
   local _deprecate = vim.deprecate or deprecate
-  _deprecate('cmp_nvim_lsp.update_capabilities', 'cmp_nvim_lsp.default_capabilities', '1.0.0', 'cmp-nvim-lsp')
+  _deprecate("cmp_nvim_lsp.update_capabilities", "cmp_nvim_lsp.default_capabilities", "1.0.0", "cmp-nvim-lsp")
   return M.default_capabilities(override)
 end
 
-
 ---Refresh sources on InsertEnter.
 M._on_insert_enter = function()
-  local cmp = require('cmp')
+  local cmp = require("cmp")
 
   local allowed_clients = {}
 
@@ -114,7 +111,7 @@ M._on_insert_enter = function()
     if not M.client_source_map[client.id] then
       local s = source.new(client)
       if s:is_available() then
-        M.client_source_map[client.id] = cmp.register_source('nvim_lsp', s)
+        M.client_source_map[client.id] = cmp.register_source("nvim_lsp", s)
       end
     end
   end
@@ -125,7 +122,7 @@ M._on_insert_enter = function()
     if not M.client_source_map[client.id] then
       local s = source.new(client)
       if s:is_available() then
-        M.client_source_map[client.id] = cmp.register_source('nvim_lsp', s)
+        M.client_source_map[client.id] = cmp.register_source("nvim_lsp", s)
       end
     end
   end

@@ -53,10 +53,9 @@ wildmenu_entries_view.new = function()
         return
       end
 
-      local formatting = config.get().formatting
       for i, e in ipairs(self.entries) do
         if e then
-          local view = e:get_view(self.offset, buf, formatting)
+          local view = e:get_view(self.offset, buf)
           vim.api.nvim_buf_set_extmark(buf, wildmenu_entries_view.ns, 0, self.offsets[i], {
             end_line = 0,
             end_col = self.offsets[i] + view.abbr.bytes,
@@ -110,12 +109,11 @@ wildmenu_entries_view.open = function(self, offset, entries)
   -- Apply window options (that might be changed) on the custom completion menu.
   self.entries_win:option('winblend', vim.o.pumblend)
 
-  local formatting = config.get().formatting
   local dedup = {}
   local preselect = 0
   local i = 1
   for _, e in ipairs(entries) do
-    local view = e:get_view(offset, 0, formatting)
+    local view = e:get_view(offset, 0)
     if view.dup == 1 or not dedup[e.completion_item.label] then
       dedup[e.completion_item.label] = true
       table.insert(self.entries, e)
@@ -158,16 +156,19 @@ wildmenu_entries_view.draw = function(self)
   local entries_buf = self.entries_win:get_buffer()
   local texts = {}
   local offset = 0
-  local formatting = config.get().formatting
   for _, e in ipairs(self.entries) do
-    local view = e:get_view(self.offset, entries_buf, formatting)
+    local view = e:get_view(self.offset, entries_buf)
     table.insert(self.offsets, offset)
     table.insert(texts, view.abbr.text)
     offset = offset + view.abbr.bytes + #self:_get_separator()
   end
 
   vim.api.nvim_buf_set_lines(entries_buf, 0, 1, false, { table.concat(texts, self:_get_separator()) })
-  vim.api.nvim_buf_set_option(entries_buf, 'modified', false)
+  if vim.fn.has('nvim-0.10') == 1 then
+    vim.api.nvim_set_option_value('modified', false, { buf = entries_buf })
+  else
+    vim.api.nvim_buf_set_option(entries_buf, 'modified', false)
+  end
 
   vim.api.nvim_win_call(0, function()
     misc.redraw()
@@ -253,11 +254,11 @@ wildmenu_entries_view._select = function(self, selected_index, option)
     local e = self:get_active_entry()
     if option.behavior == types.cmp.SelectBehavior.Insert then
       local cursor = api.get_cursor()
-      local word = e:get_vim_item(self.offset, config.get().formatting).word
+      local word = e:get_vim_item(self.offset).word
       vim.api.nvim_feedkeys(keymap.backspace(string.sub(api.get_current_line(), self.offset, cursor[2])) .. word, 'int', true)
     end
     vim.api.nvim_win_call(self.entries_win.win, function()
-      local view = e:get_view(self.offset, self.entries_win:get_buffer(), config.get().formatting)
+      local view = e:get_view(self.offset, self.entries_win:get_buffer())
       vim.api.nvim_win_set_cursor(0, { 1, self.offsets[selected_index] + (is_next and view.abbr.bytes or 0) })
       vim.cmd([[redraw!]]) -- Force refresh for vim.api.nvim_set_decoration_provider
     end)

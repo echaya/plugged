@@ -1,4 +1,4 @@
-# cmp-nvim-lsp
+# cmp-nvim-lsp (fork)
 
 nvim-cmp source for neovim's built-in language server client.
 
