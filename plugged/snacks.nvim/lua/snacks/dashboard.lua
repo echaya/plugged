@@ -6,6 +6,11 @@ local M = setmetatable({}, {
   end,
 })
 
+M.meta = {
+  desc = " Beautiful declarative dashboards",
+  needs_setup = true,
+}
+
 local uv = vim.uv or vim.loop
 math.randomseed(os.time())
 
@@ -66,6 +71,7 @@ math.randomseed(os.time())
 ---@field width number
 
 ---@class snacks.dashboard.Config
+---@field enabled? boolean
 ---@field sections snacks.dashboard.Section
 ---@field formats table<string, snacks.dashboard.Text|fun(item:snacks.dashboard.Item, ctx:snacks.dashboard.Format.ctx):snacks.dashboard.Text>
 local defaults = {
@@ -155,6 +161,7 @@ Snacks.config.style("dashboard", {
     colorcolumn = "",
     cursorcolumn = false,
     cursorline = false,
+    foldmethod = "manual",
     list = false,
     number = false,
     relativenumber = false,

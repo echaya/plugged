@@ -8,6 +8,10 @@ local M = setmetatable({}, {
   end,
 })
 
+M.meta = {
+  desc = "Scratch buffers with a persistent file",
+}
+
 ---@class snacks.scratch.File
 ---@field file string full path to the scratch buffer
 ---@field stat uv.fs_stat.result File stat result
@@ -70,7 +74,7 @@ Snacks.util.set_hl({
   Footer = "FloatFooter",
   Key = "DiagnosticVirtualTextInfo",
   Desc = "DiagnosticInfo",
-}, { prefix = "SnacksScratch" })
+}, { prefix = "SnacksScratch", default = true })
 
 Snacks.config.style("scratch", {
   width = 100,

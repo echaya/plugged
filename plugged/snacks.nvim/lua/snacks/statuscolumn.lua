@@ -8,6 +8,11 @@ local M = setmetatable({}, {
   end,
 })
 
+M.meta = {
+  desc = "Pretty status column",
+  needs_setup = true,
+}
+
 -- Numbers in Neovim are weird
 -- They show when either number or relativenumber is true
 local LINE_NR = "%=%{%(&number || &relativenumber) && v:virtnum == 0 ? ("
