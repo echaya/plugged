@@ -250,7 +250,7 @@ function M.render(scope, ctx)
   end
 end
 
--- Animate scope changes
+-- Toggle scope animations
 function M.animate()
   M.animating = not M.animating
 end
@@ -289,6 +289,7 @@ function M.on_scope(win, _buf, scope, prev)
   end
 end
 
+---@private
 function M.debug()
   if debug_timer:is_active() then
     debug_timer:stop()

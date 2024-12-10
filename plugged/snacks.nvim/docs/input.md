@@ -1,5 +1,9 @@
 # 🍿 input
 
+Better `vim.ui.input`.
+
+![image](https://github.com/user-attachments/assets/f7579302-bea1-4f1c-8b3b-723c3f4ca04b)
+
 <!-- docgen -->
 
 ## 📦 Setup

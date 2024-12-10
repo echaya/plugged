@@ -43,10 +43,10 @@ care of all active animations, controlled by the `fps` setting.
 
 All easing functions take these parameters:
 
-t = time     should go from 0 to duration
-b = begin    value of the property being ease.
-c = change   ending value of the property - beginning value of the property
-d = duration
+* `t` _(time)_: should go from 0 to duration
+* `b` _(begin)_: value of the property being ease.
+* `c` _(change)_: ending value of the property - beginning value of the property
+* `d` _(duration)_: total duration of the animation
 
 Some functions allow additional modifiers, like the elastic functions
 which also can receive an amplitud and a period parameters (defaults

@@ -1,5 +1,7 @@
 # 🍿 meta
 
+Meta functions for Snacks
+
 <!-- docgen -->
 
 ## 📚 Types

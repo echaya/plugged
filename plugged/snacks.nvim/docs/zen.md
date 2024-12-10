@@ -9,6 +9,8 @@ Similar plugins:
 - [zen-mode.nvim](https://github.com/folke/zen-mode.nvim)
 - [true-zen.nvim](https://github.com/pocco81/true-zen.nvim)
 
+![image](https://github.com/user-attachments/assets/77c607ec-c354-4e17-bcd1-fdcd4b4c0057)
+
 <!-- docgen -->
 
 ## 📦 Setup

@@ -8,6 +8,9 @@ Similar plugins:
 - [limelight.vim](https://github.com/junegunn/limelight.vim)
 - [goyo.vim](https://github.com/junegunn/goyo.vim)
 
+![image](https://github.com/user-attachments/assets/c0c5ffda-aaeb-4578-8a18-abee2e443a93)
+
+
 <!-- docgen -->
 
 ## 📦 Setup

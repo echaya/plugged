@@ -7,6 +7,8 @@ Similar plugins:
 - [indent-blankline.nvim](https://github.com/lukas-reineke/indent-blankline.nvim)
 - [mini.indentscope](https://github.com/echasnovski/mini.indentscope)
 
+![image](https://github.com/user-attachments/assets/56a99495-05ab-488e-9619-574cb7ff2b7d)
+
 <!-- docgen -->
 
 ## 📦 Setup
@@ -93,16 +95,10 @@ Similar plugins:
 
 ### `Snacks.indent.animate()`
 
-Animate scope changes
+Toggle scope animations
 
 ```lua
 Snacks.indent.animate()
-```
-
-### `Snacks.indent.debug()`
-
-```lua
-Snacks.indent.debug()
 ```
 
 ### `Snacks.indent.disable()`

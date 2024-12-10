@@ -69,6 +69,7 @@ local ctx = {}
 ---@param opts? snacks.input.Opts
 ---@param on_confirm fun(value?: string)
 function M.input(opts, on_confirm)
+  assert(type(on_confirm) == "function", "`on_confirm` must be a function")
   local function confirm(value)
     ctx.win = nil
     ctx.opts = nil

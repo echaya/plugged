@@ -21,6 +21,7 @@ local config = {
   bigfile = { enabled = false },
   dashboard = { enabled = false },
   indent = { enabled = false },
+  input = { enabled = false },
   notifier = { enabled = false },
   quickfile = { enabled = false },
   scroll = { enabled = false },

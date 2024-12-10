@@ -117,6 +117,7 @@ Please refer to the readme of each plugin for their specific configuration.
   bigfile = { enabled = false },
   dashboard = { enabled = false },
   indent = { enabled = false },
+  input = { enabled = false },
   notifier = { enabled = false },
   quickfile = { enabled = false },
   scroll = { enabled = false },

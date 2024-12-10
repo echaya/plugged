@@ -23,6 +23,7 @@ M.meta = {
 ---@field health? fun()
 
 --- Get the metadata for all snacks plugins
+---@return snacks.meta.Plugin[]
 function M.get()
   local ret = {} ---@type snacks.meta.Plugin[]
   local root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")

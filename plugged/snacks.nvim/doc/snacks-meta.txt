@@ -6,6 +6,8 @@ Table of Contents                              *snacks-meta-table-of-contents*
 1. Types                                                   |snacks-meta-types|
 2. Module                                                 |snacks-meta-module|
   - Snacks.meta.get()                   |snacks-meta-module-snacks.meta.get()|
+Meta functions for Snacks
+
 
 ==============================================================================
 1. Types                                                   *snacks-meta-types*
