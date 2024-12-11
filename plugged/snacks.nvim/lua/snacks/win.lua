@@ -568,11 +568,15 @@ function M:drop()
 
   local bg, winblend = backdrop.bg or "#000000", backdrop.blend
   if not backdrop.transparent then
-    bg = Snacks.util.blend(Snacks.util.color("Normal", "bg"), bg, winblend / 100)
+    if Snacks.util.is_transparent() then
+      bg = nil
+    else
+      bg = Snacks.util.blend(Snacks.util.color("Normal", "bg"), bg, winblend / 100)
+    end
     winblend = 0
   end
 
-  local group = ("SnacksBackdrop_%s"):format(bg:sub(2))
+  local group = ("SnacksBackdrop_%s"):format(bg and bg:sub(2) or "T")
   vim.api.nvim_set_hl(0, group, { bg = bg })
 
   self.backdrop = M.new(M.resolve({

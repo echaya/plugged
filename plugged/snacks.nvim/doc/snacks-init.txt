@@ -41,6 +41,7 @@ Table of Contents                              *snacks-init-table-of-contents*
       bigfile = { enabled = false },
       dashboard = { enabled = false },
       indent = { enabled = false },
+      input = { enabled = false },
       notifier = { enabled = false },
       quickfile = { enabled = false },
       scroll = { enabled = false },

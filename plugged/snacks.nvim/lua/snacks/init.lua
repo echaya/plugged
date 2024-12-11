@@ -108,7 +108,7 @@ function M.setup(opts)
     BufReadPre = { "bigfile" },
     BufReadPost = { "quickfile", "indent" },
     LspAttach = { "words" },
-    UIEnter = { "dashboard", "scroll" },
+    UIEnter = { "dashboard", "scroll", "input" },
   }
 
   local function load(event)
@@ -136,12 +136,6 @@ function M.setup(opts)
 
   if M.config.statuscolumn.enabled then
     vim.o.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
-  end
-
-  if M.config.input.enabled then
-    vim.ui.input = function(...)
-      return Snacks.input(...)
-    end
   end
 
   if M.config.notifier.enabled then

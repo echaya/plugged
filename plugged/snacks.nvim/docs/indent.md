@@ -34,6 +34,7 @@ Similar plugins:
 ---@field enabled? boolean
 {
   indent = {
+    enabled = true, -- enable indent guides
     char = "│",
     blank = " ",
     -- blank = "∙",
@@ -54,6 +55,7 @@ Similar plugins:
   },
   ---@class snacks.indent.Scope.Config: snacks.scope.Config
   scope = {
+    enabled = true, -- enable highlighting the current scope
     -- animate scopes. Enabled by default for Neovim >= 0.10
     -- Works on older versions but has to trigger redraws during animation.
     ---@type snacks.animate.Config|{enabled?: boolean}
@@ -69,6 +71,23 @@ Similar plugins:
     underline = false, -- underline the start of the scope
     only_current = false, -- only show scope in the current window
     hl = "SnacksIndentScope", ---@type string|string[] hl group for scopes
+  },
+  chunk = {
+    -- when enabled, scopes will be rendered as chunks, except for the
+    -- top-level scope which will be rendered as a scope.
+    enabled = false,
+    -- only show chunk scopes in the current window
+    only_current = false,
+    hl = "SnacksIndentChunk", ---@type string|string[] hl group for chunk scopes
+    char = {
+      corner_top = "┌",
+      corner_bottom = "└",
+      -- corner_top = "╭",
+      -- corner_bottom = "╰",
+      horizontal = "─",
+      vertical = "│",
+      arrow = ">",
+    },
   },
   blank = {
     char = " ",

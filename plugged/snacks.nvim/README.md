@@ -57,10 +57,10 @@ Install the plugin with your package manager:
 > Check the [code](https://github.com/folke/snacks.nvim/blob/main/lua/snacks/init.lua) to see what it does.
 
 > [!caution]
-> You need to explicitely pass options for a plugin or set `enabled = true` to enable it.
+> You need to explicitly pass options for a plugin or set `enabled = true` to enable it.
 
 > [!tip]
-> It' a good idea to run `:checkhealth snacks` to see if everything is set up correctly.
+> It's a good idea to run `:checkhealth snacks` to see if everything is set up correctly.
 
 ```lua
 {
@@ -72,8 +72,12 @@ Install the plugin with your package manager:
     -- or leave it empty to use the default settings
     -- refer to the configuration section below
     bigfile = { enabled = true },
+    dashboard = { enabled = true },
+    indent = { enabled = true },
+    input = { enabled = true },
     notifier = { enabled = true },
     quickfile = { enabled = true },
+    scroll = { enabled = true },
     statuscolumn = { enabled = true },
     words = { enabled = true },
   },
@@ -169,16 +173,18 @@ See the example below for how to configure `snacks.nvim`.
     bigfile = { enabled = true },
     dashboard = { enabled = true },
     indent = { enabled = true },
+    input = { enabled = true },
     notifier = {
       enabled = true,
       timeout = 3000,
     },
     quickfile = { enabled = true },
+    scroll = { enabled = true },
     statuscolumn = { enabled = true },
     words = { enabled = true },
     styles = {
       notification = {
-        wo = { wrap = true } -- Wrap notifications
+        -- wo = { wrap = true } -- Wrap notifications
       }
     }
   },

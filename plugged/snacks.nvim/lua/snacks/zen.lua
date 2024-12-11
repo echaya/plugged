@@ -106,6 +106,9 @@ function M.zen(opts)
   local parent_win = vim.api.nvim_get_current_win()
   local buf = vim.api.nvim_get_current_buf()
   local win_opts = Snacks.win.resolve({ style = "zen" }, opts.win, { buf = buf })
+  if Snacks.util.is_transparent() and type(win_opts.backdrop) == "table" then
+    win_opts.backdrop.transparent = false
+  end
 
   local zoom_indicator ---@type snacks.win?
   local show_indicator = false
@@ -129,6 +132,7 @@ function M.zen(opts)
 
   -- create window
   local win = Snacks.win(win_opts)
+  vim.cmd([[norm! zz]])
   zen_win = win
 
   if show_indicator then
